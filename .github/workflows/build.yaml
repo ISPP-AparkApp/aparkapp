@@ -8,8 +8,6 @@ on:
       - hotfix/*
       - release/*
       - config/*
-  pull_request:
-    types: [opened, synchronize, reopened]
 jobs:
   sonarcloud:
     name: SonarCloud
@@ -23,3 +21,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  deploy:
+    # needs: build (Se añadirá cuando esté la ejecución automática de pruebas)
+    # if: ${{github.ref == 'refs/heads/main'}}
+    name: Heroku
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: AkhileshNS/heroku-deploy@v3.12.12
+        with:
+          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
+          heroku_app_name: "aparkapp-backend-s1"
+          heroku_email: "ferherque@alum.us.es"
