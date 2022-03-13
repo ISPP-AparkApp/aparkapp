@@ -4,9 +4,12 @@ from django.contrib.auth.models import User
 
 
 
-class User(User):
+class Profile(models.Model):
     phone = models.CharField(max_length=12)
     birthdate = models.DateField()
+
+    #Relationship
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
 
 class Rating(models.Model):
     RATING = ((1, 'Muy mala'), (2,'Mala'), (3,'Regular'), (4,'Buena'), (5,'Muy Buena'))
@@ -18,7 +21,7 @@ class Rating(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.id
+        return str(self.id)
 
 
 class Vehicle(models.Model):
@@ -51,7 +54,7 @@ class Vehicle(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.id
+        return str(self.id)
 
 class Announcement(models.Model):
 
@@ -106,7 +109,7 @@ class Announcement(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.id
+        return str(self.id)
 
 class Reservation(models.Model):
     id = models.AutoField(primary_key=True)
@@ -122,5 +125,5 @@ class Reservation(models.Model):
 
 
     def __str__(self):
-        return self.id
+        return str(self.id)
 
