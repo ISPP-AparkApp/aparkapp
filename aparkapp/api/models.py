@@ -1,18 +1,12 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator, EmailValidator
+from django.contrib.auth.models import User
 
 
-class User(models.Model):
-    id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=200)
-    surname = models.CharField(max_length=400)
+
+class User(User):
     phone = models.CharField(max_length=12)
-    email = models.EmailField(validators=[EmailValidator()])
-    password = models.CharField(max_length=128)
     birthdate = models.DateField()
-
-    def __str__(self):
-        return self.id
 
 class Rating(models.Model):
     RATING = ((1, 'Muy mala'), (2,'Mala'), (3,'Regular'), (4,'Buena'), (5,'Muy Buena'))
@@ -34,6 +28,7 @@ class Vehicle(models.Model):
     SEGC = 'Segmento C'
     SEGD = 'Segmento D'
     SEGE = 'Segmento E'
+    SEGF = 'Segmento F'
 
     TYPE = [
        (SEGA, ('El vehículo pertenece al segmento A')),
@@ -65,6 +60,7 @@ class Announcement(models.Model):
     GREEN = 'Zona Verde'
     RED = 'Zona Roja'
     ORANGE = 'Zona Naranja'
+    MAR = 'Zona MAR'
 
     TYPE = [
        (PUBLIC, ('La plaza está situada en una zona libre')),
@@ -72,18 +68,17 @@ class Announcement(models.Model):
        (GREEN, ('La plaza está situada en zona verde')),
        (RED, ('La plaza está situada en zona roja')),
        (ORANGE, ('La plaza está situada en zona naranja')),
+       (MAR, ('La plaza está situada en zona de muy alta rotación'))
     ] 
 
     INITIAL = 'Initial'
     ARRIVAL = 'Arrival'
     DEPARTURE = 'Departure'
-    RATING = 'Rating'
 
     STATUS = [
        (INITIAL, ('Estado inicial')),
        (ARRIVAL, ('Estado llegada')),
        (DEPARTURE, ('Estado salida')),
-       (RATING, ('Estado valoración')),
     ] 
 
     id = models.AutoField(primary_key=True)
@@ -104,9 +99,11 @@ class Announcement(models.Model):
        default=INITIAL,
     )
     observation = models.CharField(max_length=500)
+    rated = models.BooleanField(default=False)
 
     #Relationship
     vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.id
@@ -116,6 +113,8 @@ class Reservation(models.Model):
     date = models.DateTimeField()
     n_extend = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(3)])
     cancelled = models.BooleanField(default=False)
+    rated = models.BooleanField(default=False)
+
 
     #Relationship
     user = models.ForeignKey(User, on_delete=models.CASCADE)
