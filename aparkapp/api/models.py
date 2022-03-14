@@ -4,12 +4,12 @@ from django.contrib.auth.models import User
 
 
 
-class User(User):
+class Profile(models.Model):
     phone = models.CharField(max_length=12)
     birthdate = models.DateField()
 
-    def __str__(self):
-        return str(self.id)
+    #Relationship
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
 
 class Rating(models.Model):
     RATING = ((1, 'Muy mala'), (2,'Mala'), (3,'Regular'), (4,'Buena'), (5,'Muy Buena'))
