@@ -28,6 +28,7 @@ class ExpiringTokenAuthentication(TokenAuthentication):
         message,token,user = None,None,None
         try:
             token = self.get_model().objects.select_related('user').get(key = key)
+            user = token.user
         except self.get_model().DoesNotExist:
             message = 'Invalid Token'
             self.expired = True
@@ -40,6 +41,6 @@ class ExpiringTokenAuthentication(TokenAuthentication):
             if is_expired:
                 message = 'Token expired'
         
-        return (token.user,token,message,self.expired)
+        return (user,token,message,self.expired)
 
         
