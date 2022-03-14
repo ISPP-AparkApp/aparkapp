@@ -60,11 +60,12 @@ class Login(ObtainAuthToken):
         else:
             return Response({'error': 'Incorrect username or password'}, status=status.HTTP_400_BAD_REQUEST)
 
-class Logout(APIView):
+class Logout(Authentication,APIView):
     def post(self,request):
         try:
             #Send token as param
-            token = Token.objects.filter(key=request.GET.get('token')).first()
+            token = request.headers['Authorization'].split()[1]
+            token = Token.objects.get(key=token)
             if token:
                 user = token.user
                 # DELETE all sessions
