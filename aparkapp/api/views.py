@@ -1,20 +1,35 @@
-from django.contrib.sessions.models import Session
 from django.shortcuts import render
+import jwt
 from .models import User, Vehicle
-
 from api.serializers import UserSerializer,VehicleSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated,BasePermission
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.token_blacklist.models import OutstandingToken,BlacklistedToken
 from rest_framework.authtoken.models import Token
-from rest_framework.authtoken.views import ObtainAuthToken
-from django.http import Http404
-from datetime import datetime
-from .authentication_mixins import Authentication
+from rest_framework_simplejwt import views as jwt_views
+
+class IsTokenValid(BasePermission):
+    def has_permission(self, request, view):
+        user_id = request.user.id
+        token = request.headers['Authorization'].split()[1]          
+        is_allowed_user = True
+        try:
+            tokens = OutstandingToken.objects.filter(user_id=request.user.id)
+            is_blackListed = BlacklistedToken.objects.get(token=tokens[len(tokens)-1])
+            if is_blackListed:
+                return False
+        except BlacklistedToken.DoesNotExist:
+            is_allowed_user = True
+        return is_allowed_user
 
 # Create your views here.
+class VehiclesAPI(APIView):
+    # View protected
+    permission_classes = [IsAuthenticated&IsTokenValid]
 
-class VehiclesAPI(Authentication,APIView):
     def post(self,request):
         serializer = VehicleSerializer(data=request.data)
 
@@ -24,65 +39,16 @@ class VehiclesAPI(Authentication,APIView):
             return Response(serializer.data,status=status.HTTP_201_CREATED)
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
-class UserToken(APIView):
-    # Send username as param
-    def get(self,request):
-        username = request.GET.get('username')
-        try:
-            user_token = Token.objects.get(user = UserSerializer().Meta.model.objects.filter(username = username).first())
-            return Response({'TOKEN': user_token.key})
-        except:
-            return Response({'error': 'Incorrect credentials'},status=status.HTTP_400_BAD_REQUEST)
+
+class Logout(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        tokens = OutstandingToken.objects.filter(user_id=request.user.id)
+        for token in tokens:
+            t, _ = BlacklistedToken.objects.get_or_create(token=token)
+
+        return Response(status=status.HTTP_205_RESET_CONTENT)
 
 
-class Login(ObtainAuthToken):
-    def post(self,request):
-        login_serializer = self.serializer_class(data=request.data,context={'request':request})
-        if login_serializer.is_valid():
-            user = login_serializer.validated_data['user']
-            if user.is_active:
-                token,is_created = Token.objects.get_or_create(user=user)
-                user_serializer = UserSerializer(user)
-                if is_created:
-                    return Response({'TOKEN': token.key,'user':user_serializer.data}, status=status.HTTP_201_CREATED)
-                else:
-                    all_sessions = Session.objects.filter(expire_date__gte = datetime.now())
-                    if all_sessions.exists():
-                        for session in all_sessions:
-                            session_data = session.get_decoded()
-                            if user.id == int(session_data.get('_auth_user_id')):
-                                session.delete()
-                    token.delete()
-                    token = Token.objects.create(user=user)
-                    return Response({'TOKEN': token.key,'user':user_serializer.data}, status=status.HTTP_201_CREATED)
-            else:
-                return Response({'error': 'Invalid to login'}, status=status.HTTP_401_UNAUTHORIZED)
-        else:
-            return Response({'error': 'Incorrect username or password'}, status=status.HTTP_400_BAD_REQUEST)
 
-class Logout(Authentication,APIView):
-    def post(self,request):
-        try:
-            #Send token as param
-            token = request.headers['Authorization'].split()[1]
-            token = Token.objects.get(key=token)
-            if token:
-                user = token.user
-                # DELETE all sessions
-                all_sessions = Session.objects.filter(expire_date__gte = datetime.now())
-                if all_sessions.exists():
-                    for session in all_sessions:
-                        session_data = session.get_decoded()
-                        if user.id == int(session_data.get('_auth_user_id')):
-                            session.delete()
-                session_message = "User sessions deleted"
-                #Delete token
-                token.delete()
-                token_message = "Token deleted"
-
-                return Response({'session_message': session_message,'token_message':token_message}, status=status.HTTP_201_CREATED)
-            return Response({'error': 'User not found'}, status=status.HTTP_400_BAD_REQUEST)
-        except:
-            return Response({'error': 'Token not found'}, status=status.HTTP_409_CONFLICT)
-
-            
