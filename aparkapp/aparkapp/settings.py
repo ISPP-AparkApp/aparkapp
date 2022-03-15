@@ -42,11 +42,15 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_filters',
     'rest_framework.authtoken',
+    'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist'
 ]
 
-
-
-TOKEN_EXPIRED_AFTER_SECONDS = 900 #15m
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -88,7 +92,7 @@ DATABASES = {
             'NAME': 'aparkapp',
             'USER': 'aparkapp',
             'PASSWORD': 'aparkapp',
-            'HOST': 'localhost',
+            'HOST': 'db',
             'PORT': '3306',
         }
 }
