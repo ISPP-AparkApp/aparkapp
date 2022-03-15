@@ -52,7 +52,7 @@ class Logout(APIView):
 class UsersAPI(APIView):
     permission_classes = [IsAuthenticated&IsTokenValid]
 
-    def get(self, pk):
+    def get(self,request, pk):
         user = User.objects.get(pk=pk)
         vehicles = Vehicle.objects.filter(user=user)
         vehicle_serializer = VehicleSerializer(vehicles, many=True)
@@ -77,7 +77,7 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
         return Announcement.objects.all()
 
 
-    def get(self):
+    def get(self, request):
         announcements = self.filter_queryset(self.get_queryset())
         serializer_class = AnnouncementSerializer(announcements,many=True)
 
@@ -126,13 +126,16 @@ class AnnouncementAPI(APIView):
     def put(self, request, pk):
         announcement = self.get_object(pk)
         serializer = AnnouncementSerializer(announcement, data=request.data)
-        if serializer.is_valid():
+        query = Announcement.objects.filter(date=request.data["date"], vehicle=request.data["vehicle"])
+        if query:
+            return Response("There's already an announcement for this vehicle at the same time.",status=status.HTTP_401_UNAUTHORIZED)
+        if serializer.is_valid() and not query:
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
 
-    def delete(self, pk):
+    def delete(self, request, pk):
         announcement = self.get_object(pk)
         announcement.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
