@@ -1,7 +1,7 @@
 from django.shortcuts import render
 import jwt
-from .models import User, Vehicle
-from api.serializers import UserSerializer,VehicleSerializer
+from .models import Profile, User, Vehicle
+from api.serializers import UserSerializer,VehicleSerializer, ProfileSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -10,6 +10,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken,BlacklistedToken
 from rest_framework.authtoken.models import Token
 from rest_framework_simplejwt import views as jwt_views
+
 
 class IsTokenValid(BasePermission):
     def has_permission(self, request, view):
@@ -38,6 +39,20 @@ class VehiclesAPI(APIView):
             serializer.save()
             return Response(serializer.data,status=status.HTTP_201_CREATED)
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+    
+    def put(self,request):
+        post = self.get_object(request.vehicle.id)
+        serializer = VehicleSerializer(post, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self):
+        post = self.get_object(Vehicle.id)
+        post.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class Logout(APIView):
@@ -50,5 +65,20 @@ class Logout(APIView):
 
         return Response(status=status.HTTP_205_RESET_CONTENT)
 
+class UpdateDeleteUser (APIView): 
+    permission_classes = [IsAuthenticated&IsTokenValid]
+    model = Profile
 
+    def put(self,request):
+        post = self.get_object(request.user.id)
+        serializer = ProfileSerializer(post, data=request.data)
 
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self):
+        post = self.get_object(Profile.id)
+        post.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
