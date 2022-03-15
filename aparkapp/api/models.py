@@ -51,7 +51,7 @@ class Vehicle(models.Model):
        default=SEGA,
     )
     #Relationship
-    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return str(self.id)
