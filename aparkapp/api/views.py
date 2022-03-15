@@ -10,7 +10,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from django_filters.rest_framework import DjangoFilterBackend
 from django.http import Http404
-from datetime import datetime
+from datetime import datetime, timedelta
 from .authentication_mixins import Authentication
 
 # Create your views here.
@@ -101,14 +101,28 @@ class AnnouncementsAPI(generics.ListAPIView):
     def get_queryset(self):
         return Announcement.objects.all()
 
-    def get(self,request):
-        current_user = request.user
-        if current_user.is_authenticated:
-            announcements = self.filter_queryset(self.get_queryset())
-            serializer_class = AnnouncementSerializer(announcements,many=True)
-            return Response(serializer_class.data)
-        else:
-            return  Response({"detail": "Unauthorized"},status=status.HTTP_401_UNAUTHORIZED)
+    def get(self,request):     
+        try:   
+            token = request.headers['Authorization'].split()[1]
+            token = Token.objects.get(key=token)
+
+            aux = datetime.now() - token.created.replace(tzinfo=None) - timedelta(hours=1)
+            print(aux)
+            # check if token is valid
+            if aux > timedelta(minutes=15):
+                return  Response({"detail": "Unauthorized"},status=status.HTTP_401_UNAUTHORIZED)
+            else:
+                announcements = self.filter_queryset(self.get_queryset())
+                serializer_class = AnnouncementSerializer(announcements,many=True)
+                return Response(serializer_class.data)
+        except:
+            return Response({'error': 'Token not found'}, status=status.HTTP_409_CONFLICT)
+        #if current_user.is_authenticated:
+        #    announcements = self.filter_queryset(self.get_queryset())
+         #   serializer_class = AnnouncementSerializer(announcements,many=True)
+          #  return Response(serializer_class.data)
+        #else:
+         #   return  Response({"detail": "Unauthorized"},status=status.HTTP_401_UNAUTHORIZED)
 
 
 class AnnouncementAPI(APIView):
@@ -119,15 +133,35 @@ class AnnouncementAPI(APIView):
             raise Http404
             
     def get(self,request,pk):
-        current_user = request.user
-        an = self.get_object(pk)
-        if current_user.is_authenticated:
-            res_list = Reservation.objects.filter(user=current_user)
-            print(res_list)
-            announcement_list = res_list.values_list('announcement')
-
-            if pk in announcement_list:   
-                serializer = AnnouncementSerializer(an)
-                return Response(serializer.data)
+        try:
+            token = request.headers['Authorization'].split()[1]
+            token = Token.objects.get(key=token)
+            aux = datetime.now() - token.created.replace(tzinfo=None) - timedelta(hours=1)
+            if aux > timedelta(minutes=15):
+                return  Response({"detail": "Unauthorized"},status=status.HTTP_401_UNAUTHORIZED)
             else:
-                return Response({"detail": "Unauthorized"},status=status.HTTP_401_UNAUTHORIZED)
+                an = self.get_object(pk)
+                res_list = Reservation.objects.filter(user=token.user)
+                print(res_list)
+                announcement_list = res_list.values_list('announcement')
+
+                if pk in announcement_list:   
+                    serializer = AnnouncementSerializer(an)
+                    return Response(serializer.data)
+                else:
+                    return Response({"detail": "Unauthorized"},status=status.HTTP_401_UNAUTHORIZED)
+        except:
+            return Response({'error': 'Token not found'}, status=status.HTTP_409_CONFLICT)
+
+#        current_user = request.user
+#           an = self.get_object(pk)
+#        if current_user.is_authenticated:
+#           res_list = Reservation.objects.filter(user=current_user)
+#            print(res_list)
+#            announcement_list = res_list.values_list('announcement')
+
+#            if pk in announcement_list:   
+#                serializer = AnnouncementSerializer(an)
+#                return Response(serializer.data)
+#            else:
+#                return Response({"detail": "Unauthorized"},status=status.HTTP_401_UNAUTHORIZED)
