@@ -2,7 +2,7 @@ from os import stat
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from api.models import Vehicle
+from api.models import Vehicle, Announcement
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -15,3 +15,9 @@ class VehicleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vehicle
         fields = ['id','brand','model','license_plate','color','type','user']
+
+
+class AnnouncementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Announcement
+        fields = '__all__'
