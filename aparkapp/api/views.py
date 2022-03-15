@@ -3,17 +3,10 @@ from api.serializers import VehicleSerializer, AnnouncementSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, filters, generics
-from rest_framework.permissions import IsAuthenticated,BasePermission
-from rest_framework_simplejwt.token_blacklist.models import OutstandingToken,BlacklistedToken
-from rest_framework.authtoken.models import Token
-from rest_framework_simplejwt import views as jwt_views
-import uuid
+from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from django.http import Http404
 
-
-
-# Create your views here.
 class VehiclesAPI(APIView):
     # View protected
     permission_classes = [IsAuthenticated]
@@ -30,7 +23,7 @@ class VehiclesAPI(APIView):
 
 
 class UsersAPI(APIView):
-    permission_classes = [IsAuthenticated&IsTokenValid]
+    permission_classes = [IsAuthenticated]
 
     def get(self,request, pk):
         user = User.objects.get(pk=pk)
@@ -39,7 +32,7 @@ class UsersAPI(APIView):
         return Response(vehicle_serializer.data, status=status.HTTP_200_OK)
 
 class AnnouncementsAPI(generics.ListCreateAPIView):
-    permission_classes = [IsAuthenticated&IsTokenValid]
+    permission_classes = [IsAuthenticated]
 
     filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend)
 
@@ -79,7 +72,7 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
 
 
 class AnnouncementAPI(APIView):
-    permission_classes = [IsAuthenticated&IsTokenValid]
+    permission_classes = [IsAuthenticated]
 
     def get_object(self,pk):
         try:
