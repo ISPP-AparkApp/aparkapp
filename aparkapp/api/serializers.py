@@ -20,5 +20,4 @@ class VehicleSerializer(serializers.ModelSerializer):
 class AnnouncementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Announcement
-        fields = ['id','date','wait_time','price','allow_wait','location','zone','limited_mobility',
-                'status','observation','rated','vehicle','user']
+        fields = '__all__'
