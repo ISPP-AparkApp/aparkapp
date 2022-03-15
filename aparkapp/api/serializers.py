@@ -14,7 +14,7 @@ class UserSerializer(serializers.ModelSerializer):
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ('id','username', 'password', 'email', 'first_name', 'last_name', 'phone', 'birthdate')
+        fields = ("__all__")
 
 class VehicleSerializer(serializers.ModelSerializer):
     class Meta:
