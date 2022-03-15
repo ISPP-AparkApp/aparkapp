@@ -92,7 +92,7 @@ DATABASES = {
             'NAME': 'aparkapp',
             'USER': 'aparkapp',
             'PASSWORD': 'aparkapp',
-            'HOST': 'db',
+            'HOST': 'localhost',
             'PORT': '3306',
         }
 }
