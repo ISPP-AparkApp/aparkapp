@@ -25,7 +25,10 @@ SECRET_KEY = 'django-insecure-0c@al$25nzv(s7y96$adhg38hv-at!4=9k+278iyn##2dks!vb
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['aparkapp-backend-s1.herokuapp.com', '127.0.0.1']
+
+ALLOWED_HOSTS = ["*"]
+
+CORS_ORIGIN_ALLOW_ALL = True
 
 AUTH_PROFILE_MODULE = 'api.User'
 
@@ -43,7 +46,8 @@ INSTALLED_APPS = [
     'django_filters',
     'rest_framework.authtoken',
     'rest_framework_simplejwt',
-    'rest_framework_simplejwt.token_blacklist'
+    'rest_framework_simplejwt.token_blacklist',
+    'corsheaders'
 ]
 
 REST_FRAMEWORK = {
@@ -60,6 +64,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware'
 ]
 
 ROOT_URLCONF = 'aparkapp.urls'
