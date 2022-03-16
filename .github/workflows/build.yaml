@@ -1,0 +1,35 @@
+name: Build
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - feature/*
+      - hotfix/*
+      - release/*
+      - config/*
+jobs:
+  sonarcloud:
+    name: SonarCloud
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  deploy:
+    # needs: build (Se añadirá cuando esté la ejecución automática de pruebas)
+    if: ${{github.ref == 'refs/heads/develop'}}
+    name: Heroku
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: AkhileshNS/heroku-deploy@v3.12.12
+        with:
+          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
+          heroku_app_name: "aparkapp-backend-s1"
+          heroku_email: "ferherque@alum.us.es"

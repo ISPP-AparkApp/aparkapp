@@ -39,6 +39,8 @@ class Vehicle(models.Model):
        (SEGC, ('El vehículo pertenece al segmento C')),
        (SEGD, ('El vehículo pertenece al segmento D')),
        (SEGE, ('El vehículo pertenece al segmento E')),
+       (SEGF, ('El vehículo pertenece al segmento F'))
+
     ] 
     id = models.AutoField(primary_key=True)
     brand = models.CharField(max_length=200)
@@ -52,6 +54,7 @@ class Vehicle(models.Model):
     )
     #Relationship
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    
 
     def __str__(self):
         return str(self.id)
@@ -101,7 +104,7 @@ class Announcement(models.Model):
        choices=STATUS,
        default=INITIAL,
     )
-    observation = models.CharField(max_length=500)
+    observation = models.CharField(max_length=500, default="Sin comentarios.")
     rated = models.BooleanField(default=False)
 
     #Relationship
