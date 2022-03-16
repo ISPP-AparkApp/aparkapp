@@ -12,11 +12,12 @@ class VehiclesAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self,request):
-        data = request.data
+        data = request.data.copy()
         data['user'] = request.user.id
-        print(data)
         serializer = VehicleSerializer(data=data)
-        if serializer.is_valid():
+
+        query = Vehicle.objects.filter(license_plate=request.data["license_plate"],user=request.data["user"])
+        if serializer.is_valid() and not query:
             serializer.save()
             return Response(serializer.data,status=status.HTTP_201_CREATED)
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
