@@ -1,0 +1,27 @@
+version: '3'
+
+services:
+  db:
+    container_name: db
+    image: mysql/mysql-server:8.0.13
+    ports:
+      - '3306:3306'
+    environment:
+       MYSQL_ROOT_HOST: 'db'
+       MYSQL_DATABASE: 'aparkapp'
+       MYSQL_USER: 'aparkapp'
+       MYSQL_PASSWORD: 'aparkapp'
+       MYSQL_ROOT_PASSWORD: 'aparkapp'
+    healthcheck:
+        test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+        timeout: 15s
+        retries: 10
+  web:
+    container_name: web
+    build: .
+    command: sh -c "python manage.py makemigrations && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy

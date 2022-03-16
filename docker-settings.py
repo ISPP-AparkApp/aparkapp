@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-0c@al$25nzv(s7y96$adhg38hv-at!4=9k+278iyn##2dks!vb
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['aparkapp-backend-s1.herokuapp.com', '127.0.0.1']
+ALLOWED_HOSTS = []
 
 AUTH_PROFILE_MODULE = 'api.User'
 
@@ -40,17 +40,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'django_filters',
     'rest_framework.authtoken',
-    'rest_framework_simplejwt',
-    'rest_framework_simplejwt.token_blacklist'
 ]
 
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ],
-}
+
+
+TOKEN_EXPIRED_AFTER_SECONDS = 900 #15m
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -92,7 +87,7 @@ DATABASES = {
             'NAME': 'aparkapp',
             'USER': 'aparkapp',
             'PASSWORD': 'aparkapp',
-            'HOST': 'localhost',
+            'HOST': 'db',
             'PORT': '3306',
         }
 }
@@ -136,7 +131,3 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-import django_heroku
-
-django_heroku.settings(locals())
