@@ -16,7 +16,7 @@ class VehiclesAPI(APIView):
         data['user'] = request.user.id
         serializer = VehicleSerializer(data=data)
 
-        query = Vehicle.objects.filter(license_plate=request.data["license_plate"],user=request.data["user"])
+        query = Vehicle.objects.filter(license_plate=data["license_plate"],user=data["user"])
         if serializer.is_valid() and not query:
             serializer.save()
             return Response(serializer.data,status=status.HTTP_201_CREATED)
