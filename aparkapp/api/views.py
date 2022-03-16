@@ -50,16 +50,17 @@ class Logout(APIView):
 
 
 class UsersAPI(APIView):
-    permission_classes = [IsAuthenticated&IsTokenValid]
+    permission_classes = [IsAuthenticated]
 
-    def get(self,request, pk):
+    def get(self,request):
+        pk = request.user.id
         user = User.objects.get(pk=pk)
         vehicles = Vehicle.objects.filter(user=user)
         vehicle_serializer = VehicleSerializer(vehicles, many=True)
         return Response(vehicle_serializer.data, status=status.HTTP_200_OK)
 
 class AnnouncementsAPI(generics.ListCreateAPIView):
-    permission_classes = [IsAuthenticated&IsTokenValid]
+    permission_classes = [IsAuthenticated]
 
     filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend)
 
@@ -85,7 +86,9 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
 
 
     def post(self, request):
-        serializer = AnnouncementSerializer(data=request.data)
+        data = request.data.copy()
+        data['user'] = request.user.id
+        serializer = AnnouncementSerializer(data=data)
 
         query = Announcement.objects.filter(date=request.data["date"], vehicle=request.data["vehicle"])
 
@@ -99,7 +102,7 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
 
 
 class AnnouncementAPI(APIView):
-    permission_classes = [IsAuthenticated&IsTokenValid]
+    permission_classes = [IsAuthenticated]
 
     def get_object(self,pk):
         try:
