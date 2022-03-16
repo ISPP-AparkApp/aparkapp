@@ -4,4 +4,6 @@ RUN mkdir /code
 WORKDIR /code
 COPY requirements.txt /code/
 RUN pip install --upgrade pip && pip install -r requirements.txt
-COPY . /code/
+COPY /aparkapp/ /code/
+RUN rm aparkapp/settings.py
+ADD docker-settings.py aparkapp/settings.py
