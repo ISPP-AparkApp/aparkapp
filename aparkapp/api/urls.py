@@ -1,6 +1,6 @@
-from django.urls import URLPattern, path, include
+from django.urls import path
 from rest_framework_simplejwt import views as jwt_views
-from .views import *
+from .views import VehiclesAPI, AnnouncementAPI, AnnouncementsAPI, UsersAPI
 
 urlpatterns = [
     path('vehicles/', VehiclesAPI.as_view()),

@@ -8,7 +8,6 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.http import Http404
 
 class VehiclesAPI(APIView):
-    # View protected
     permission_classes = [IsAuthenticated]
 
     def post(self,request):
@@ -38,6 +37,7 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
 
     filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend)
 
+    serializer_class = AnnouncementSerializer
     search_fields = ('zone','location',)
     ordering_fields = ('price',)
     filterset_fields = ('vehicle__type',)
