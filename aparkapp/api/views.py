@@ -26,7 +26,8 @@ class VehiclesAPI(APIView):
 class UsersAPI(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self,request, pk):
+    def get(self,request):
+        pk = request.user.id
         user = User.objects.get(pk=pk)
         vehicles = Vehicle.objects.filter(user=user)
         vehicle_serializer = VehicleSerializer(vehicles, many=True)
@@ -59,7 +60,9 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
 
 
     def post(self, request):
-        serializer = AnnouncementSerializer(data=request.data)
+        data = request.data.copy()
+        data['user'] = request.user.id
+        serializer = AnnouncementSerializer(data=data)
 
         query = Announcement.objects.filter(date=request.data["date"], vehicle=request.data["vehicle"])
 
