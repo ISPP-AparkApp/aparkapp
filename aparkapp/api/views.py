@@ -115,6 +115,13 @@ class AnnouncementAPI(APIView):
     def put(self, request, pk):
         announcement = self.get_object(pk)
 
+        #Coordinates to adress
+        data = request.data.copy()
+        lt_lng = data['location'].split(',')
+        coordinates = (float(lt_lng[0]), float(lt_lng[1]))
+        direction = coordinates_to_address(coordinates)
+        data['location'] = direction[0]['display_name']
+
         serializer = AnnouncementSerializer(announcement, data=request.data)
         query = Announcement.objects.filter(date=request.data["date"], vehicle=request.data["vehicle"])
         if query:
