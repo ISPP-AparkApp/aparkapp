@@ -92,7 +92,9 @@ class Announcement(models.Model):
     wait_time = models.IntegerField()
     price = models.FloatField(validators=[MinValueValidator(0.5), MaxValueValidator(10)])
     allow_wait = models.BooleanField(default=False)
-    location = models.CharField(max_length=1024)
+    location = models.CharField(max_length=1024, blank=True)
+    longitude=models.FloatField(validators=[MinValueValidator(-180.0), MaxValueValidator(180.0)])
+    latitude=models.FloatField(validators=[MinValueValidator(-90.0), MaxValueValidator(90.0)])
     zone = models.CharField(
        max_length=256,
        choices=TYPE,
@@ -124,7 +126,7 @@ class Reservation(models.Model):
 
     #Relationship
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    announcement = models.OneToOneField(Announcement, on_delete=models.CASCADE)
+    announcement = models.ForeignKey(Announcement, on_delete=models.CASCADE, null=True)
 
 
     def __str__(self):
