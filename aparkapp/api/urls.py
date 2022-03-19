@@ -4,10 +4,9 @@ from .views import *
 
 urlpatterns = [
     path('vehicles/', VehiclesAPI.as_view()),
-    path('vehicles/update/<int:pk>/', VehiclesAPI.as_view()),
-    path('vehicles/delete/<int:pk>/', VehiclesAPI.as_view()),
-    path('vehicles/get/<int:pk>/', VehiclesAPI.as_view()),
-    path('user/<int:pk>/', UsersAPI.as_view()),
+    path('vehicles/<int:pk>/', VehiclesAPI.as_view()),
+    path('users/', UsersAPI.as_view()),
+    path('profiles/', ProfileApi.as_view()),
     path('login/', jwt_views.TokenObtainPairView.as_view()),
     path('logout/', Logout.as_view()),
     path('announcements/', AnnouncementsAPI.as_view()),

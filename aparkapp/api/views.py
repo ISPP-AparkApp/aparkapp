@@ -1,5 +1,8 @@
+from asyncio import ProactorEventLoop
+from pyexpat import model
 from django.shortcuts import render
 import jwt
+from django.contrib.auth.models import User
 from .models import Profile, User, Vehicle, Announcement, Reservation
 from api.serializers import UserSerializer,VehicleSerializer, ProfileSerializer
 from api.serializers import VehicleSerializer, AnnouncementSerializer
@@ -11,6 +14,7 @@ from rest_framework_simplejwt.token_blacklist.models import OutstandingToken,Bla
 from rest_framework.authtoken.models import Token
 from rest_framework_simplejwt import views as jwt_views
 from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Count
 
 from django.http import Http404
 
@@ -59,8 +63,11 @@ class VehiclesAPI(APIView):
     
     def delete(self, request, pk):
         vehicle = self.get_object(pk)
-        vehicle.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        query = Vehicle.objects.filter(user=request.data['user']).count()
+        if query > 1:
+            vehicle.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response("You have only one vehicle registred",status=status.HTTP_401_UNAUTHORIZED)
     
     def get(self, request, pk):
         vehicle = self.get_object(pk)
@@ -82,7 +89,7 @@ class Logout(APIView):
         return Response(status=status.HTTP_205_RESET_CONTENT)
 
 class UsersAPI(APIView): 
-    permission_classes = [IsAuthenticated&IsTokenValid]
+
     model = Profile
 
     def get_object(self,pk):
@@ -91,20 +98,35 @@ class UsersAPI(APIView):
         except Profile.DoesNotExist:
             raise Http404
 
-    def put(self,request,pk):
-        post = self.get_object(pk)
-        serializer = ProfileSerializer(post, data=request.data)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def put(self, request, *args, **kwargs):
+        serializer = UserSerializer(request.user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
 
     def get(self,request, pk):
         user = User.objects.get(pk=pk)
         vehicles = Vehicle.objects.filter(user=user)
         vehicle_serializer = VehicleSerializer(vehicles, many=True)
         return Response(vehicle_serializer.data, status=status.HTTP_200_OK)
+
+class ProfileApi(APIView):
+    model=Profile
+
+    def get_object(self,pk):
+        try:
+            return Profile.objects.get(id=pk)
+        except Profile.DoesNotExist:
+            raise Http404
+
+    def put(self, request, *args, **kwargs):
+        pk = request.user.id
+        user = self.get_object(pk)
+        serializer = ProfileSerializer(user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class AnnouncementsAPI(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated&IsTokenValid]

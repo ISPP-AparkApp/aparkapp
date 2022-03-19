@@ -6,16 +6,17 @@ from api.models import Profile
 from api.models import Vehicle, Announcement
 
 
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ('id','username')
-
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ("__all__")
+        fields = ['phone', 'birthdate']
 
+class UserSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = ['username','email','first_name','last_name']
+ 
 class VehicleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vehicle

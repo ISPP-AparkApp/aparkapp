@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 
 
 class Profile(models.Model):
+    id = models.AutoField(primary_key=True)
     phone = models.CharField(max_length=12)
     birthdate = models.DateField()
 
