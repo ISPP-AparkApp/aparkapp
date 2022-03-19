@@ -23,8 +23,8 @@ class VehiclesAPI(APIView):
         query = Vehicle.objects.filter(license_plate=data["license_plate"],user=data["user"])
         if serializer.is_valid() and not query:
             serializer.save()
-            return Response(serializer.data,status=status.HTTP_201_CREATED)
-        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+            return Response({"mensaje":"Vehículo creado con éxito","vehículo":serializer.data},status=status.HTTP_201_CREATED)
+        return Response({"error":"El usuario con id " + str(data["user"]) + " ya tiene asignado este vehículo"},status=status.HTTP_400_BAD_REQUEST)
 
 
 class UsersAPI(APIView):
