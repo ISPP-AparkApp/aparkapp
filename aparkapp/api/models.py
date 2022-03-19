@@ -93,8 +93,8 @@ class Announcement(models.Model):
     price = models.FloatField(validators=[MinValueValidator(0.5), MaxValueValidator(10)])
     allow_wait = models.BooleanField(default=False)
     location = models.CharField(max_length=1024, blank=True)
-    longitude=models.FloatField(validators=[MinValueValidator(-180.0), MaxValueValidator(180.0)])
-    latitude=models.FloatField(validators=[MinValueValidator(-90.0), MaxValueValidator(90.0)])
+    longitude=models.FloatField(validators=[MinValueValidator(-180.0), MaxValueValidator(180.0)], default=0.)
+    latitude=models.FloatField(validators=[MinValueValidator(-90.0), MaxValueValidator(90.0)], default=0.)
     zone = models.CharField(
        max_length=256,
        choices=TYPE,
