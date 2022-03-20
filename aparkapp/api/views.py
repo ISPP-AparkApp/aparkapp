@@ -1,7 +1,8 @@
 import datetime
 from .models import Vehicle, Announcement, Reservation, User
 from api.serializers import (VehicleSerializer, AnnouncementSerializer, ReservationSerializer, 
-SwaggerVehicleSerializer, SwaggerAnnouncementSerializer,SwaggerCreateReservationSerializer, SwaggerUpdateReservationSerializer)
+SwaggerVehicleSerializer, SwaggerAnnouncementSerializer,SwaggerCreateReservationSerializer, 
+SwaggerUpdateReservationSerializer, GeolocationToAddressSerializer, GeolocationToCoordinatesSerializer)
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, filters, generics
@@ -11,7 +12,7 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404
 from drf_yasg.utils import swagger_auto_schema
 from django.utils.timezone import make_aware
-
+from .geolocator import coordinates_to_address, address_to_coordinates
 
 class VehiclesAPI(APIView):
     permission_classes = [IsAuthenticated]
@@ -182,4 +183,31 @@ class ReservationsAPI(APIView):
             n_extend=0, cancelled=False, rated=False, user=request.user, announcement=announcement_to_book)
             response=Response("La reserva ha sido creada",status=status.HTTP_201_CREATED)
 
+        return response
+
+
+class GeolocationToCoordinatesAPI(APIView):
+
+    # I don't like this validation seems inefficient but not time to redo it for now
+    @swagger_auto_schema(request_body=GeolocationToCoordinatesSerializer) 
+    def post(self, request):
+        serializer = GeolocationToCoordinatesSerializer(data=request.data)
+        if serializer.is_valid():
+            response=Response(address_to_coordinates(request.data['location'],
+            request.data.get('country_code', 'ES'), bool(request.data.get('one_result', 'false')),
+            request.data.get('raw', 'true')), status=status.HTTP_200_OK)            
+        else:
+            response=Response("Petición incorrecta", status=status.HTTP_400_BAD_REQUEST)
+        return response
+
+class GeolocationToAddressAPI(APIView):
+    
+    @swagger_auto_schema(request_body=GeolocationToAddressSerializer) 
+    def post(self, request):
+        serializer = GeolocationToAddressSerializer(data=request.data)
+        if serializer.is_valid():
+            response=Response(coordinates_to_address((float(request.data['longitude']),
+            float(request.data['latitude'])), bool(request.data.get('one_result', 'false'))), status=status.HTTP_200_OK)
+        else:
+            response=Response("Petición incorrecta", status=status.HTTP_400_BAD_REQUEST)
         return response

@@ -281,7 +281,7 @@ class ReservationTestCase(TestCase):
         client = APIClient()
 
         response = client.get(
-            '/api/reservations',
+            '/api/reservations/',
             format='json',
             HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
         )  
@@ -307,7 +307,7 @@ class ReservationTestCase(TestCase):
     def test_create_reservation(self):
         client = APIClient()
         first_response = client.post(
-                '/api/reservations', {
+                '/api/reservations/', {
                     "date": "2022-03-21T23:19:13.277Z",
                     "n_extend": 0,
                     "user": 1,
@@ -318,7 +318,7 @@ class ReservationTestCase(TestCase):
         )
 
         second_response = client.post(
-                '/api/reservations', {
+                '/api/reservations/', {
                     "date": "2022-03-22T23:19:13.277Z",
                     "n_extend": 0,
                     "user": 2,
@@ -329,7 +329,7 @@ class ReservationTestCase(TestCase):
         )
 
         third_response = client.post(
-                '/api/reservations', {
+                '/api/reservations/', {
                     "date": "2022-03-23T23:19:13.277Z",
                     "n_extend": 0,
                     "user": 1,
