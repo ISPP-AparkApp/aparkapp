@@ -1,8 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from api.models import Profile
-
-from api.models import Vehicle, Announcement
+from api.models import Vehicle, Announcement, Reservation
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -25,4 +24,9 @@ class VehicleSerializer(serializers.ModelSerializer):
 class AnnouncementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Announcement
+        fields = '__all__'
+
+class ReservationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Reservation
         fields = '__all__'
