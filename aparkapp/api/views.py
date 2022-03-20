@@ -1,6 +1,7 @@
 import datetime
 from .models import Vehicle, Announcement, Reservation, User
-from api.serializers import VehicleSerializer, AnnouncementSerializer, ReservationSerializer
+from api.serializers import (VehicleSerializer, AnnouncementSerializer, ReservationSerializer, 
+SwaggerVehicleSerializer, SwaggerAnnouncementSerializer,SwaggerCreateReservationSerializer, SwaggerUpdateReservationSerializer)
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, filters, generics
@@ -9,12 +10,13 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from drf_yasg.utils import swagger_auto_schema
+from django.utils.timezone import make_aware
 
 
 class VehiclesAPI(APIView):
     permission_classes = [IsAuthenticated]
 
-    @swagger_auto_schema(request_body=VehicleSerializer)
+    @swagger_auto_schema(request_body=SwaggerVehicleSerializer)
     def post(self,request):
         data = request.data.copy()
         data['user'] = request.user.id
@@ -63,7 +65,7 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
 
         return Response(serializer_class.data)
 
-    @swagger_auto_schema(request_body=AnnouncementSerializer)
+    @swagger_auto_schema(request_body=SwaggerAnnouncementSerializer)
     def post(self, request):
         data = request.data.copy()
         data['user'] = request.user.id
@@ -102,7 +104,7 @@ class AnnouncementAPI(APIView):
         else:
             return Response({"detail": "Unauthorized"},status=status.HTTP_401_UNAUTHORIZED)
 
-    @swagger_auto_schema(request_body=AnnouncementSerializer)
+    @swagger_auto_schema(request_body=SwaggerAnnouncementSerializer)
     def put(self, request, pk):
         announcement = self.get_object(pk)
 
@@ -134,8 +136,24 @@ class ReservationAPI(APIView):
             reservation.save()
             res=Response("La reserva se ha borrado con éxito",status.HTTP_204_NO_CONTENT)
         except:
-            res=Response("No se ha encontrado tal reserva en tu historial",status.HTTP_400_BAD_REQUEST)
-        return res      
+            res=Response("No existe tal reserva en tu historial",status.HTTP_404_NOT_FOUND)
+        return res   
+
+    @swagger_auto_schema(request_body=SwaggerUpdateReservationSerializer)        
+    def put(self, request, pk):
+        reservation_to_update=get_object_or_404(Reservation,pk=pk)
+        serializer = ReservationSerializer(reservation_to_update, data=request.data)
+        announcement_to_book=get_object_or_404(Announcement,pk=request.data['announcement'])
+        if Reservation.objects.filter(announcement=request.data['announcement'], cancelled=False):
+            response=Response("El anuncio especificado ya está reservado", status.HTTP_400_BAD_REQUEST)
+        elif announcement_to_book.user == request.user:
+            response= Response("No puedes asginar tu propio anuncio.",status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        elif serializer.is_valid():
+            serializer.save()
+            return Response("La reserva ha sido actualizada", status=status.HTTP_204_NO_CONTENT)
+        else:
+            response=Response("Los datos de la reserva introducidos no son válidos", status.HTTP_400_BAD_REQUEST)
+        return response
 
 class ReservationsAPI(APIView):
 
@@ -148,20 +166,20 @@ class ReservationsAPI(APIView):
                 reservations_data.append(ReservationSerializer(r).data)
             response=Response(data=reservations_data,status=status.HTTP_200_OK)
         else:
-            response=Response("No se han encontrado reservas para este usuario",status=status.HTTP_200_OK)
+            response=Response("No se han encontrado reservas para este usuario",status=status.HTTP_404_NOT_FOUND)
         return response
 
-    @swagger_auto_schema(request_body=ReservationSerializer)        
+    @swagger_auto_schema(request_body=SwaggerCreateReservationSerializer)        
     def post(self, request):
-        announcementToBook=get_object_or_404(Announcement,pk=request.data['announcement'])
-        temp_date=datetime.datetime.now()
-        if Reservation.objects.filter(announcement=announcementToBook):
+        announcement_to_book=get_object_or_404(Announcement,pk=request.data['announcement'])
+        temp_date=make_aware(datetime.datetime.now())
+        if Reservation.objects.filter(announcement=announcement_to_book):
             response= Response("El anuncio ya está reservado.",status=status.HTTP_409_CONFLICT)
-        elif announcementToBook.user == request.user:
+        elif announcement_to_book.user == request.user:
             response= Response("No puedes reservar tu propio anuncio.",status=status.HTTP_405_METHOD_NOT_ALLOWED)
         else:
-            Reservation.objects.create(date=datetime.datetime(temp_date.year, temp_date.month, temp_date.day, temp_date.hour, temp_date.minute), n_extend=0,
-            user=request.user,announcement=announcementToBook)
+            Reservation.objects.create(date=datetime.datetime(temp_date.year, temp_date.month, temp_date.day, temp_date.hour, temp_date.minute), 
+            n_extend=0, cancelled=False, rated=False, user=request.user, announcement=announcement_to_book)
             response=Response("La reserva ha sido creada",status=status.HTTP_201_CREATED)
 
         return response
