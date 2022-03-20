@@ -2,7 +2,9 @@ import datetime
 
 from api.geolocator import coordinates_to_address
 from .models import Vehicle, Announcement, Reservation, User
-from api.serializers import VehicleSerializer, AnnouncementSerializer, ReservationSerializer
+from api.serializers import (VehicleSerializer, AnnouncementSerializer, ReservationSerializer, 
+SwaggerVehicleSerializer, SwaggerAnnouncementSerializer,SwaggerCreateReservationSerializer, 
+SwaggerUpdateReservationSerializer, GeolocationToAddressSerializer, GeolocationToCoordinatesSerializer)
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, filters, generics
@@ -11,12 +13,13 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from drf_yasg.utils import swagger_auto_schema
-
+from django.utils.timezone import make_aware
+from .geolocator import coordinates_to_address, address_to_coordinates
 
 class VehiclesAPI(APIView):
     permission_classes = [IsAuthenticated]
 
-    @swagger_auto_schema(request_body=VehicleSerializer)
+    @swagger_auto_schema(request_body=SwaggerVehicleSerializer)
     def post(self,request):
         data = request.data.copy()
         data['user'] = request.user.id
@@ -65,15 +68,18 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
 
         return Response(serializer_class.data)
 
-    @swagger_auto_schema(request_body=AnnouncementSerializer)
+    @swagger_auto_schema(request_body=SwaggerAnnouncementSerializer)
     def post(self, request):
         data = request.data.copy()
         data['user'] = request.user.id
 
         #Coordinates to adress
-        coordinates = (data['latitude'], data['longitude'])
+        coordinates = (float(data['latitude']), float(data['longitude']))
         direction = coordinates_to_address(coordinates)
-        data['location'] = direction[0]['display_name']
+        try:
+            data['location'] = str(direction[0]['display_name'])
+        except:
+            data['location'] = str(direction[0])
 
         serializer = AnnouncementSerializer(data=data)
         query = Announcement.objects.filter(date=data["date"], vehicle=data["vehicle"])
@@ -94,7 +100,6 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
         if serializer.is_valid() and not query:
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)    
 
 class AnnouncementAPI(APIView):
@@ -121,18 +126,20 @@ class AnnouncementAPI(APIView):
         else:
             return Response({"detail": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
 
-    @swagger_auto_schema(request_body=AnnouncementSerializer)
+    @swagger_auto_schema(request_body=SwaggerAnnouncementSerializer)
     def put(self, request, pk):
         announcement = self.get_object(pk)
 
         data = request.data.copy()
         data['user'] = request.user.id
 
-        #Coordinates to adress
-        coordinates = (data['latitude'], data['longitude'])
+        #Coordinates to address
+        coordinates = (float(data['latitude']), float(data['longitude']))
         direction = coordinates_to_address(coordinates)
-        data['location'] = direction[0]['display_name']
-
+        try:
+            data['location'] = str(direction[0]['display_name'])
+        except:
+            data['location'] = str(direction[0])
         serializer = AnnouncementSerializer(announcement, data=data)
         query = Announcement.objects.filter(date=data["date"], vehicle=data["vehicle"])
         
@@ -168,8 +175,24 @@ class ReservationAPI(APIView):
             reservation.save()
             res=Response("La reserva se ha borrado con éxito",status.HTTP_204_NO_CONTENT)
         except:
-            res=Response("No se ha encontrado tal reserva en tu historial",status.HTTP_400_BAD_REQUEST)
-        return res      
+            res=Response("No existe tal reserva en tu historial",status.HTTP_404_NOT_FOUND)
+        return res   
+
+    @swagger_auto_schema(request_body=SwaggerUpdateReservationSerializer)        
+    def put(self, request, pk):
+        reservation_to_update=get_object_or_404(Reservation,pk=pk)
+        serializer = ReservationSerializer(reservation_to_update, data=request.data)
+        announcement_to_book=get_object_or_404(Announcement,pk=request.data['announcement'])
+        if Reservation.objects.filter(announcement=request.data['announcement'], cancelled=False):
+            response=Response("El anuncio especificado ya está reservado", status.HTTP_400_BAD_REQUEST)
+        elif announcement_to_book.user == request.user:
+            response= Response("No puedes asginar tu propio anuncio.",status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        elif serializer.is_valid():
+            serializer.save()
+            return Response("La reserva ha sido actualizada", status=status.HTTP_204_NO_CONTENT)
+        else:
+            response=Response("Los datos de la reserva introducidos no son válidos", status.HTTP_400_BAD_REQUEST)
+        return response
 
 class ReservationsAPI(APIView):
 
@@ -182,20 +205,47 @@ class ReservationsAPI(APIView):
                 reservations_data.append(ReservationSerializer(r).data)
             response=Response(data=reservations_data,status=status.HTTP_200_OK)
         else:
-            response=Response("No se han encontrado reservas para este usuario",status=status.HTTP_200_OK)
+            response=Response("No se han encontrado reservas para este usuario",status=status.HTTP_404_NOT_FOUND)
         return response
 
-    @swagger_auto_schema(request_body=ReservationSerializer)        
+    @swagger_auto_schema(request_body=SwaggerCreateReservationSerializer)        
     def post(self, request):
-        announcementToBook=get_object_or_404(Announcement,pk=request.data['announcement'])
-        temp_date=datetime.datetime.now()
-        if Reservation.objects.filter(announcement=announcementToBook):
+        announcement_to_book=get_object_or_404(Announcement,pk=request.data['announcement'])
+        temp_date=make_aware(datetime.datetime.now())
+        if Reservation.objects.filter(announcement=announcement_to_book):
             response= Response("El anuncio ya está reservado.",status=status.HTTP_409_CONFLICT)
-        elif announcementToBook.user == request.user:
+        elif announcement_to_book.user == request.user:
             response= Response("No puedes reservar tu propio anuncio.",status=status.HTTP_405_METHOD_NOT_ALLOWED)
         else:
-            Reservation.objects.create(date=datetime.datetime(temp_date.year, temp_date.month, temp_date.day, temp_date.hour, temp_date.minute), n_extend=0,
-            user=request.user,announcement=announcementToBook)
-            response=Response("La reserva ha sido creada.",status=status.HTTP_201_CREATED)
+            Reservation.objects.create(date=datetime.datetime(temp_date.year, temp_date.month, temp_date.day, temp_date.hour, temp_date.minute), 
+            n_extend=0, cancelled=False, rated=False, user=request.user, announcement=announcement_to_book)
+            response=Response("La reserva ha sido creada",status=status.HTTP_201_CREATED)
 
         return response
+
+class GeolocationToCoordinatesAPI(APIView):
+
+    # I don't like this validation seems inefficient but not time to redo it for now
+    @swagger_auto_schema(request_body=GeolocationToCoordinatesSerializer) 
+    def post(self, request):
+        serializer = GeolocationToCoordinatesSerializer(data=request.data)
+        if serializer.is_valid():
+            response=Response(address_to_coordinates(request.data['location'],
+            request.data.get('country_code', 'ES'), bool(request.data.get('one_result', 'false')),
+            request.data.get('raw', 'true')), status=status.HTTP_200_OK)            
+        else:
+            response=Response("Petición incorrecta", status=status.HTTP_400_BAD_REQUEST)
+        return response
+
+class GeolocationToAddressAPI(APIView):
+    
+    @swagger_auto_schema(request_body=GeolocationToAddressSerializer) 
+    def post(self, request):
+        serializer = GeolocationToAddressSerializer(data=request.data)
+        if serializer.is_valid():
+            response=Response(coordinates_to_address((float(request.data['longitude']),
+            float(request.data['latitude'])), bool(request.data.get('one_result', 'false'))), status=status.HTTP_200_OK)
+        else:
+            response=Response("Petición incorrecta", status=status.HTTP_400_BAD_REQUEST)
+        return response
+
