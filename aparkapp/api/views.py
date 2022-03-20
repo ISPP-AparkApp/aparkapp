@@ -81,15 +81,14 @@ class UsersAPI(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
-        
-    def get(self,request):
+
+    def get(self, request):
         pk = request.user.id
-        user = User.objects.get(pk=pk)
-        vehicles = Vehicle.objects.filter(user=user)
-        vehicle_serializer = VehicleSerializer(vehicles, many=True)
-        return Response(vehicle_serializer.data, status=status.HTTP_200_OK)
+        return Response(UserSerializer(get_object_or_404(User, pk=pk)).data)
+    
 
 class ProfileApi(APIView):
+    permission_classes = [IsAuthenticated]
     model=Profile
 
     def get_object(self,pk):
@@ -105,6 +104,10 @@ class ProfileApi(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def get(self, request):
+        pk = request.user.id
+        return Response(ProfileSerializer(get_object_or_404(Profile, pk=pk)).data)
 
 class AnnouncementsAPI(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
