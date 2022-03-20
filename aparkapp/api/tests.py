@@ -138,16 +138,16 @@ class AnnouncementTestCase(TestCase):
         
         self.vehicle.save()
         
-        self.announcement = Announcement(date="2022-08-14 13:43", wait_time=5,
+        self.announcement = Announcement(date="2022-08-14 13:43", wait_time=5,allow_wait=True,
          price=2, latitude=38.35865724531185, longitude=-5.986121868933244, vehicle=self.vehicle, user = self.user)
         self.announcement.save()
 
 
-        self.announcement2 = Announcement(date="2022-08-14 15:43", wait_time=5,
+        self.announcement2 = Announcement(date="2022-08-14 15:43", wait_time=5,allow_wait=True,
          price=2, latitude=38.35865724531185, longitude=-5.986121868933244, vehicle=self.vehicle, user = self.user)
         self.announcement2.save()
 
-        self.announcement3 = Announcement(date="2022-08-14 15:43", wait_time=5,
+        self.announcement3 = Announcement(date="2022-08-14 15:43", wait_time=5,allow_wait=True,
          price=2, latitude=38.35865724531185, longitude=-5.986121868933244, vehicle=self.vehicle, user = self.user2)
         self.announcement3.save()
 
@@ -170,6 +170,7 @@ class AnnouncementTestCase(TestCase):
                     "date": "2022-08-14 13:45",
                     "wait_time": 5,
                     "price": 2,
+                    "allow_wait": True,
                     "latitude": 38.35865724531185,
                     "longitude": -5.986121868933244,
                     "vehicle": self.vehicle.id
@@ -201,6 +202,7 @@ class AnnouncementTestCase(TestCase):
         response = client.post('/api/announcements/', {
                     "date": "2022-08-14 13:43",
                     "wait_time": 5,
+                    "allow_wait": True,
                     "price": 2,
                     "latitude": 38.35865724531185,
                     "longitude": -5.986121868933244,
@@ -217,6 +219,7 @@ class AnnouncementTestCase(TestCase):
         response = client.post('/api/announcements/', {
                     "date": "2022-08-14 13:53",
                     "wait_time": 5,
+                    "allow_wait": True,
                     #"price": 2,  Price it's a mandatory field
                     "latitude": 38.35865724531185,
                     "longitude": -5.986121868933244,
@@ -235,6 +238,7 @@ class AnnouncementTestCase(TestCase):
                     "date": "2022-08-14 14:00",
                     "wait_time": 5,
                     "price": 2,
+                    "allow_wait": True,
                     "latitude": 38.35865724531185,
                     "longitude": -5.986121868933244,
                     "vehicle": self.vehicle.id  
@@ -250,6 +254,7 @@ class AnnouncementTestCase(TestCase):
         response = client.put('/api/announcement/' + str(self.announcement2.id)+'/', {
                     "date": "2022-08-14 13:43",
                     "wait_time": 10,
+                    "allow_wait": True,
                     "price": 2,
                     "latitude": 38.35865724531185,
                     "longitude": -5.986121868933244,
@@ -267,6 +272,7 @@ class AnnouncementTestCase(TestCase):
         response = client.put('/api/announcement/' + str(self.announcement.id)+'/', {
                     "date": "2022-08-14 13:43",
                     "wait_time": 10,
+                    "allow_wait": True,
                     "latitude": 38.35865724531185,
                     "longitude": -5.986121868933244,
                     "vehicle": self.vehicle.id  

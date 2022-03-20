@@ -74,9 +74,12 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
         data['user'] = request.user.id
 
         #Coordinates to adress
-        coordinates = (data['latitude'], data['longitude'])
+        coordinates = (float(data['latitude']), float(data['longitude']))
         direction = coordinates_to_address(coordinates)
-        data['location'] = direction[0]['display_name']
+        try:
+            data['location'] = str(direction[0]['display_name'])
+        except:
+            data['location'] = str(direction[0])
 
         serializer = AnnouncementSerializer(data=data)
         query = Announcement.objects.filter(date=data["date"], vehicle=data["vehicle"])
@@ -97,7 +100,6 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
         if serializer.is_valid() and not query:
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)    
 
 class AnnouncementAPI(APIView):
@@ -131,11 +133,13 @@ class AnnouncementAPI(APIView):
         data = request.data.copy()
         data['user'] = request.user.id
 
-        #Coordinates to adress
-        coordinates = (data['latitude'], data['longitude'])
+        #Coordinates to address
+        coordinates = (float(data['latitude']), float(data['longitude']))
         direction = coordinates_to_address(coordinates)
-        data['location'] = direction[0]['display_name']
-
+        try:
+            data['location'] = str(direction[0]['display_name'])
+        except:
+            data['location'] = str(direction[0])
         serializer = AnnouncementSerializer(announcement, data=data)
         query = Announcement.objects.filter(date=data["date"], vehicle=data["vehicle"])
         
