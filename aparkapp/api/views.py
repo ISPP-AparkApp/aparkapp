@@ -1,4 +1,6 @@
 import datetime
+
+from api.geolocator import coordinates_to_address
 from .models import Vehicle, Announcement, Reservation, User
 from api.serializers import VehicleSerializer, AnnouncementSerializer, ReservationSerializer
 from rest_framework.views import APIView
@@ -27,7 +29,7 @@ class VehiclesAPI(APIView):
         return Response({"error":"El usuario con id " + str(data["user"]) + " ya tiene asignado este vehículo"},status=status.HTTP_400_BAD_REQUEST)
 
 
-class UsersAPI(APIView):
+class UsersVehiclesAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self,request):
@@ -67,16 +69,33 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
     def post(self, request):
         data = request.data.copy()
         data['user'] = request.user.id
+
+        #Coordinates to adress
+        coordinates = (data['latitude'], data['longitude'])
+        direction = coordinates_to_address(coordinates)
+        data['location'] = direction[0]['display_name']
+
         serializer = AnnouncementSerializer(data=data)
         query = Announcement.objects.filter(date=data["date"], vehicle=data["vehicle"])
 
+        #Validation to publish an announcement with your own vehicles
+        user = User.objects.get(pk=request.user.id)
+        query2 = Vehicle.objects.filter(user=user)
+
         if query:
-            return Response("There's already an announcement for this vehicle at the same time.",status=status.HTTP_401_UNAUTHORIZED)
+            return Response("Ya existe un anuncio para este vehículo a la misma hora.", status=status.HTTP_401_UNAUTHORIZED)
+
+        if query2:
+            vhs = query2.all().values()
+            ls = [v['id'] for v in vhs]
+            if data['vehicle'] not in ls:
+                return Response("No se puede crear un anuncio con un vehículo ajeno.", status=status.HTTP_406_NOT_ACCEPTABLE)
+
         if serializer.is_valid() and not query:
             serializer.save()
-            return Response(serializer.data,status=status.HTTP_201_CREATED)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)    
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)    
 
 class AnnouncementAPI(APIView):
     permission_classes = [IsAuthenticated]
@@ -100,26 +119,41 @@ class AnnouncementAPI(APIView):
             serializer = AnnouncementSerializer(an)
             return Response(serializer.data)
         else:
-            return Response({"detail": "Unauthorized"},status=status.HTTP_401_UNAUTHORIZED)
+            return Response({"detail": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
 
     @swagger_auto_schema(request_body=AnnouncementSerializer)
     def put(self, request, pk):
         announcement = self.get_object(pk)
 
-        serializer = AnnouncementSerializer(announcement, data=request.data)
-        query = Announcement.objects.filter(date=request.data["date"], vehicle=request.data["vehicle"])
-        if query:
-            return Response("There's already an announcement for this vehicle at the same time.",status=status.HTTP_401_UNAUTHORIZED)
-        if serializer.is_valid() and not query:
+        data = request.data.copy()
+        data['user'] = request.user.id
+
+        #Coordinates to adress
+        coordinates = (data['latitude'], data['longitude'])
+        direction = coordinates_to_address(coordinates)
+        data['location'] = direction[0]['display_name']
+
+        serializer = AnnouncementSerializer(announcement, data=data)
+        query = Announcement.objects.filter(date=data["date"], vehicle=data["vehicle"])
+        
+        if query and query.get().id != pk:
+            return Response("Ya existe un anuncio para este vehículo a la misma hora.",status=status.HTTP_401_UNAUTHORIZED)
+        if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
 
     def delete(self, request, pk):
-        announcement = self.get_object(pk)
-        announcement.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        try:
+            announcement = self.get_object(pk)
+            if announcement.user.id == request.user.id:
+                announcement.delete()
+                return Response("Se ha borrado correctamente el anuncio.", status.HTTP_204_NO_CONTENT)
+            else:
+                return Response("No se puede borrar un anuncio que usted no ha publicado.", status.HTTP_401_UNAUTHORIZED)
+        except:
+            return Response("No existe el anuncio que desea borrar.", status.HTTP_400_BAD_REQUEST)
 
 class ReservationAPI(APIView):
     
@@ -162,6 +196,6 @@ class ReservationsAPI(APIView):
         else:
             Reservation.objects.create(date=datetime.datetime(temp_date.year, temp_date.month, temp_date.day, temp_date.hour, temp_date.minute), n_extend=0,
             user=request.user,announcement=announcementToBook)
-            response=Response("La reserva ha sido creada",status=status.HTTP_201_CREATED)
+            response=Response("La reserva ha sido creada.",status=status.HTTP_201_CREATED)
 
         return response
