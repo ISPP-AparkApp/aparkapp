@@ -23,7 +23,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
   deploy:
     # needs: build (Se añadirá cuando esté la ejecución automática de pruebas)
-    if: ${{github.ref == 'refs/heads/main'}}
+    if: ${{github.ref == 'refs/heads/develop'}}
     name: Heroku
     runs-on: ubuntu-latest
     steps:
