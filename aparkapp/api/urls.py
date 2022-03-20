@@ -1,6 +1,6 @@
-from django.urls import URLPattern, path, include
+from django.urls import path
 from rest_framework_simplejwt import views as jwt_views
-from .views import *
+from .views import VehiclesAPI, AnnouncementAPI, AnnouncementsAPI, UsersAPI, ReservationAPI, ReservationsAPI
 
 urlpatterns = [
     path('vehicles/', VehiclesAPI.as_view()),
@@ -8,5 +8,7 @@ urlpatterns = [
     path('refresh-token/',jwt_views.TokenRefreshView.as_view()),
     path('announcements/', AnnouncementsAPI.as_view()),
     path('announcement/<int:pk>/', AnnouncementAPI.as_view()),
-    path('users/vehicles/', UsersAPI.as_view())
+    path('users/vehicles/', UsersAPI.as_view()),
+    path('reservation/<int:pk>/', ReservationAPI.as_view()),
+    path('reservations',ReservationsAPI.as_view()),
 ]
