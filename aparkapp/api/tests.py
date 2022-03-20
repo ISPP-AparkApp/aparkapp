@@ -123,6 +123,9 @@ class AnnouncementTestCase(TestCase):
         self.user.set_password('aparkapp123')
         self.user.save()
 
+        self.user2 = User(username='user_test2')
+        self.user2.save()
+
         self.vehicle = Vehicle(
             brand="Testing",
             model="Testing",
@@ -142,6 +145,10 @@ class AnnouncementTestCase(TestCase):
         self.announcement2 = Announcement(date="2022-08-14 15:43", wait_time=5,
          price=2, latitude=38.35865724531185, longitude=-5.986121868933244, vehicle=self.vehicle, user = self.user)
         self.announcement2.save()
+
+        self.announcement3 = Announcement(date="2022-08-14 15:43", wait_time=5,
+         price=2, latitude=38.35865724531185, longitude=-5.986121868933244, vehicle=self.vehicle, user = self.user2)
+        self.announcement3.save()
 
 
         client = APIClient()
@@ -196,11 +203,28 @@ class AnnouncementTestCase(TestCase):
                     "price": 2,
                     "latitude": 38.35865724531185,
                     "longitude": -5.986121868933244,
-                    "vehicle": -1 #This ID does not exist 
+                    "vehicle": 1 #This vehicle does not belong to the user 
+                },
+         format='json',
+        HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
+        self.assertEqual(response.status_code, status.HTTP_406_NOT_ACCEPTABLE)
+
+    
+    def test_create_announcement_fail_bad_request(self):
+        client = APIClient()
+
+        response = client.post('/api/announcements/', {
+                    "date": "2022-08-14 13:53",
+                    "wait_time": 5,
+                    #"price": 2,  Price it's a mandatory field
+                    "latitude": 38.35865724531185,
+                    "longitude": -5.986121868933244,
+                    "vehicle": self.vehicle.id 
                 },
          format='json',
         HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
 
     
     def test_modify_announcement(self):
@@ -255,6 +279,22 @@ class AnnouncementTestCase(TestCase):
         response = client.delete('/api/announcement/' + str(self.announcement.id)+'/',
         HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_delete_announcement_fail(self):
+        client = APIClient()
+        response = client.delete('/api/announcement/58/', #This ID does not exists
+        HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, 'No existe el anuncio que desea borrar.')
+
+    def test_delete_announcement_unauthorized(self):
+        client = APIClient()
+        response = client.delete('/api/announcement/'+ str(self.announcement3.id)+'/',
+        HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.data, 'No se puede borrar un anuncio que usted no ha publicado.')
+    
+    
 
 class UserVehiclesTestCase(TestCase):
     def setUp(self):

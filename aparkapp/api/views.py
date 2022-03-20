@@ -78,8 +78,19 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
         serializer = AnnouncementSerializer(data=data)
         query = Announcement.objects.filter(date=data["date"], vehicle=data["vehicle"])
 
+        #Validation to publish an announcement with your own vehicles
+        user = User.objects.get(pk=request.user.id)
+        query2 = Vehicle.objects.filter(user=user)
+
         if query:
             return Response("Ya existe un anuncio para este vehículo a la misma hora.", status=status.HTTP_401_UNAUTHORIZED)
+
+        if query2:
+            vhs = query2.all().values()
+            ls = [v['id'] for v in vhs]
+            if data['vehicle'] not in ls:
+                return Response("No se puede crear un anuncio con un vehículo ajeno.", status=status.HTTP_406_NOT_ACCEPTABLE)
+
         if serializer.is_valid() and not query:
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -114,17 +125,13 @@ class AnnouncementAPI(APIView):
     def put(self, request, pk):
         announcement = self.get_object(pk)
 
-        #Coordinates to adress
         data = request.data.copy()
         data['user'] = request.user.id
 
-        
         #Coordinates to adress
         coordinates = (data['latitude'], data['longitude'])
         direction = coordinates_to_address(coordinates)
         data['location'] = direction[0]['display_name']
-
-        
 
         serializer = AnnouncementSerializer(announcement, data=data)
         query = Announcement.objects.filter(date=data["date"], vehicle=data["vehicle"])
@@ -138,9 +145,15 @@ class AnnouncementAPI(APIView):
 
 
     def delete(self, request, pk):
-        announcement = self.get_object(pk)
-        announcement.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        try:
+            announcement = self.get_object(pk)
+            if announcement.user.id == request.user.id:
+                announcement.delete()
+                return Response("Se ha borrado correctamente el anuncio.", status.HTTP_204_NO_CONTENT)
+            else:
+                return Response("No se puede borrar un anuncio que usted no ha publicado.", status.HTTP_401_UNAUTHORIZED)
+        except:
+            return Response("No existe el anuncio que desea borrar.", status.HTTP_400_BAD_REQUEST)
 
 class ReservationAPI(APIView):
     
