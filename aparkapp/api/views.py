@@ -71,8 +71,7 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
         data['user'] = request.user.id
 
         #Coordinates to adress
-        lt_lng = data['location'].split(',')
-        coordinates = (float(lt_lng[0]), float(lt_lng[1]))
+        coordinates = (data['latitude'], data['longitude'])
         direction = coordinates_to_address(coordinates)
         data['location'] = direction[0]['display_name']
 
@@ -80,12 +79,12 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
         query = Announcement.objects.filter(date=data["date"], vehicle=data["vehicle"])
 
         if query:
-            return Response("Ya existe un anuncio para este vehículo a la misma hora.",status=status.HTTP_401_UNAUTHORIZED)
+            return Response("Ya existe un anuncio para este vehículo a la misma hora.", status=status.HTTP_401_UNAUTHORIZED)
         if serializer.is_valid() and not query:
             serializer.save()
-            return Response(serializer.data,status=status.HTTP_201_CREATED)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)    
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)    
 
 class AnnouncementAPI(APIView):
     permission_classes = [IsAuthenticated]
@@ -109,7 +108,7 @@ class AnnouncementAPI(APIView):
             serializer = AnnouncementSerializer(an)
             return Response(serializer.data)
         else:
-            return Response({"detail": "Unauthorized"},status=status.HTTP_401_UNAUTHORIZED)
+            return Response({"detail": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
 
     @swagger_auto_schema(request_body=AnnouncementSerializer)
     def put(self, request, pk):
@@ -117,16 +116,22 @@ class AnnouncementAPI(APIView):
 
         #Coordinates to adress
         data = request.data.copy()
-        lt_lng = data['location'].split(',')
-        coordinates = (float(lt_lng[0]), float(lt_lng[1]))
+        data['user'] = request.user.id
+
+        
+        #Coordinates to adress
+        coordinates = (data['latitude'], data['longitude'])
         direction = coordinates_to_address(coordinates)
         data['location'] = direction[0]['display_name']
 
-        serializer = AnnouncementSerializer(announcement, data=request.data)
-        query = Announcement.objects.filter(date=request.data["date"], vehicle=request.data["vehicle"])
-        if query:
-            return Response("There's already an announcement for this vehicle at the same time.",status=status.HTTP_401_UNAUTHORIZED)
-        if serializer.is_valid() and not query:
+        
+
+        serializer = AnnouncementSerializer(announcement, data=data)
+        query = Announcement.objects.filter(date=data["date"], vehicle=data["vehicle"])
+        
+        if query and query.get().id != pk:
+            return Response("Ya existe un anuncio para este vehículo a la misma hora.",status=status.HTTP_401_UNAUTHORIZED)
+        if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
