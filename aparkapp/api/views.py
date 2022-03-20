@@ -78,6 +78,15 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
 
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)    
 
+class AnnouncementsUserAPI(APIView):
+    def get(self,request):
+        pk = request.user.id
+        announcements = Announcement.objects.filter(user=pk)
+        announcement_serializer = AnnouncementSerializer(announcements, many=True)
+
+        return Response(announcement_serializer.data, status=status.HTTP_200_OK)
+
+
 class AnnouncementAPI(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -102,8 +111,7 @@ class AnnouncementAPI(APIView):
         else:
             return Response({"detail": "Unauthorized"},status=status.HTTP_401_UNAUTHORIZED)
 
-    def getByUser(self,request,pk):
-        return self.Meta.model.objects.filter(user=pk)     
+  
 
     @swagger_auto_schema(request_body=AnnouncementSerializer)
     def put(self, request, pk):
@@ -130,10 +138,6 @@ class ReservationAPI(APIView):
         return Response(ReservationSerializer(get_object_or_404(Reservation, pk=pk)).data)
 
 
-    def getByUser(self, request,pk):
-        return self.Meta.model.objects.filter(user=pk)
-    
-
     @swagger_auto_schema(request_body=ReservationSerializer)
     def put(self, request, pk):
         reservation = self.get_object(pk)
@@ -155,7 +159,15 @@ class ReservationAPI(APIView):
             res=Response("La reserva se ha borrado con éxito",status.HTTP_204_NO_CONTENT)
         except:
             res=Response("No se ha encontrado tal reserva en tu historial",status.HTTP_400_BAD_REQUEST)
-        return res      
+        return res   
+        
+class ReservationsUserAPI(APIView):
+    def get(self,request):
+        pk = request.user.id
+        reservations = Reservation.objects.filter(user=pk)
+        reservation_serializer = ReservationSerializer(reservations, many=True)
+
+        return Response(reservation_serializer.data, status=status.HTTP_200_OK)
 
 class ReservationsAPI(APIView):
 
