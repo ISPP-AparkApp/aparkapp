@@ -50,7 +50,9 @@ class VehiclesAPI(APIView):
     
     def delete(self, request, pk):
         vehicle = self.get_object(pk)
-        query = Vehicle.objects.filter(user=request.data['user']).count()
+        data = request.data.copy()
+        data['user'] = request.user.id
+        query = Vehicle.objects.filter(user=data['user']).count()
         if query > 1:
             vehicle.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
