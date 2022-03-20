@@ -18,7 +18,7 @@ class UserSerializer(serializers.ModelSerializer):
 class VehicleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vehicle
-        fields = ['id','brand','model','license_plate','color','type','user']
+        fields = ['id','brand','model','license_plate','color','type']
 
 
 class AnnouncementSerializer(serializers.ModelSerializer):

@@ -3,6 +3,7 @@ from api.models import User, Vehicle
 from rest_framework.test import APIClient
 from rest_framework import status
 
+
 class AuthenticationTestCase(TestCase):
     # APP - 19/03/2022 - Create user for setup
     def setUp(self):
@@ -47,7 +48,7 @@ class AuthenticationTestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue('access' in response.data)
 
-class VehiclesTestCase(TestCase):
+class VehiclesIDTestCase(TestCase):
     access = ""
     refresh = ""
     # APP - 19/03/2022 - Create user and vehicle, and get tokens
@@ -59,6 +60,7 @@ class VehiclesTestCase(TestCase):
         self.user.save()
 
         vehicle = Vehicle(
+            id=99,
             brand="Testing",
             model="Testing",
             license_plate="Testing",
@@ -67,6 +69,17 @@ class VehiclesTestCase(TestCase):
         )
         vehicle.user = self.user
         vehicle.save()
+
+        vehicle2 = Vehicle(
+            id=98,
+            brand="Testing",
+            model="Testing",
+            license_plate="Testing",
+            color="Testing",
+            type="Segmento A"
+        )
+        vehicle2.user = self.user
+        vehicle2.save()
 
         client = APIClient()
         response = client.post(
@@ -80,12 +93,14 @@ class VehiclesTestCase(TestCase):
         self.access = response.data['access']
         self.refresh = response.data['refresh']
 
-    # APP - 19/03/2022 - Test create vehicle with token access in the header
-    def test_create_vehicle(self):
+
+    # APP - 20/03/2022 - Test create vehicle with token access in the header
+    def test_update_vehicle(self):
         client = APIClient()
-        response = client.post(
-                '/api/vehicles/', {
-                    "brand":"Prueba",
+        response = client.put(
+                '/api/vehicles/99/', {
+                    "id": 99,
+                    "brand":"Test",
                     "model":"Prueba",
                     "license_plate":"Testing2",
                     "color":"Prueba",
@@ -94,23 +109,20 @@ class VehiclesTestCase(TestCase):
             format='json',
             HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
         )
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertTrue('mensaje' in response.data)
-        self.assertTrue('vehículo' in response.data)
-
-    # APP - 19/03/2022 - Test create a vehicle that already exists by the same user 
-    def test_create_vehicle_validation(self):
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+    
+    # APP - 20/03/2022 - Test get vehicle with token access in the header
+    def test_get_vehicle(self):
         client = APIClient()
-        response = client.post(
-                '/api/vehicles/', {
-                    "brand":"Prueba",
-                    "model":"Prueba",
-                    "license_plate":"Testing",
-                    "color":"Prueba",
-                    "type":"Segmento A"
-            },
-            format='json',
-            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
-        )
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertTrue('error' in response.data)
+        response = client.get('/api/vehicles/99/',HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    # APP - 20/03/2022 - Test delete vehicle with token access in the header
+    def test_delete_vehicle(self):
+        client = APIClient()
+        response = client.delete('/api/vehicles/98/',HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
+        response2 = client.delete('/api/vehicles/99/',HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(response2.status_code, status.HTTP_401_UNAUTHORIZED)
+    
+

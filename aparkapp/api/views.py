@@ -64,11 +64,7 @@ class VehiclesAPI(APIView):
         return Response("You have only one vehicle registred",status=status.HTTP_401_UNAUTHORIZED)
     
     def get(self, request, pk):
-        vehicle = self.get_object(pk)
-        serializer = VehicleSerializer(vehicle, data=request.data)
-        if serializer.is_valid():
-            return Response(serializer.data)
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(VehicleSerializer(get_object_or_404(Vehicle, pk=pk)).data)
 
 class UsersAPI(APIView):
     permission_classes = [IsAuthenticated]
