@@ -102,6 +102,9 @@ class AnnouncementAPI(APIView):
         else:
             return Response({"detail": "Unauthorized"},status=status.HTTP_401_UNAUTHORIZED)
 
+    def getByUser(self,request,pk):
+        return self.Meta.model.objects.filter(user=pk)     
+
     @swagger_auto_schema(request_body=AnnouncementSerializer)
     def put(self, request, pk):
         announcement = self.get_object(pk)
@@ -125,6 +128,23 @@ class ReservationAPI(APIView):
     
     def get(self, request,pk):
         return Response(ReservationSerializer(get_object_or_404(Reservation, pk=pk)).data)
+
+
+    def getByUser(self, request,pk):
+        return self.Meta.model.objects.filter(user=pk)
+    
+
+    @swagger_auto_schema(request_body=ReservationSerializer)
+    def put(self, request, pk):
+        reservation = self.get_object(pk)
+
+        serializer = ReservationSerializer(reservation, data=request.data)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)    
     
     def delete(self, request, pk):
         try:
