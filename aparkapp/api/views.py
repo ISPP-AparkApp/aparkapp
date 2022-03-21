@@ -161,13 +161,6 @@ class ReservationAPI(APIView):
             res=Response("No se ha encontrado tal reserva en tu historial",status.HTTP_400_BAD_REQUEST)
         return res   
         
-class ReservationsUserAPI(APIView):
-    def get(self,request):
-        pk = request.user.id
-        reservations = Reservation.objects.filter(user=pk)
-        reservation_serializer = ReservationSerializer(reservations, many=True)
-
-        return Response(reservation_serializer.data, status=status.HTTP_200_OK)
 
 class ReservationsAPI(APIView):
 
