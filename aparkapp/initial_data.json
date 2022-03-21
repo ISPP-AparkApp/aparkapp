@@ -1,0 +1,48 @@
+[
+  {
+    "model": "api.profile",
+    "pk": 1,
+    "fields": { "phone": "633917766", "birthdate": "2000-02-15", "user": 1 }
+  },
+  {
+    "model": "api.vehicle",
+    "pk": 1,
+    "fields": {
+      "brand": "Seat",
+      "model": "León",
+      "license_plate": "2193ELO",
+      "color": "Verde",
+      "type": "Segmento C",
+      "user": 1
+    }
+  },{
+    "model": "api.vehicle",
+    "pk": 2,
+    "fields": {
+      "brand": "Audi",
+      "model": "A4",
+      "license_plate": "9102MXN",
+      "color": "Gris",
+      "type": "Segmento D",
+      "user": 1
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 1,
+    "fields": {
+      "password": "pbkdf2_sha256$320000$rsak8BCXOomY87FZRYWAeH$9Il8uVbuHOGj+pMBGctIJNs7Z3+5jz3uAU2oseyFac4=",
+      "last_login": "2022-03-21T07:35:56Z",
+      "is_superuser": true,
+      "username": "admin",
+      "first_name": "Jorge",
+      "last_name": "López",
+      "email": "admin@hotmail.com",
+      "is_staff": true,
+      "is_active": true,
+      "date_joined": "2022-03-21T07:35:40Z",
+      "groups": [],
+      "user_permissions": []
+    }
+  }
+]
