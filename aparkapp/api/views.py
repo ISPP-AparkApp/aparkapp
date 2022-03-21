@@ -1,4 +1,3 @@
-from asyncio import ProactorEventLoop
 from pyexpat import model
 from django.shortcuts import render
 import jwt
@@ -73,29 +72,13 @@ class VehiclesAPI(APIView):
 
 class UsersVehiclesAPI(APIView):
     permission_classes = [IsAuthenticated]
-    model = Profile
 
-    def get_object(self,pk):
-        try:
-            return Profile.objects.get(id=pk)
-        except Profile.DoesNotExist:
-            raise Http404
-
-    def put(self, request, *args, **kwargs):
-        serializer = UserSerializer(request.user, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def get(self, request):
+    def get(self,request):
         pk = request.user.id
-        return Response(UserSerializer(get_object_or_404(User, pk=pk)).data)
-    
-    def delete(self, request):
-        pk = request.user.id
-        user=get_object_or_404(User,pk=pk)
-        user.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        user = User.objects.get(pk=pk)
+        vehicles = Vehicle.objects.filter(user=user)
+        vehicle_serializer = VehicleSerializer(vehicles, many=True)
+        return Response(vehicle_serializer.data, status=status.HTTP_200_OK)
 
 class UsersAPI(APIView):
     permission_classes = [IsAuthenticated]
