@@ -86,7 +86,12 @@ class UsersAPI(APIView):
         pk = request.user.id
         return Response(UserSerializer(get_object_or_404(User, pk=pk)).data)
     
-
+    def delete(self, request):
+        pk = request.user.id
+        user=get_object_or_404(User,pk=pk)
+        user.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
 class ProfileApi(APIView):
     permission_classes = [IsAuthenticated]
     model=Profile
