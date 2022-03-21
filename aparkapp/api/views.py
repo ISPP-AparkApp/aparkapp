@@ -131,6 +131,13 @@ class AnnouncementAPI(APIView):
         announcement = self.get_object(pk)
         announcement.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+class ReservationByAnouncementAPI(APIView):
+    def get(self, request,pk):
+        reservation = Reservation.objects.filter(announcement=pk)
+        reservation_serializer = ReservationSerializer(reservation, many=True)
+
+        return Response(reservation_serializer.data, status=status.HTTP_200_OK)
 
 class ReservationAPI(APIView):
     
