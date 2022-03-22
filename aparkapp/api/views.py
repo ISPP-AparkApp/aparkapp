@@ -90,6 +90,7 @@ class UsersVehiclesAPI(APIView):
         vehicle_serializer = VehicleSerializer(vehicles, many=True)
         return Response(vehicle_serializer.data, status=status.HTTP_200_OK)
 
+
 class UsersAPI(APIView):
     permission_classes = [IsAuthenticated]
     model = Profile
@@ -139,6 +140,7 @@ class ProfileApi(APIView):
     def get(self, request):
         pk = request.user.id
         return Response(ProfileSerializer(get_object_or_404(Profile, pk=pk)).data)
+
 
 class AnnouncementsAPI(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
@@ -200,6 +202,33 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)    
 
+class AnnouncementsUserAPI(APIView):
+    def get(self,request):
+        pk = request.user.id
+        announcements = Announcement.objects.filter(user=pk)
+        announcement_serializer = AnnouncementSerializer(announcements, many=True)
+
+        return Response(announcement_serializer.data, status=status.HTTP_200_OK)
+
+
+    
+class AnnouncementStatusAPI(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def put(self,request,pk):
+        announcement = self.get_object(pk)
+        
+        announcement.update(status=request)
+        
+        announcement.save()
+            
+        return Response(announcement, status=status.HTTP_200_OK)
+        
+    def get(self):
+        ahora=Date.now()
+        return Announcement.objects.filter(status!='Departure' && (date-waitTime)<=ahora && (date+waitTime)>=ahora)
+        
+    
 class AnnouncementAPI(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -224,7 +253,9 @@ class AnnouncementAPI(APIView):
         else:
             return Response({"detail": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
 
+
     @swagger_auto_schema(request_body=SwaggerAnnouncementSerializer)
+
     def put(self, request, pk):
         announcement = self.get_object(pk)
 
@@ -260,10 +291,36 @@ class AnnouncementAPI(APIView):
         except:
             return Response("No existe el anuncio que desea borrar.", status.HTTP_400_BAD_REQUEST)
 
+        announcement = self.get_object(pk)
+        announcement.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+class ReservationByAnouncementAPI(APIView):
+    def get(self, request,pk):
+        reservation = Reservation.objects.filter(announcement=pk)
+        user =User.objects.filter(pk=getattr(reservation, 'user'))
+        user_serializer = UserSerializer(user, many=True)
+
+        return Response(user_serializer.data, status=status.HTTP_200_OK)
+
+
 class ReservationAPI(APIView):
     
     def get(self, request,pk):
         return Response(ReservationSerializer(get_object_or_404(Reservation, pk=pk)).data)
+
+
+    @swagger_auto_schema(request_body=ReservationSerializer)
+    def put(self, request, pk):
+        reservation = self.get_object(pk)
+
+        serializer = ReservationSerializer(reservation, data=request.data)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)    
     
     def delete(self, request, pk):
         try:
@@ -273,6 +330,7 @@ class ReservationAPI(APIView):
             reservation.save()
             res=Response("La reserva se ha borrado con éxito",status.HTTP_204_NO_CONTENT)
         except:
+
             res=Response("No existe tal reserva en tu historial",status.HTTP_404_NOT_FOUND)
         return res   
 
@@ -291,6 +349,7 @@ class ReservationAPI(APIView):
         else:
             response=Response("Los datos de la reserva introducidos no son válidos", status.HTTP_400_BAD_REQUEST)
         return response
+
 
 class ReservationsAPI(APIView):
 
