@@ -9,7 +9,18 @@ class ProfileSerializer(serializers.ModelSerializer):
         model = Profile
         fields = ['phone', 'birthdate']
 
+class SwaggerProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ['phone', 'birthdate']
+
 class UserSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = ['username','email','first_name','last_name']
+
+class SwaggerUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
@@ -19,6 +30,11 @@ class VehicleSerializerId(serializers.ModelSerializer):
     class Meta:
         model = Vehicle
         fields = ['id','brand','model','license_plate','color','type']
+
+class SwaggerVehicleSerializerId(serializers.ModelSerializer):
+    class Meta:
+        model = Vehicle
+        fields = ['brand','model','license_plate','color','type']
 
 class VehicleSerializer(serializers.ModelSerializer):
     class Meta:

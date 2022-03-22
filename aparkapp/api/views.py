@@ -10,7 +10,7 @@ from .models import Vehicle, Announcement, Reservation, User
 from api.serializers import (VehicleSerializer, AnnouncementSerializer, ReservationSerializer, 
 SwaggerVehicleSerializer, SwaggerAnnouncementSerializer,SwaggerCreateReservationSerializer, 
 SwaggerUpdateReservationSerializer, GeolocationToAddressSerializer, GeolocationToCoordinatesSerializer,
-VehicleSerializerId)
+VehicleSerializerId, SwaggerVehicleSerializerId,SwaggerUserSerializer,SwaggerProfileSerializer)
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, filters, generics
@@ -52,6 +52,7 @@ class VehiclesIdAPI(APIView):
         except Vehicle.DoesNotExist:
             raise Http404
     
+    @swagger_auto_schema(request_body=SwaggerVehicleSerializerId)
     def put(self,request, pk):
         vehicle = self.get_object(pk)
         serializer = VehicleSerializerId(vehicle, data=request.data)
@@ -94,6 +95,7 @@ class UsersAPI(APIView):
         except Profile.DoesNotExist:
             raise Http404
 
+    @swagger_auto_schema(request_body=SwaggerUserSerializer)
     def put(self, request, *args, **kwargs):
         serializer = UserSerializer(request.user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
@@ -120,6 +122,7 @@ class ProfileApi(APIView):
         except Profile.DoesNotExist:
             raise Http404
 
+    @swagger_auto_schema(request_body=SwaggerProfileSerializer)
     def put(self, request, *args, **kwargs):
         pk = request.user.id
         user = self.get_object(pk)

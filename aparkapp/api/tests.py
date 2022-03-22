@@ -144,7 +144,7 @@ class VehiclesIDTestCase(TestCase):
             id=98,
             brand="Testing",
             model="Testing",
-            license_plate="Testing",
+            license_plate="Testing1",
             color="Testing",
             type="Segmento A"
         )
