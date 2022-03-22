@@ -15,10 +15,15 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['username','email','first_name','last_name']
  
-class VehicleSerializer(serializers.ModelSerializer):
+class VehicleSerializerId(serializers.ModelSerializer):
     class Meta:
         model = Vehicle
         fields = ['id','brand','model','license_plate','color','type']
+
+class VehicleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Vehicle
+        fields = ['id','brand','model','license_plate','color','type','user']
 
 class SwaggerVehicleSerializer(serializers.ModelSerializer):
     class Meta:

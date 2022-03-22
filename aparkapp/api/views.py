@@ -9,7 +9,8 @@ from api.geolocator import coordinates_to_address
 from .models import Vehicle, Announcement, Reservation, User
 from api.serializers import (VehicleSerializer, AnnouncementSerializer, ReservationSerializer, 
 SwaggerVehicleSerializer, SwaggerAnnouncementSerializer,SwaggerCreateReservationSerializer, 
-SwaggerUpdateReservationSerializer, GeolocationToAddressSerializer, GeolocationToCoordinatesSerializer)
+SwaggerUpdateReservationSerializer, GeolocationToAddressSerializer, GeolocationToCoordinatesSerializer,
+VehicleSerializerId)
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, filters, generics
@@ -53,7 +54,7 @@ class VehiclesIdAPI(APIView):
     
     def put(self,request, pk):
         vehicle = self.get_object(pk)
-        serializer = VehicleSerializer(vehicle, data=request.data)
+        serializer = VehicleSerializerId(vehicle, data=request.data)
 
         if serializer.is_valid():
             serializer.save()
@@ -71,7 +72,7 @@ class VehiclesIdAPI(APIView):
         return Response("You have only one vehicle registred",status=status.HTTP_401_UNAUTHORIZED)
     
     def get(self, request, pk):
-        return Response(VehicleSerializer(get_object_or_404(Vehicle, pk=pk)).data)
+        return Response(VehicleSerializerId(get_object_or_404(Vehicle, pk=pk)).data)
 
 class UsersVehiclesAPI(APIView):
     permission_classes = [IsAuthenticated]
