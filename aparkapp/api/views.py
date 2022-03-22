@@ -39,7 +39,7 @@ class UsersAPI(APIView):
 
     
     
-class AnnouncementsAPI(generics.ListCreateAPIView):
+class AnnouncementsStatusAPI(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
     
     def get(self):
