@@ -37,14 +37,6 @@ class UsersAPI(APIView):
         vehicle_serializer = VehicleSerializer(vehicles, many=True)
         return Response(vehicle_serializer.data, status=status.HTTP_200_OK)
 
-    
-    
-class AnnouncementsStatusAPI(generics.ListCreateAPIView):
-    permission_classes = [IsAuthenticated]
-    
-    def get(self):
-        ahora=Date.now()
-        return Announcement.objects.filter(status!='Departure' && (date-waitTime)<=ahora && (date+waitTime)>=ahora)
         
     
 class AnnouncementsAPI(generics.ListCreateAPIView):
@@ -109,6 +101,10 @@ class AnnouncementStatusAPI(APIView):
         announcement.save()
             
         return Response(announcement, status=status.HTTP_200_OK)
+        
+    def get(self):
+        ahora=Date.now()
+        return Announcement.objects.filter(status!='Departure' && (date-waitTime)<=ahora && (date+waitTime)>=ahora)
         
     
 class AnnouncementAPI(APIView):
