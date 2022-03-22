@@ -29,12 +29,6 @@ from .geolocator import coordinates_to_address, address_to_coordinates
 
 class VehiclesAPI(APIView):
     permission_classes = [IsAuthenticated]
-    
-    def get_object(self,pk):
-        try:
-            return Vehicle.objects.get(id=pk)
-        except Vehicle.DoesNotExist:
-            raise Http404
 
     @swagger_auto_schema(request_body=SwaggerVehicleSerializer)
     def post(self,request):
@@ -47,6 +41,15 @@ class VehiclesAPI(APIView):
             serializer.save()
             return Response(serializer.data,status=status.HTTP_201_CREATED)
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
+class VehiclesIdAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self,pk):
+        try:
+            return Vehicle.objects.get(id=pk)
+        except Vehicle.DoesNotExist:
+            raise Http404
     
     def put(self,request, pk):
         vehicle = self.get_object(pk)
