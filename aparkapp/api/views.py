@@ -37,6 +37,8 @@ class UsersAPI(APIView):
         vehicle_serializer = VehicleSerializer(vehicles, many=True)
         return Response(vehicle_serializer.data, status=status.HTTP_200_OK)
 
+        
+    
 class AnnouncementsAPI(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
@@ -87,6 +89,24 @@ class AnnouncementsUserAPI(APIView):
         return Response(announcement_serializer.data, status=status.HTTP_200_OK)
 
 
+    
+class AnnouncementStatusAPI(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def put(self,request,pk):
+        announcement = self.get_object(pk)
+        
+        announcement.update(status=request)
+        
+        announcement.save()
+            
+        return Response(announcement, status=status.HTTP_200_OK)
+        
+    def get(self):
+        ahora=Date.now()
+        return Announcement.objects.filter(status!='Departure' && (date-waitTime)<=ahora && (date+waitTime)>=ahora)
+        
+    
 class AnnouncementAPI(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -111,8 +131,9 @@ class AnnouncementAPI(APIView):
         else:
             return Response({"detail": "Unauthorized"},status=status.HTTP_401_UNAUTHORIZED)
 
-  
-
+ 
+        
+    
     @swagger_auto_schema(request_body=AnnouncementSerializer)
     def put(self, request, pk):
         announcement = self.get_object(pk)
@@ -135,9 +156,10 @@ class AnnouncementAPI(APIView):
 class ReservationByAnouncementAPI(APIView):
     def get(self, request,pk):
         reservation = Reservation.objects.filter(announcement=pk)
-        reservation_serializer = ReservationSerializer(reservation, many=True)
+        user =User.objects.filter(pk=getattr(reservation, 'user'))
+        user_serializer = UserSerializer(user, many=True)
 
-        return Response(reservation_serializer.data, status=status.HTTP_200_OK)
+        return Response(user_serializer.data, status=status.HTTP_200_OK)
 
 class ReservationAPI(APIView):
     
