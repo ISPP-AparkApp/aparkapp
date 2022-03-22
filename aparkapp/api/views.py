@@ -41,7 +41,12 @@ class VehiclesAPI(APIView):
         if serializer.is_valid() and not query:
             serializer.save()
             return Response({"mensaje":"Vehículo creado con éxito","vehículo":serializer.data},status=status.HTTP_201_CREATED)
-        return Response({"error":"El usuario con id " + str(data["user"]) + " ya tiene asignado este vehículo"},status=status.HTTP_400_BAD_REQUEST)
+        elif query:
+            return Response({"error":"El usuario con id " + str(data["user"]) + " ya tiene asignado este vehículo"},status=status.HTTP_409_CONFLICT)
+        else:
+            return Response({"error":str(serializer.error_messages)},status=status.HTTP_400_BAD_REQUEST)
+        
+        
 
 class VehiclesIdAPI(APIView):
     permission_classes = [IsAuthenticated]
