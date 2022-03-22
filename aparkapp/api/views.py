@@ -131,7 +131,7 @@ class AnnouncementAPI(APIView):
         announcement = self.get_object(pk)
 
         data = request.data.copy()
-        data['user'] = request.user.id
+        data['user'] = announcement.user.id
 
         #Coordinates to address
         coordinates = (float(data['latitude']), float(data['longitude']))
