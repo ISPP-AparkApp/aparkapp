@@ -156,6 +156,7 @@ class AnnouncementAPI(APIView):
 class ReservationByAnouncementAPI(APIView):
     def get(self, request,pk):
         reservation = Reservation.objects.filter(announcement=pk)
+        user =User.objects.filter(pk=getattr(reservation, 'user'))
         reservation_serializer = ReservationSerializer(reservation, many=True)
 
         return Response(reservation_serializer.data, status=status.HTTP_200_OK)
