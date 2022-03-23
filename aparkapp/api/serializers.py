@@ -57,6 +57,11 @@ class SwaggerAnnouncementSerializer(serializers.ModelSerializer):
         fields = ['id','date','wait_time','price','allow_wait','location', 'longitude', 'latitude',
         'zone', 'limited_mobility', 'status', 'observation', 'rated', 'vehicle']
 
+class SwaggerUpdateAnnouncementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Announcement
+        fields = [ 'status']
+
 class ReservationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reservation

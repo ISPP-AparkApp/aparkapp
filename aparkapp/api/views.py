@@ -8,9 +8,9 @@ import datetime
 from api.geolocator import coordinates_to_address
 from .models import Vehicle, Announcement, Reservation, User
 from api.serializers import (VehicleSerializer, AnnouncementSerializer, ReservationSerializer, 
-SwaggerVehicleSerializer, SwaggerAnnouncementSerializer,SwaggerCreateReservationSerializer, 
-SwaggerUpdateReservationSerializer, GeolocationToAddressSerializer, GeolocationToCoordinatesSerializer,
-VehicleSerializerId, SwaggerVehicleSerializerId,SwaggerUserSerializer,SwaggerProfileSerializer)
+SwaggerVehicleSerializer, SwaggerAnnouncementSerializer,SwaggerCreateReservationSerializer, UserSerializer,
+SwaggerUpdateReservationSerializer, GeolocationToAddressSerializer, GeolocationToCoordinatesSerializer, SwaggerVehicleSerializer,
+VehicleSerializerId, SwaggerVehicleSerializerId,SwaggerUserSerializer,SwaggerProfileSerializer, SwaggerUpdateAnnouncementSerializer)
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, filters, generics
@@ -215,18 +215,35 @@ class AnnouncementsUserAPI(APIView):
 class AnnouncementStatusAPI(APIView):
     permission_classes = [IsAuthenticated]
     
+    def get_object(self,pk):
+        try:
+            return Announcement.objects.get(id=pk)
+        except Announcement.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk):
+        low = datetime.datetime.now() - datetime.timedelta(minutes=10)
+        major = datetime.datetime.now() + datetime.timedelta(minutes=60)
+        announcements =  Announcement.objects.filter(user=pk and status!='Departure', date__gte=low, date__lte=major)
+        aux=[]
+        for a in announcements:
+            aux.append(AnnouncementSerializer(a).data)
+        return Response(data=aux,status=status.HTTP_200_OK)
+
+    @swagger_auto_schema(request_body=SwaggerUpdateAnnouncementSerializer)
     def put(self,request,pk):
-        announcement = self.get_object(pk)
+        try:
+            if request.data.get("status"):
+                announcement_to_update=Announcement.objects.filter(pk=pk)
+                if announcement_to_update:
+                    announcement_to_update.update(status=request.data["status"])
+                    res=Response("Se ha actualizado con éxito el anuncio",status=status.HTTP_204_NO_CONTENT)
+            else:
+                res=Response("La petición es inválida", status=status.HTTP_400_BAD_REQUEST)
+        except Exception:
+            res=Response("No existe el anuncio especificado", status=status.HTTP_404_NOT_FOUND)
         
-        announcement.update(status=request)
-        
-        announcement.save()
-            
-        return Response(announcement, status=status.HTTP_200_OK)
-        
-    def get(self):
-        ahora=Date.now()
-        return Announcement.objects.filter(status!='Departure' && (date-waitTime)<=ahora && (date+waitTime)>=ahora)
+        return res
         
     
 class AnnouncementAPI(APIView):
@@ -253,9 +270,7 @@ class AnnouncementAPI(APIView):
         else:
             return Response({"detail": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
 
-
     @swagger_auto_schema(request_body=SwaggerAnnouncementSerializer)
-
     def put(self, request, pk):
         announcement = self.get_object(pk)
 
@@ -281,46 +296,33 @@ class AnnouncementAPI(APIView):
 
 
     def delete(self, request, pk):
-        try:
-            announcement = self.get_object(pk)
-            if announcement.user.id == request.user.id:
-                announcement.delete()
-                return Response("Se ha borrado correctamente el anuncio.", status.HTTP_204_NO_CONTENT)
-            else:
-                return Response("No se puede borrar un anuncio que usted no ha publicado.", status.HTTP_401_UNAUTHORIZED)
-        except:
-            return Response("No existe el anuncio que desea borrar.", status.HTTP_400_BAD_REQUEST)
-
-        announcement = self.get_object(pk)
-        announcement.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+            try:
+                announcement = self.get_object(pk)
+                if announcement.user.id == request.user.id:
+                    announcement.delete()
+                    return Response("Se ha borrado correctamente el anuncio.", status.HTTP_204_NO_CONTENT)
+                else:
+                    return Response("No se puede borrar un anuncio que usted no ha publicado.", status.HTTP_401_UNAUTHORIZED)
+            except:
+                return Response("No existe el anuncio que desea borrar.", status.HTTP_400_BAD_REQUEST)
     
 class ReservationByAnouncementAPI(APIView):
     def get(self, request,pk):
-        reservation = Reservation.objects.filter(announcement=pk)
-        user =User.objects.filter(pk=getattr(reservation, 'user'))
-        user_serializer = UserSerializer(user, many=True)
-
-        return Response(user_serializer.data, status=status.HTTP_200_OK)
+        reservation = Reservation.objects.filter(announcement=pk, cancelled=False)
+        if reservation: 
+            userId = reservation.get().user.id
+            user= User.objects.filter(id=userId)
+            user_serializer = UserSerializer(user.get())
+            res=Response(user_serializer.data, status=status.HTTP_200_OK)
+        else:
+            res=Response("No se ha encontrado ninguna reserva asociada a ese anuncio", status=status.HTTP_404_NOT_FOUND)
+        return res
 
 
 class ReservationAPI(APIView):
     
     def get(self, request,pk):
         return Response(ReservationSerializer(get_object_or_404(Reservation, pk=pk)).data)
-
-
-    @swagger_auto_schema(request_body=ReservationSerializer)
-    def put(self, request, pk):
-        reservation = self.get_object(pk)
-
-        serializer = ReservationSerializer(reservation, data=request.data)
-        
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)    
     
     def delete(self, request, pk):
         try:
@@ -330,7 +332,6 @@ class ReservationAPI(APIView):
             reservation.save()
             res=Response("La reserva se ha borrado con éxito",status.HTTP_204_NO_CONTENT)
         except:
-
             res=Response("No existe tal reserva en tu historial",status.HTTP_404_NOT_FOUND)
         return res   
 
@@ -350,10 +351,9 @@ class ReservationAPI(APIView):
             response=Response("Los datos de la reserva introducidos no son válidos", status.HTTP_400_BAD_REQUEST)
         return response
 
-
 class ReservationsAPI(APIView):
 
-    # Returns own reservations
+ # Returns own reservations
     def get(self, request):
         reservations=Reservation.objects.filter(user=request.user)
         reservations_data=[]
