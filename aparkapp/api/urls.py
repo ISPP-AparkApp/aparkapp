@@ -2,11 +2,14 @@ from django.urls import path
 from rest_framework_simplejwt import views as jwt_views
 from .views import (VehiclesAPI, AnnouncementAPI, AnnouncementsAPI, AnnouncementStatusAPI, 
 UsersVehiclesAPI, ReservationAPI, ReservationsAPI, GeolocationToAddressAPI, AnnouncementsUserAPI, ReservationByAnouncementAPI,
-GeolocationToCoordinatesAPI)
+GeolocationToCoordinatesAPI, VehiclesIdAPI, UsersAPI, ProfileApi)
 
 
 urlpatterns = [
     path('vehicles/', VehiclesAPI.as_view()),
+    path('vehicles/<int:pk>/', VehiclesIdAPI.as_view()),
+    path('users/', UsersAPI.as_view()),
+    path('profiles/', ProfileApi.as_view()),
     path('login/', jwt_views.TokenObtainPairView.as_view()),
     path('refresh-token/',jwt_views.TokenRefreshView.as_view()),
     path('announcements/', AnnouncementsAPI.as_view()),

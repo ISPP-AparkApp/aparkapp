@@ -1,13 +1,40 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
+from api.models import Profile
 from api.models import Vehicle, Announcement, Reservation
 from django.core.validators import MinValueValidator, MaxValueValidator
 
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ['phone', 'birthdate']
+
+class SwaggerProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ['phone', 'birthdate']
+
 class UserSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = User
-        fields = ('id','username')
+        fields = ['username','email','first_name','last_name']
 
+class SwaggerUserSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = ['username','email','first_name','last_name']
+ 
+class VehicleSerializerId(serializers.ModelSerializer):
+    class Meta:
+        model = Vehicle
+        fields = ['id','brand','model','license_plate','color','type']
+
+class SwaggerVehicleSerializerId(serializers.ModelSerializer):
+    class Meta:
+        model = Vehicle
+        fields = ['brand','model','license_plate','color','type']
 
 class VehicleSerializer(serializers.ModelSerializer):
     class Meta:
