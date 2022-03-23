@@ -10,6 +10,11 @@
     "fields": { "phone": "633917333", "birthdate": "2000-01-10", "user": 2 }
   },
   {
+    "model": "api.profile",
+    "pk": 3,
+    "fields": { "phone": "78542011", "birthdate": "2000-012-10", "user": 3 }
+  },
+  {
     "model": "api.vehicle",
     "pk": 1,
     "fields": {
@@ -45,6 +50,18 @@
     }
   },
   {
+    "model": "api.vehicle",
+    "pk": 4,
+    "fields": {
+      "brand": "Fiat",
+      "model": "Toledo",
+      "license_plate": "9002MXN",
+      "color": "Gris",
+      "type": "Segmento A",
+      "user": 3
+    }
+  },
+  {
     "model": "auth.user",
     "pk": 1,
     "fields": {
@@ -73,6 +90,24 @@
       "first_name": "Luis",
       "last_name": "Ibáñez",
       "email": "user@hotmail.com",
+      "is_staff": true,
+      "is_active": true,
+      "date_joined": "2022-03-21T07:35:40Z",
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 3,
+    "fields": {
+      "password": "pbkdf2_sha256$320000$rsak8BCXOomY87FZRYWAeH$9Il8uVbuHOGj+pMBGctIJNs7Z3+5jz3uAU2oseyFac4=",
+      "last_login": "2022-03-21T07:35:56Z",
+      "is_superuser": false,
+      "username": "user2",
+      "first_name": "Fran",
+      "last_name": "Diaz",
+      "email": "user2@hotmail.com",
       "is_staff": true,
       "is_active": true,
       "date_joined": "2022-03-21T07:35:40Z",
