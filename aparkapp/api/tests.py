@@ -201,18 +201,21 @@ class AnnouncementStatusAPI(TestCase):
 
         self.access = response.data['access']
 
+    #PROBLEMAS
     def test_modify_announcement_status(self):
         client = APIClient()
 
-        response = client.put('/api/announcements/status/' + str(self.announcement2.id)+'/', {
-            "Initial"
+        response = client.put('/api/announcements/status/' + str(self.announcement2.id)+'/', 
+        {
+            "status":"Initial"
         }
             ,HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
-        self.assertEqual(self.announcement2, "Initial")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(self.announcement2.status, "Initial")
 
     def test_search_announcements(self):
         client = APIClient()
-        response = client.get('/api/announcements/status/', format='json',
+        response = client.get('/api/announcements/status/'+str(self.announcement.id)+"/", format='json',
                               HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -959,10 +962,8 @@ class ReservationTestCase(TestCase):
             format='json',
             HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
         )
-        self.assertEqual(first_response.status_code,
-                         status.HTTP_204_NO_CONTENT)
-        self.assertEqual(second_response.status_code,
-                         status.HTTP_404_NOT_FOUND)
+        self.assertEqual(first_response.status_code,status.HTTP_204_NO_CONTENT)
+        self.assertEqual(second_response.status_code,status.HTTP_404_NOT_FOUND)
 
     # APP - 20/03/2022 - Test which creates three reservations one already reserved, one from itself and another valid
     def test_create_reservation(self):
@@ -1000,8 +1001,7 @@ class ReservationTestCase(TestCase):
             HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
         )
         self.assertEqual(first_response.status_code, status.HTTP_409_CONFLICT)
-        self.assertEqual(second_response.status_code,
-                         status.HTTP_405_METHOD_NOT_ALLOWED)
+        self.assertEqual(second_response.status_code,status.HTTP_405_METHOD_NOT_ALLOWED)
         self.assertEqual(third_response.status_code, status.HTTP_201_CREATED)
 
     # APP - 20/03/2022 - Test which updates reservations one which doesn't exist, one already reserved
@@ -1042,7 +1042,4 @@ class ReservationTestCase(TestCase):
         self.assertEqual(first_response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(second_response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(third_response.status_code, status.HTTP_204_NO_CONTENT)
-
-
-        self.assertTrue('error' in response.data)
 

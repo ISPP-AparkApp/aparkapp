@@ -236,29 +236,18 @@ class AnnouncementStatusAPI(APIView):
 
     @swagger_auto_schema(request_body=SwaggerUpdateAnnouncementSerializer)
     def put(self,request,pk):
-        announcement = self.get_object(pk)
+        try:
+            if request.data.get("status"):
+                announcement_to_update=Announcement.objects.filter(pk=pk)
+                if announcement_to_update:
+                    announcement_to_update.update(status=request.data["status"])
+                    res=Response("Se ha actualizado con éxito el anuncio",status=status.HTTP_204_NO_CONTENT)
+            else:
+                res=Response("La petición es inválida", status=status.HTTP_400_BAD_REQUEST)
+        except Exception:
+            res=Response("No existe el anuncio especificado", status=status.HTTP_404_NOT_FOUND)
         
-        query = Announcement.objects.filter(id=pk)
-        data = request.data.copy()
-        data["date"] = query.get().date
-        data["wait_time"] = query.get().wait_time
-        data["price"] = query.get().price
-        data["allow_wait"] = query.get().allow_wait
-        data["location"] = query.get().location
-        data["longitude"] = query.get().longitude
-        data["latitude"] = query.get().latitude
-        data["zone"] = query.get().zone
-        data["limited_mobility"] = query.get().limited_mobility
-        data["observation"] = query.get().observation
-        data["rated"] = query.get().rated
-        data["vehicle"] = query.get().vehicle.id
-        data["user"] = query.get().user.id
-
-        serializer = AnnouncementSerializer(announcement, data=data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+        return res
         
     
 class AnnouncementAPI(APIView):
@@ -323,31 +312,21 @@ class AnnouncementAPI(APIView):
     
 class ReservationByAnouncementAPI(APIView):
     def get(self, request,pk):
-        reservation = Reservation.objects.filter(announcement=pk)
-        userId = reservation.get().user.id
-        user= User.objects.filter(id=userId)
-        user_serializer = UserSerializer(user.get())
-
-        return Response(user_serializer.data, status=status.HTTP_200_OK)
+        reservation = Reservation.objects.filter(announcement=pk, cancelled=False)
+        if reservation: 
+            userId = reservation.get().user.id
+            user= User.objects.filter(id=userId)
+            user_serializer = UserSerializer(user.get())
+            res=Response(user_serializer.data, status=status.HTTP_200_OK)
+        else:
+            res=Response("No se ha encontrado ninguna reserva asociada a ese anuncio", status=status.HTTP_404_NOT_FOUND)
+        return res
 
 
 class ReservationAPI(APIView):
     
     def get(self, request,pk):
         return Response(ReservationSerializer(get_object_or_404(Reservation, pk=pk)).data)
-
-
-    @swagger_auto_schema(request_body=ReservationSerializer)
-    def put(self, request, pk):
-        reservation = self.get_object(pk)
-
-        serializer = ReservationSerializer(reservation, data=request.data)
-        
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)    
     
     def delete(self, request, pk):
         try:
@@ -375,9 +354,10 @@ class ReservationAPI(APIView):
         else:
             response=Response("Los datos de la reserva introducidos no son válidos", status.HTTP_400_BAD_REQUEST)
         return response
+
 class ReservationsAPI(APIView):
 
-    # Returns own reservations
+ # Returns own reservations
     def get(self, request):
         reservations=Reservation.objects.filter(user=request.user)
         reservations_data=[]
