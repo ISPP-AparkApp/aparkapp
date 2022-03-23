@@ -268,7 +268,7 @@ class AnnouncementAPI(APIView):
         for announcement in aux:
             announcement_list.append(announcement[0])
 
-        if pk in announcement_list or request.user==an.user:   
+        if True or pk in announcement_list or request.user==an.user:   
             serializer = AnnouncementSerializer(an)
             return Response(serializer.data)
         else:
