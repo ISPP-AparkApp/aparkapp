@@ -18,7 +18,7 @@ urlpatterns = [
     path('announcement/user/', AnnouncementsUserAPI.as_view()),
     path('reservation/<int:pk>/', ReservationAPI.as_view()),
     path('reservation/anouncement/<int:pk>/', ReservationByAnouncementAPI.as_view()),
-    path('reservations',ReservationsAPI.as_view()),
+    path('reservations/',ReservationsAPI.as_view()),
     path('users/vehicles/', UsersVehiclesAPI.as_view()),
     path('reservation/<int:pk>/', ReservationAPI.as_view()),
     path('geolocatorToAddress/', GeolocationToAddressAPI.as_view()),
