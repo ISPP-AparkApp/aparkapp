@@ -505,6 +505,12 @@ class AnnouncementTestCase(TestCase):
                                           vehicle=self.vehicle2, user=self.user2)
         self.announcement4.save()
 
+        self.announcement5 = Announcement(date="2022-08-16 18:43", wait_time=5,
+                                          price=3.5,  allow_wait=True, location='Nervion', latitude=38.35582224531185, longitude=-5.986231318933244,
+                                          zone='Zona Azul', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
+                                          vehicle=self.vehicle2, user=self.user2)
+        self.announcement5.save()
+
         self.reservation = Reservation(date=self.announcement3.date, n_extend=1,
                                        cancelled=False, rated=False, user=self.user, announcement=self.announcement3)
         self.reservation.save()

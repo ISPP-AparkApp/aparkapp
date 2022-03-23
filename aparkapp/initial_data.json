@@ -5,6 +5,11 @@
     "fields": { "phone": "633917766", "birthdate": "2000-02-15", "user": 1 }
   },
   {
+    "model": "api.profile",
+    "pk": 2,
+    "fields": { "phone": "633917333", "birthdate": "2000-01-10", "user": 2 }
+  },
+  {
     "model": "api.vehicle",
     "pk": 1,
     "fields": {
@@ -28,6 +33,18 @@
     }
   },
   {
+    "model": "api.vehicle",
+    "pk": 3,
+    "fields": {
+      "brand": "Open",
+      "model": "Corsa",
+      "license_plate": "6602MXN",
+      "color": "Rojo",
+      "type": "Segmento A",
+      "user": 2
+    }
+  },
+  {
     "model": "auth.user",
     "pk": 1,
     "fields": {
@@ -43,6 +60,37 @@
       "date_joined": "2022-03-21T07:35:40Z",
       "groups": [],
       "user_permissions": []
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 2,
+    "fields": {
+      "password": "pbkdf2_sha256$320000$rsak8BCXOomY87FZRYWAeH$9Il8uVbuHOGj+pMBGctIJNs7Z3+5jz3uAU2oseyFac4=",
+      "last_login": "2022-03-21T07:35:56Z",
+      "is_superuser": true,
+      "username": "user",
+      "first_name": "Luis",
+      "last_name": "Ibáñez",
+      "email": "user@hotmail.com",
+      "is_staff": true,
+      "is_active": true,
+      "date_joined": "2022-03-21T07:35:40Z",
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "api.announcement",
+    "pk": 1,
+    "fields": {
+      "date": "2022-03-29 00:00:00",
+      "price": 1,
+      "location": "Triana",
+      "longitude": -5.99629,
+      "latitude": 37.3826,
+      "vehicle": 3,
+      "user": 2
     }
   }
 ]

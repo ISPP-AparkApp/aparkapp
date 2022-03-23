@@ -158,12 +158,16 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
         return queryset
 
 
-    def get_queryset(self):
-        return Announcement.objects.all()
+    def get_queryset(self, request):
+        res_list = Reservation.objects.all()
+        ann_id_list = list(res_list.values_list('announcement', flat=True))
+        query = Announcement.objects.exclude(user=request.user).exclude(id__in=ann_id_list)
+        
+        return query
 
 
     def get(self, request):
-        announcements = self.filter_queryset(self.get_queryset())
+        announcements = self.filter_queryset(self.get_queryset(request))
         serializer_class = AnnouncementSerializer(announcements,many=True)
 
         return Response(serializer_class.data)
