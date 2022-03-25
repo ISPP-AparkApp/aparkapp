@@ -1,4 +1,4 @@
-name: Build
+name: CI
 on:
   push:
     branches:
@@ -9,20 +9,61 @@ on:
       - release/*
       - config/*
 jobs:
-  sonarcloud:
-    name: SonarCloud
+  build:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:13.0-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: aparkapp
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.9
+    - name: Prerequisites
+      run: sudo apt-get install libpq-dev
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install coverage
+        pip install codacy-coverage
+    - name: Run migrations
+      run: |
+        cd aparkapp
+        python manage.py makemigrations
+        python manage.py migrate
+    - name: Run tests
+      run: cd aparkapp;coverage run --branch --source=. ./manage.py test api --keepdb; coverage xml;
+    - name: Codacy Coverage Reporter
+      uses: codacy/codacy-coverage-reporter-action@v1.1.0
+      with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          coverage-reports: aparkapp/coverage.xml
+
+  codacy-analysis-cli:
+    name: Codacy Analysis CLI
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@main
+
+      - name: Run Codacy Analysis CLI
+        uses: codacy/codacy-analysis-cli-action@master
         with:
-          fetch-depth: 0
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          upload: true
+
   deploy:
-    # needs: build (Se añadirá cuando esté la ejecución automática de pruebas)
+    needs: build
     if: ${{github.ref == 'refs/heads/develop'}}
     name: Heroku
     runs-on: ubuntu-latest
@@ -31,5 +72,5 @@ jobs:
       - uses: AkhileshNS/heroku-deploy@v3.12.12
         with:
           heroku_api_key: ${{secrets.HEROKU_API_KEY}}
-          heroku_app_name: "aparkapp-backend-s1"
+          heroku_app_name: "aparkapp-backend-s2"
           heroku_email: "ferherque@alum.us.es"
