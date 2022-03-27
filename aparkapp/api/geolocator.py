@@ -1,6 +1,6 @@
 from geopy.geocoders import Nominatim
 
-#Geolocation 
+# Geolocation agent being used
 geolocator = Nominatim(user_agent="AparkApp")
 # Returns JSON or Point with coordinates given an address
 # <param>raw</query> Determines if a JSON or just its point"
@@ -14,7 +14,7 @@ def address_to_coordinates(query, county_code="ES", only_one_result=False, raw=T
            locations=[loc.point for loc in res] 
         else:
            locations=[loc for loc in res]  
-    except:
+    except Exception:
         raise ValueError
     return locations
     
@@ -27,6 +27,6 @@ def coordinates_to_address(query, only_one_result=False):
             response=[loc.raw for loc in res]
         else:
             response=[loc for loc in res]
-    except:
+    except Exception:
         raise ValueError
     return response

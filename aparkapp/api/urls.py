@@ -1,9 +1,12 @@
 from django.urls import path
 from rest_framework_simplejwt import views as jwt_views
-from .views import (VehiclesAPI, AnnouncementAPI, AnnouncementsAPI, AnnouncementStatusAPI, 
-UsersVehiclesAPI, ReservationAPI, ReservationsAPI, GeolocationToAddressAPI, AnnouncementsUserAPI, ReservationByAnouncementAPI,
-GeolocationToCoordinatesAPI, VehiclesIdAPI, UsersAPI, ProfileApi, myAnnouncementsAPI)
 
+from .views import (AnnouncementAPI, AnnouncementsAPI, AnnouncementStatusAPI,
+                    AnnouncementsUserAPI, GeolocationToAddressAPI,
+                    GeolocationToCoordinatesAPI, ProfileApi, ReservationAPI,
+                    ReservationByAnouncementAPI, ReservationsAPI, UsersAPI,
+                    UsersVehiclesAPI, VehiclesAPI, VehiclesIdAPI,
+                    myAnnouncementsAPI)
 
 urlpatterns = [
     path('vehicles/', VehiclesAPI.as_view()),

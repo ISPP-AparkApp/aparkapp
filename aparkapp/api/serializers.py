@@ -1,8 +1,10 @@
 from django.contrib.auth.models import User
+from django.core.validators import MaxValueValidator, MinValueValidator
 from rest_framework import serializers
-from api.models import Profile
-from api.models import Vehicle, Announcement, Reservation
-from django.core.validators import MinValueValidator, MaxValueValidator
+
+from api.models import Announcement, Profile, Reservation, Vehicle
+
+### PROFILE SERIALIZERS
 
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -13,6 +15,8 @@ class SwaggerProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = ['phone', 'birthdate']
+
+### USER SERIALIZERS
 
 class UserSerializer(serializers.ModelSerializer):
 
@@ -25,7 +29,9 @@ class SwaggerUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['username','email','first_name','last_name']
- 
+
+### VEHICLE SERIALIZERS
+
 class VehicleSerializerId(serializers.ModelSerializer):
     class Meta:
         model = Vehicle
@@ -46,11 +52,18 @@ class SwaggerVehicleSerializer(serializers.ModelSerializer):
         model = Vehicle
         fields = ['id','brand','model','license_plate','color','type']
 
+### ANNOUNCEMENTS SERIALIZERS
+
 class AnnouncementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Announcement
         fields = '__all__'
 
+class AnnouncementNestedVehicleSerializer(serializers.ModelSerializer):
+    vehicle = VehicleSerializer(read_only = True)
+    class Meta:
+        model = Announcement
+        fields = '__all__'
 class SwaggerAnnouncementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Announcement
@@ -62,11 +75,16 @@ class SwaggerUpdateAnnouncementSerializer(serializers.ModelSerializer):
         model = Announcement
         fields = [ 'status']
 
+
+### RESERVATION SERIALIZERS
+
 class ReservationSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only = True)
+    announcement = AnnouncementNestedVehicleSerializer(read_only = True)
     class Meta:
         model = Reservation
-        fields = '__all__'
-
+        fields = ['id','date','n_extend','cancelled','rated','announcement', 'user']
+        
 class SwaggerCreateReservationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reservation
@@ -76,6 +94,9 @@ class SwaggerUpdateReservationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reservation
         fields = ['date','n_extend','cancelled','rated','announcement', 'user']
+
+
+### GEOLOCATION SERIALIZERS
 
 class GeolocationToAddressSerializer(serializers.Serializer):
     longitude = serializers.FloatField(validators=[MinValueValidator(-180.0), MaxValueValidator(180.0)])
