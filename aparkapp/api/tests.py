@@ -1,10 +1,10 @@
-from urllib import response
-from django.test import TestCase
-from rest_framework.test import APIClient
-from api.models import User, Vehicle, Announcement, Reservation,Profile
-from rest_framework import status
 from datetime import datetime, timedelta
+from django.test import TestCase
 from django.utils.timezone import make_aware
+from rest_framework import status
+from rest_framework.test import APIClient
+
+from api.models import Announcement, Profile, Reservation, User, Vehicle
 
 
 class AuthenticationTestCase(TestCase):
