@@ -1,3 +1,4 @@
+from urllib import response
 from django.test import TestCase
 from rest_framework.test import APIClient
 from api.models import User, Vehicle, Announcement, Reservation,Profile
@@ -1043,3 +1044,184 @@ class ReservationTestCase(TestCase):
         self.assertEqual(second_response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(third_response.status_code, status.HTTP_204_NO_CONTENT)
 
+class RegistrationTestCase(TestCase):
+    
+    def setUp(self):
+        self.user = User(
+            username='Pedro',
+            email='pedroHdez@gmail.com'
+        )
+        self.user.set_password('ped123')
+        self.user.save()
+
+        self.vehicle = Vehicle(
+            brand="Mercedes",
+            model="Clase A",
+            license_plate="6716 MUV",
+            color="Gris",
+            type="Segmento C",
+            user=self.user
+        )
+        self.vehicle.save()
+
+        self.data = {
+                "username": "Romario",
+                "password": "roma4win125",
+                "email": "romper@gmail.com",
+                "first_name": "Romario",
+                "last_name": "Velázquez",
+                "profile": {
+                    "phone": "618518923",
+                    "birthdate": "1985-05-02"
+                },
+                "vehicle":{
+                    "brand": "Opel",
+                    "model": "Corsa",
+                    "license_plate": "5574 CKX",
+                    "color": "Negro",
+                    "type": "Segmento A"
+                }
+            }
+    
+    #Test register with an existing username
+    def test_invalid_register_username_exists(self):
+        client = APIClient()
+        data = self.data
+        data['username'] = self.user.username
+
+        response = client.post( '/api/register/', data, format='json')
+
+        self.assertTrue('username already exists.' in response.data['error'])
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    #Test register with an existing email
+    def test_invalid_register_email_exist(self):
+        client = APIClient()
+        data = self.data
+        data['email'] = self.user.email
+
+        response = client.post('/api/register/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    #Test register with a short or common password
+    def test_invalid_register_password(self):
+        client = APIClient()
+        data = self.data
+        data['password'] = "hola"
+
+        response = client.post('/api/register/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    #Test register without first name
+    def test_invalid_register_first_name(self):
+        client = APIClient()
+        data = self.data
+        data.pop("first_name", None)
+
+        response = client.post('/api/register/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    #Test register without last name
+    def test_invalid_register_last_name(self):
+        client = APIClient()
+        data = self.data
+        data.pop("last_name", None)
+
+        response = client.post('/api/register/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    #Test register without phone
+    def test_invalid_register_phone(self):
+        client = APIClient()
+        data = self.data
+        data['profile'].pop("phone", None)
+
+        response = client.post('/api/register/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    #Test register without birthdate
+    def test_invalid_register_birthdate(self):
+        client = APIClient()
+        data = self.data
+        data['profile'].pop("phone", None)
+
+        response = client.post('/api/register/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    #Test register with a birthdate that is not a date
+    def test_invalid_register_birthdate_not_date(self):
+        client = APIClient()
+        data = self.data
+        data['profile']['birthdate'] = "fecha"
+
+        response = client.post('/api/register/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    #Test register without profile data
+    def test_invalid_register_profile(self):
+        client = APIClient()
+        data = self.data
+        data.pop("profile", None)
+
+        response = client.post('/api/register/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    #Test register without vehicle data
+    def test_invalid_register_vehicle(self):
+        client = APIClient()
+        data = self.data
+        data.pop("vehicle", None)
+
+        response = client.post('/api/register/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    #Test register without vehicle brand
+    def test_invalid_register_brand(self):
+        client = APIClient()
+        data = self.data
+        data['vehicle'].pop("brand",None)
+
+        response = client.post('/api/register/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    #Test register without vehicle model
+    def test_invalid_register_model(self):
+        client = APIClient()
+        data = self.data
+        data['vehicle'].pop("model",None)
+
+        response = client.post('/api/register/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+    
+    #Test register without vehicle license_plate
+    def test_invalid_register_license_plate(self):
+        client = APIClient()
+        data = self.data
+        data['vehicle'].pop("license_plate",None)
+
+        response = client.post('/api/register/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    #Test register with an existing license_plate
+    def test_invalid_register_license_plate_exists(self):
+        client = APIClient()
+        data = self.data
+        data['vehicle']['license_plate'] = self.vehicle.license_plate
+
+        response = client.post('/api/register/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    #Test register without vehicle color
+    def test_invalid_register_color(self):
+        client = APIClient()
+        data = self.data
+        data['vehicle'].pop("color",None)
+
+        response = client.post('/api/register/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    #Test succesfully register
+    def test_successfully_register(self):
+        client = APIClient()
+        response = client.post('/api/register/', self.data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)

@@ -1,9 +1,12 @@
 from pyexpat import model
+import coreapi
 from django.shortcuts import render
 import jwt
 from django.contrib.auth.models import User
+
+#from api.serializers import SwaggerRegisterSerializer
 from .models import Profile, User, Vehicle, Announcement, Reservation
-from api.serializers import UserSerializer,VehicleSerializer, ProfileSerializer
+from api.serializers import UserSerializer,VehicleSerializer, ProfileSerializer, RegisterSerializer, ProfileRegisterSerializer, VehicleRegisterSerializer
 import datetime
 from api.geolocator import coordinates_to_address
 from .models import Vehicle, Announcement, Reservation, User
@@ -18,7 +21,7 @@ from rest_framework.permissions import IsAuthenticated,BasePermission
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken,BlacklistedToken
 from rest_framework.authtoken.models import Token
 from rest_framework_simplejwt import views as jwt_views
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Count
 
@@ -27,6 +30,7 @@ from django.shortcuts import get_object_or_404
 from drf_yasg.utils import swagger_auto_schema
 from django.utils.timezone import make_aware
 from .geolocator import coordinates_to_address, address_to_coordinates
+from rest_framework.schemas import AutoSchema, openapi
 
 class VehiclesAPI(APIView):
     permission_classes = [IsAuthenticated]
@@ -410,3 +414,47 @@ class GeolocationToAddressAPI(APIView):
             response=Response("Petición incorrecta", status=status.HTTP_400_BAD_REQUEST)
         return response
 
+# class RegisterViewSchema(AutoSchema):
+    
+#     def get_manual_fields(self, path, method):
+#         extra_fields = []
+#         if method.lowe() == 'post':
+#             extra_fields = [
+#                 coreapi.Field('username'),
+#                 coreapi.Field('password')
+#             ]
+#         manual_fields = super().get_manual_fields(path, method)
+#         return manual_fields + extra_fields
+
+class RegisterAPI(APIView):
+    permision_classes = (AllowAny,)
+    #schema = RegisterViewSchema()
+    
+#    @swagger_auto_schema(request_body=SwaggerRegisterSerializer)
+    def post(self, request):
+        data = request.data.copy()
+        serializer_data = RegisterSerializer(data=data)
+        if serializer_data.is_valid():
+            serializer_data.save()
+            userId = User.objects.filter(username=data['username']).get().id
+            if 'profile' in data and 'vehicle' in data:
+                data['profile']['user'] = userId
+                data['vehicle']['user'] = userId
+                profile_data = ProfileRegisterSerializer(data=data['profile'])
+                vehicle_data = VehicleRegisterSerializer(data=data['vehicle'])
+                if profile_data.is_valid() and vehicle_data.is_valid():
+                    profile_data.save()
+                    vehicle_data.save()
+                    return Response({"mensaje":"Successfully registered","user":serializer_data.data},status=status.HTTP_201_CREATED)
+                else:
+                    profile_data.is_valid()
+                    vehicle_data.is_valid()
+                    User.objects.filter(id=userId).delete()
+                    err=[str(vehicle_data.errors),str(profile_data.errors)]
+                    return Response({"error":err}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                User.objects.filter(id=userId).delete()
+                return Response({"error":"You must insert a vehicle and related data to a profile."}, status=status.HTTP_400_BAD_REQUEST)        
+        else:
+            return Response({"error":str(serializer_data.errors)},status=status.HTTP_400_BAD_REQUEST)
+        
