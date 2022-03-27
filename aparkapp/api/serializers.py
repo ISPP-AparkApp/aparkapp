@@ -75,6 +75,11 @@ class SwaggerUpdateAnnouncementSerializer(serializers.ModelSerializer):
         model = Announcement
         fields = [ 'status']
 
+class SwaggerCancelAnnouncementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Announcement
+        fields = ['cancelled']
+
 
 ### RESERVATION SERIALIZERS
 

@@ -22,7 +22,8 @@ from api.serializers import (AnnouncementSerializer,
                              SwaggerUpdateReservationSerializer,
                              SwaggerUserSerializer, SwaggerVehicleSerializer,
                              SwaggerVehicleSerializerId, UserSerializer,
-                             VehicleSerializer, VehicleSerializerId)
+                             VehicleSerializer, VehicleSerializerId,
+                             SwaggerCancelAnnouncementSerializer)
 
 from .geolocator import address_to_coordinates, coordinates_to_address
 from .models import Announcement, Profile, Reservation, User, Vehicle
@@ -223,8 +224,6 @@ class AnnouncementsUserAPI(APIView):
 
         return Response(announcement_serializer.data, status=status.HTTP_200_OK)
 
-
-    
 class AnnouncementStatusAPI(APIView):
     permission_classes = [IsAuthenticated]
     
@@ -251,6 +250,8 @@ class AnnouncementStatusAPI(APIView):
                 if announcement_to_update:
                     announcement_to_update.update(status=request.data["status"])
                     res=Response("Se ha actualizado con éxito el anuncio",status=status.HTTP_204_NO_CONTENT)
+                else:
+                    raise Exception()
             else:
                 res=Response("La petición es inválida", status=status.HTTP_400_BAD_REQUEST)
         except Exception:
@@ -318,7 +319,27 @@ class AnnouncementAPI(APIView):
                     return Response("No se puede borrar un anuncio que usted no ha publicado.", status.HTTP_401_UNAUTHORIZED)
             except:
                 return Response("No existe el anuncio que desea borrar.", status.HTTP_400_BAD_REQUEST)
-    
+
+class CancelAnnouncementsAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(request_body=SwaggerCancelAnnouncementSerializer)
+    def put(self, request, pk):
+        try:
+            if request.data["cancelled"]:
+                announcement_to_update= Announcement.objects.filter(pk=pk)
+                if announcement_to_update:
+                    announcement_to_update.update(cancelled=request.data["cancelled"])
+                    res = Response("El anuncio se ha actualizado con éxito", status=status.HTTP_204_NO_CONTENT)
+                else:
+                    raise Exception()
+            else:
+                res = Response("La petición es inválida",status=status.HTTP_400_BAD_REQUEST)
+        except Exception:
+            res = Response("No existe el anuncio especificado", status=status.HTTP_404_NOT_FOUND)
+
+        return res
+
 class ReservationByAnouncementAPI(APIView):
     def get(self, request,pk):
         reservation = Reservation.objects.filter(announcement=pk, cancelled=False)
