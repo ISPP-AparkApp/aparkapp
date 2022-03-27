@@ -1,5 +1,7 @@
 from django.urls import path
 from rest_framework_simplejwt import views as jwt_views
+
+from .payments import StripePaymentsAPI
 from .views import (VehiclesAPI, AnnouncementAPI, AnnouncementsAPI, AnnouncementStatusAPI, 
 UsersVehiclesAPI, ReservationAPI, ReservationsAPI, GeolocationToAddressAPI, AnnouncementsUserAPI, ReservationByAnouncementAPI,
 GeolocationToCoordinatesAPI, VehiclesIdAPI, UsersAPI, ProfileApi)
@@ -23,4 +25,5 @@ urlpatterns = [
     path('reservation/<int:pk>/', ReservationAPI.as_view()),
     path('geolocatorToAddress/', GeolocationToAddressAPI.as_view()),
     path('geolocatorToCoordinates/', GeolocationToCoordinatesAPI.as_view()),
+    path('payments/<int:pk>/', StripePaymentsAPI.as_view()),
 ]

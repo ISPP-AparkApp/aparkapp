@@ -1,6 +1,4 @@
 from pyexpat import model
-from django.shortcuts import render
-import jwt
 from django.contrib.auth.models import User
 from .models import Profile, User, Vehicle, Announcement, Reservation
 from api.serializers import UserSerializer,VehicleSerializer, ProfileSerializer
@@ -14,14 +12,8 @@ VehicleSerializerId, SwaggerVehicleSerializerId,SwaggerUserSerializer,SwaggerPro
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, filters, generics
-from rest_framework.permissions import IsAuthenticated,BasePermission
-from rest_framework_simplejwt.token_blacklist.models import OutstandingToken,BlacklistedToken
-from rest_framework.authtoken.models import Token
-from rest_framework_simplejwt import views as jwt_views
 from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
-from django.db.models import Count
-
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from drf_yasg.utils import swagger_auto_schema
@@ -324,7 +316,8 @@ class ReservationByAnouncementAPI(APIView):
 
 
 class ReservationAPI(APIView):
-    
+    permission_classes = [IsAuthenticated]
+
     def get(self, request,pk):
         return Response(ReservationSerializer(get_object_or_404(Reservation, pk=pk)).data)
     
@@ -356,8 +349,8 @@ class ReservationAPI(APIView):
         return response
 
 class ReservationsAPI(APIView):
-
- # Returns own reservations
+    permission_classes = [IsAuthenticated]
+    # Returns own reservations
     def get(self, request):
         reservations=Reservation.objects.filter(user=request.user)
         reservations_data=[]
@@ -385,7 +378,7 @@ class ReservationsAPI(APIView):
         return response
 
 class GeolocationToCoordinatesAPI(APIView):
-
+    permission_classes = [IsAuthenticated]
     # I don't like this validation seems inefficient but not time to redo it for now
     @swagger_auto_schema(request_body=GeolocationToCoordinatesSerializer) 
     def post(self, request):
@@ -399,7 +392,7 @@ class GeolocationToCoordinatesAPI(APIView):
         return response
 
 class GeolocationToAddressAPI(APIView):
-    
+    permission_classes = [IsAuthenticated]
     @swagger_auto_schema(request_body=GeolocationToAddressSerializer) 
     def post(self, request):
         serializer = GeolocationToAddressSerializer(data=request.data)
