@@ -1,3 +1,4 @@
+from urllib import response
 from django.test import TestCase
 from rest_framework.test import APIClient
 from api.models import User, Vehicle, Announcement, Reservation,Profile
@@ -737,6 +738,20 @@ class AnnouncementTestCase(TestCase):
     '''
 
 
+    def test_get_my_announcements(self):
+        client = APIClient()
+        response = client.get('/api/myAnnouncements/', format='json',
+                              HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+    
+    def test_filter_announcements_by_datetime(self):
+        client = APIClient()
+        response = client.get('/api/announcements/?date=2022-08-14 17:43',
+                              format='json', HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        results = response.json()
+        for r in results:
+            self.assertEqual(r['date'], '2022-08-14 17:43')
 
 class UserVehiclesTestCase(TestCase):
     def setUp(self):

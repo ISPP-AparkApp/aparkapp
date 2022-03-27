@@ -2,7 +2,7 @@ from django.urls import path
 from rest_framework_simplejwt import views as jwt_views
 from .views import (VehiclesAPI, AnnouncementAPI, AnnouncementsAPI, AnnouncementStatusAPI, 
 UsersVehiclesAPI, ReservationAPI, ReservationsAPI, GeolocationToAddressAPI, AnnouncementsUserAPI, ReservationByAnouncementAPI,
-GeolocationToCoordinatesAPI, VehiclesIdAPI, UsersAPI, ProfileApi)
+GeolocationToCoordinatesAPI, VehiclesIdAPI, UsersAPI, ProfileApi, myAnnouncementsAPI)
 
 
 urlpatterns = [
@@ -13,6 +13,7 @@ urlpatterns = [
     path('login/', jwt_views.TokenObtainPairView.as_view()),
     path('refresh-token/',jwt_views.TokenRefreshView.as_view()),
     path('announcements/', AnnouncementsAPI.as_view()),
+    path('myAnnouncements/', myAnnouncementsAPI.as_view()),
     path('announcements/status/<int:pk>/', AnnouncementStatusAPI.as_view()),
     path('announcement/<int:pk>/', AnnouncementAPI.as_view()),
     path('announcement/user/', AnnouncementsUserAPI.as_view()),

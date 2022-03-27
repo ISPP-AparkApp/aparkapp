@@ -21,6 +21,7 @@ from rest_framework_simplejwt import views as jwt_views
 from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Count
+from django.urls import resolve
 
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -150,7 +151,7 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
     serializer_class = AnnouncementSerializer
     search_fields = ('zone','location','longitude','latitude',)
     ordering_fields = ('price',)
-    filterset_fields = ('vehicle__type',)
+    filterset_fields = ('vehicle__type','date')
 
     def filter_queryset(self, queryset):
         for backend in list(self.filter_backends):
@@ -205,6 +206,15 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)    
+
+class myAnnouncementsAPI(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        announcements = Announcement.objects.filter(user=request.user)
+        serializer_class = AnnouncementSerializer(announcements,many=True)
+
+        return Response(serializer_class.data)
 
 class AnnouncementsUserAPI(APIView):
     def get(self,request):
