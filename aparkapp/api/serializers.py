@@ -95,6 +95,11 @@ class SwaggerUpdateReservationSerializer(serializers.ModelSerializer):
         model = Reservation
         fields = ['date','n_extend','cancelled','rated','announcement', 'user']
 
+class SwaggerCancelReservationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Reservation
+        fields = ['cancelled']
+
 
 ### GEOLOCATION SERIALIZERS
 

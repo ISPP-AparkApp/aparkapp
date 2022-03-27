@@ -22,7 +22,8 @@ from api.serializers import (AnnouncementSerializer,
                              SwaggerUpdateReservationSerializer,
                              SwaggerUserSerializer, SwaggerVehicleSerializer,
                              SwaggerVehicleSerializerId, UserSerializer,
-                             VehicleSerializer, VehicleSerializerId)
+                             VehicleSerializer, VehicleSerializerId,
+                             SwaggerCancelReservationSerializer)
 
 from .geolocator import address_to_coordinates, coordinates_to_address
 from .models import Announcement, Profile, Reservation, User, Vehicle
@@ -393,6 +394,26 @@ class ReservationsAPI(APIView):
             response=Response("La reserva ha sido creada",status=status.HTTP_201_CREATED)
 
         return response
+
+class CancelReservationAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(request_body=SwaggerCancelReservationSerializer)
+    def put(self, request, pk):
+        try:
+            if request.data["cancelled"]:
+                reservation_to_update= Reservation.objects.filter(pk=pk)
+                if reservation_to_update:
+                    reservation_to_update.update(cancelled=request.data["cancelled"])
+                    res = Response("La reserva se ha actualizado con éxito", status=status.HTTP_204_NO_CONTENT)
+                else:
+                    raise Exception()
+            else:
+                res = Response("La petición es inválida",status=status.HTTP_400_BAD_REQUEST)
+        except Exception:
+            res = Response("No existe la reserva especificada", status=status.HTTP_404_NOT_FOUND)
+
+        return res
 
 class GeolocationToCoordinatesAPI(APIView):
 
