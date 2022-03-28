@@ -2,11 +2,11 @@ from django.urls import path
 from rest_framework_simplejwt import views as jwt_views
 
 from .views import (AnnouncementAPI, AnnouncementsAPI, AnnouncementStatusAPI,
-                    AnnouncementsUserAPI, CancelAnnouncementsAPI, GeolocationToAddressAPI,
+                    AnnouncementsUserAPI, CancelAnnouncementsAPI, CancelReservationAPI,GeolocationToAddressAPI,
                     GeolocationToCoordinatesAPI, ProfileApi, ReservationAPI,
                     ReservationByAnouncementAPI, ReservationsAPI, UsersAPI,
                     UsersVehiclesAPI, VehiclesAPI, VehiclesIdAPI,
-                    myAnnouncementsAPI)
+                    myAnnouncementsAPI, RegisterAPI)
 
 urlpatterns = [
     path('vehicles/', VehiclesAPI.as_view()),
@@ -27,5 +27,7 @@ urlpatterns = [
     path('reservation/<int:pk>/', ReservationAPI.as_view()),
     path('geolocatorToAddress/', GeolocationToAddressAPI.as_view()),
     path('geolocatorToCoordinates/', GeolocationToCoordinatesAPI.as_view()),
+    path('register/', RegisterAPI.as_view()),
     path('cancel/announcement/<int:pk>', CancelAnnouncementsAPI.as_view()),
+    path('cancel/reservation/<int:pk>/',CancelReservationAPI.as_view()),
 ]

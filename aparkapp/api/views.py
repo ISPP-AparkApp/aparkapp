@@ -7,7 +7,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import filters, generics, status
 from rest_framework.authtoken.models import Token
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from api.geolocator import coordinates_to_address
@@ -23,7 +23,10 @@ from api.serializers import (AnnouncementSerializer,
                              SwaggerUserSerializer, SwaggerVehicleSerializer,
                              SwaggerVehicleSerializerId, UserSerializer,
                              VehicleSerializer, VehicleSerializerId,
-                             SwaggerCancelAnnouncementSerializer)
+                             SwaggerCancelAnnouncementSerializer,SwaggerCancelReservationSerializer)
+                             ProfileRegisterSerializer,VehicleRegisterSerializer, 
+                             SwaggerRegisterSer, RegisterSerializer, 
+                             AnnouncementNestedVehicleSerializer)
 
 from .geolocator import address_to_coordinates, coordinates_to_address
 from .models import Announcement, Profile, Reservation, User, Vehicle
@@ -272,14 +275,10 @@ class AnnouncementAPI(APIView):
     def get(self,request,pk):
         an = self.get_object(pk)
         res_list = Reservation.objects.filter(user=request.user)
-        aux = list(res_list.values_list('announcement'))
-        announcement_list = []
+        announcement_list = list(res_list.values_list('announcement', flat=True))
 
-        for announcement in aux:
-            announcement_list.append(announcement[0])
-
-        if True or pk in announcement_list or request.user==an.user:   
-            serializer = AnnouncementSerializer(an)
+        if True or pk in announcement_list or request.user==an.user:
+            serializer = AnnouncementNestedVehicleSerializer(an)
             return Response(serializer.data)
         else:
             return Response({"detail": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
@@ -415,6 +414,26 @@ class ReservationsAPI(APIView):
 
         return response
 
+class CancelReservationAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(request_body=SwaggerCancelReservationSerializer)
+    def put(self, request, pk):
+        try:
+            if request.data["cancelled"]:
+                reservation_to_update= Reservation.objects.filter(pk=pk)
+                if reservation_to_update:
+                    reservation_to_update.update(cancelled=request.data["cancelled"])
+                    res = Response("La reserva se ha actualizado con éxito", status=status.HTTP_204_NO_CONTENT)
+                else:
+                    raise Exception()
+            else:
+                res = Response("La petición es inválida",status=status.HTTP_400_BAD_REQUEST)
+        except Exception:
+            res = Response("No existe la reserva especificada", status=status.HTTP_404_NOT_FOUND)
+
+        return res
+
 class GeolocationToCoordinatesAPI(APIView):
 
     # I don't like this validation seems inefficient but not time to redo it for now
@@ -441,3 +460,34 @@ class GeolocationToAddressAPI(APIView):
             response=Response("Petición incorrecta", status=status.HTTP_400_BAD_REQUEST)
         return response
 
+class RegisterAPI(APIView):
+    permision_classes = (AllowAny,)
+    
+    @swagger_auto_schema(request_body=SwaggerRegisterSer)
+    def post(self, request):
+        data = request.data.copy()
+        serializer_data = RegisterSerializer(data=data)
+        if serializer_data.is_valid():
+            serializer_data.save()
+            userId = User.objects.filter(username=data['username']).get().id
+            if 'profile' in data and 'vehicle' in data:
+                data['profile']['user'] = userId
+                data['vehicle']['user'] = userId
+                profile_data = ProfileRegisterSerializer(data=data['profile'])
+                vehicle_data = VehicleRegisterSerializer(data=data['vehicle'])
+                if profile_data.is_valid() and vehicle_data.is_valid():
+                    profile_data.save()
+                    vehicle_data.save()
+                    return Response({"mensaje":"Successfully registered","user":serializer_data.data},status=status.HTTP_201_CREATED)
+                else:
+                    profile_data.is_valid()
+                    vehicle_data.is_valid()
+                    User.objects.filter(id=userId).delete()
+                    err=[str(vehicle_data.errors),str(profile_data.errors)]
+                    return Response({"error":err}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                User.objects.filter(id=userId).delete()
+                return Response({"error":"You must insert a vehicle and related data to a profile."}, status=status.HTTP_400_BAD_REQUEST)        
+        else:
+            return Response({"error":str(serializer_data.errors)},status=status.HTTP_400_BAD_REQUEST)
+        
