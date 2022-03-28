@@ -1,9 +1,12 @@
 from django.urls import path
 from rest_framework_simplejwt import views as jwt_views
-from .views import (RegisterAPI, VehiclesAPI, AnnouncementAPI, AnnouncementsAPI, AnnouncementStatusAPI, 
-UsersVehiclesAPI, ReservationAPI, ReservationsAPI, GeolocationToAddressAPI, AnnouncementsUserAPI, ReservationByAnouncementAPI,
-GeolocationToCoordinatesAPI, VehiclesIdAPI, UsersAPI, ProfileApi)
 
+from .views import (AnnouncementAPI, AnnouncementsAPI, AnnouncementStatusAPI,
+                    AnnouncementsUserAPI, CancelReservationAPI, GeolocationToAddressAPI,
+                    GeolocationToCoordinatesAPI, ProfileApi, ReservationAPI,
+                    ReservationByAnouncementAPI, ReservationsAPI, UsersAPI,
+                    UsersVehiclesAPI, VehiclesAPI, VehiclesIdAPI,
+                    myAnnouncementsAPI, RegisterAPI)
 
 urlpatterns = [
     path('vehicles/', VehiclesAPI.as_view()),
@@ -13,6 +16,7 @@ urlpatterns = [
     path('login/', jwt_views.TokenObtainPairView.as_view()),
     path('refresh-token/',jwt_views.TokenRefreshView.as_view()),
     path('announcements/', AnnouncementsAPI.as_view()),
+    path('myAnnouncements/', myAnnouncementsAPI.as_view()),
     path('announcements/status/<int:pk>/', AnnouncementStatusAPI.as_view()),
     path('announcement/<int:pk>/', AnnouncementAPI.as_view()),
     path('announcement/user/', AnnouncementsUserAPI.as_view()),
@@ -24,4 +28,5 @@ urlpatterns = [
     path('geolocatorToAddress/', GeolocationToAddressAPI.as_view()),
     path('geolocatorToCoordinates/', GeolocationToCoordinatesAPI.as_view()),
     path('register/', RegisterAPI.as_view()),
+    path('cancel/reservation/<int:pk>/',CancelReservationAPI.as_view()),
 ]

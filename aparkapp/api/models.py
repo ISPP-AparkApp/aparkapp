@@ -115,16 +115,6 @@ class Announcement(models.Model):
 
    def __str__(self):
       return str(self.id)
-   
-   def clean(self, *args, **kwargs):
-      if self.allow_wait and self.wait_time <=0:
-         raise ValidationError(('El tiempo de espera no debe ser %(wait_time)s si la opción de esperar ha sido marcada'),
-         params={'wait_time': self.wait_time},)
-      super().clean(*args, **kwargs)
-      
-   def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)   
 
 class Reservation(models.Model):
    id = models.AutoField(primary_key=True)

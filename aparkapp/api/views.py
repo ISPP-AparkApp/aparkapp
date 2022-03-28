@@ -1,33 +1,34 @@
-from pyexpat import model
-from django.shortcuts import render
-import jwt
-from django.contrib.auth.models import User
-
-from .models import Profile, User, Vehicle, Announcement, Reservation
-from api.serializers import UserSerializer,VehicleSerializer, ProfileSerializer, RegisterSerializer, ProfileRegisterSerializer, VehicleRegisterSerializer, SwaggerRegisterSer
 import datetime
-from api.geolocator import coordinates_to_address
-from .models import Vehicle, Announcement, Reservation, User
-from api.serializers import (VehicleSerializer, AnnouncementSerializer, ReservationSerializer, 
-SwaggerVehicleSerializer, SwaggerAnnouncementSerializer,SwaggerCreateReservationSerializer, UserSerializer,
-SwaggerUpdateReservationSerializer, GeolocationToAddressSerializer, GeolocationToCoordinatesSerializer, SwaggerVehicleSerializer,
-VehicleSerializerId, SwaggerVehicleSerializerId,SwaggerUserSerializer,SwaggerProfileSerializer, SwaggerUpdateAnnouncementSerializer)
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status, filters, generics
-from rest_framework.permissions import IsAuthenticated,BasePermission
-from rest_framework_simplejwt.token_blacklist.models import OutstandingToken,BlacklistedToken
-from rest_framework.authtoken.models import Token
-from rest_framework_simplejwt import views as jwt_views
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from django_filters.rest_framework import DjangoFilterBackend
-from django.db.models import Count
-
+from django.contrib.auth.models import User
 from django.http import Http404
 from django.shortcuts import get_object_or_404
-from drf_yasg.utils import swagger_auto_schema
 from django.utils.timezone import make_aware
-from .geolocator import coordinates_to_address, address_to_coordinates
+from django_filters.rest_framework import DjangoFilterBackend
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework import filters, generics, status
+from rest_framework.authtoken.models import Token
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from api.geolocator import coordinates_to_address
+from api.serializers import (AnnouncementSerializer,
+                             GeolocationToAddressSerializer,
+                             GeolocationToCoordinatesSerializer,
+                             ProfileSerializer, ReservationSerializer,
+                             SwaggerAnnouncementSerializer,
+                             SwaggerCreateReservationSerializer,
+                             SwaggerProfileSerializer,
+                             SwaggerUpdateAnnouncementSerializer,
+                             SwaggerUpdateReservationSerializer,
+                             SwaggerUserSerializer, SwaggerVehicleSerializer,
+                             SwaggerVehicleSerializerId, UserSerializer,
+                             VehicleSerializer, VehicleSerializerId,
+                             SwaggerCancelReservationSerializer, ProfileRegisterSerializer,
+                             VehicleRegisterSerializer, SwaggerRegisterSer, RegisterSerializer)
+
+from .geolocator import address_to_coordinates, coordinates_to_address
+from .models import Announcement, Profile, Reservation, User, Vehicle
+from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 
 class VehiclesAPI(APIView):
     permission_classes = [IsAuthenticated]
@@ -151,7 +152,7 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
     serializer_class = AnnouncementSerializer
     search_fields = ('zone','location','longitude','latitude',)
     ordering_fields = ('price',)
-    filterset_fields = ('vehicle__type',)
+    filterset_fields = ('vehicle__type','date')
 
     def filter_queryset(self, queryset):
         for backend in list(self.filter_backends):
@@ -206,6 +207,15 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)    
+
+class myAnnouncementsAPI(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        announcements = Announcement.objects.filter(user=request.user)
+        serializer_class = AnnouncementSerializer(announcements,many=True)
+
+        return Response(serializer_class.data)
 
 class AnnouncementsUserAPI(APIView):
     def get(self,request):
@@ -327,7 +337,12 @@ class ReservationByAnouncementAPI(APIView):
 class ReservationAPI(APIView):
     
     def get(self, request,pk):
-        return Response(ReservationSerializer(get_object_or_404(Reservation, pk=pk)).data)
+        try:
+            reservation=Reservation.objects.get(pk=pk)
+            res=Response(ReservationSerializer(reservation).data, status=status.HTTP_200_OK)
+        except (MultipleObjectsReturned,ObjectDoesNotExist) as e:
+            res=Response("No se ha encontrado ninguna reserva con tal identificador", status=status.HTTP_404_NOT_FOUND)
+        return res
     
     def delete(self, request, pk):
         try:
@@ -362,13 +377,9 @@ class ReservationsAPI(APIView):
     def get(self, request):
         reservations=Reservation.objects.filter(user=request.user)
         reservations_data=[]
-        if reservations:
-            for r in reservations:
-                reservations_data.append(ReservationSerializer(r).data)
-            response=Response(data=reservations_data,status=status.HTTP_200_OK)
-        else:
-            response=Response("No se han encontrado reservas para este usuario",status=status.HTTP_404_NOT_FOUND)
-        return response
+        for r in reservations:
+            reservations_data.append(ReservationSerializer(r).data)
+        return Response(data=reservations_data,status=status.HTTP_200_OK)
 
     @swagger_auto_schema(request_body=SwaggerCreateReservationSerializer)        
     def post(self, request):
@@ -384,6 +395,26 @@ class ReservationsAPI(APIView):
             response=Response("La reserva ha sido creada",status=status.HTTP_201_CREATED)
 
         return response
+
+class CancelReservationAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(request_body=SwaggerCancelReservationSerializer)
+    def put(self, request, pk):
+        try:
+            if request.data["cancelled"]:
+                reservation_to_update= Reservation.objects.filter(pk=pk)
+                if reservation_to_update:
+                    reservation_to_update.update(cancelled=request.data["cancelled"])
+                    res = Response("La reserva se ha actualizado con éxito", status=status.HTTP_204_NO_CONTENT)
+                else:
+                    raise Exception()
+            else:
+                res = Response("La petición es inválida",status=status.HTTP_400_BAD_REQUEST)
+        except Exception:
+            res = Response("No existe la reserva especificada", status=status.HTTP_404_NOT_FOUND)
+
+        return res
 
 class GeolocationToCoordinatesAPI(APIView):
 
