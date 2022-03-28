@@ -6,7 +6,7 @@ from .views import (AnnouncementAPI, AnnouncementsAPI, AnnouncementStatusAPI,
                     GeolocationToCoordinatesAPI, ProfileApi, ReservationAPI,
                     ReservationByAnouncementAPI, ReservationsAPI, UsersAPI,
                     UsersVehiclesAPI, VehiclesAPI, VehiclesIdAPI,
-                    myAnnouncementsAPI)
+                    myAnnouncementsAPI, RegisterAPI)
 
 urlpatterns = [
     path('vehicles/', VehiclesAPI.as_view()),
@@ -27,5 +27,6 @@ urlpatterns = [
     path('reservation/<int:pk>/', ReservationAPI.as_view()),
     path('geolocatorToAddress/', GeolocationToAddressAPI.as_view()),
     path('geolocatorToCoordinates/', GeolocationToCoordinatesAPI.as_view()),
+    path('register/', RegisterAPI.as_view()),
     path('cancel/reservation/<int:pk>/',CancelReservationAPI.as_view()),
 ]

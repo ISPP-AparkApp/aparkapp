@@ -7,7 +7,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import filters, generics, status
 from rest_framework.authtoken.models import Token
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from api.geolocator import coordinates_to_address
@@ -23,7 +23,8 @@ from api.serializers import (AnnouncementSerializer,
                              SwaggerUserSerializer, SwaggerVehicleSerializer,
                              SwaggerVehicleSerializerId, UserSerializer,
                              VehicleSerializer, VehicleSerializerId,
-                             SwaggerCancelReservationSerializer)
+                             SwaggerCancelReservationSerializer, ProfileRegisterSerializer,
+                             VehicleRegisterSerializer, SwaggerRegisterSer, RegisterSerializer)
 
 from .geolocator import address_to_coordinates, coordinates_to_address
 from .models import Announcement, Profile, Reservation, User, Vehicle
@@ -441,3 +442,34 @@ class GeolocationToAddressAPI(APIView):
             response=Response("Petición incorrecta", status=status.HTTP_400_BAD_REQUEST)
         return response
 
+class RegisterAPI(APIView):
+    permision_classes = (AllowAny,)
+    
+    @swagger_auto_schema(request_body=SwaggerRegisterSer)
+    def post(self, request):
+        data = request.data.copy()
+        serializer_data = RegisterSerializer(data=data)
+        if serializer_data.is_valid():
+            serializer_data.save()
+            userId = User.objects.filter(username=data['username']).get().id
+            if 'profile' in data and 'vehicle' in data:
+                data['profile']['user'] = userId
+                data['vehicle']['user'] = userId
+                profile_data = ProfileRegisterSerializer(data=data['profile'])
+                vehicle_data = VehicleRegisterSerializer(data=data['vehicle'])
+                if profile_data.is_valid() and vehicle_data.is_valid():
+                    profile_data.save()
+                    vehicle_data.save()
+                    return Response({"mensaje":"Successfully registered","user":serializer_data.data},status=status.HTTP_201_CREATED)
+                else:
+                    profile_data.is_valid()
+                    vehicle_data.is_valid()
+                    User.objects.filter(id=userId).delete()
+                    err=[str(vehicle_data.errors),str(profile_data.errors)]
+                    return Response({"error":err}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                User.objects.filter(id=userId).delete()
+                return Response({"error":"You must insert a vehicle and related data to a profile."}, status=status.HTTP_400_BAD_REQUEST)        
+        else:
+            return Response({"error":str(serializer_data.errors)},status=status.HTTP_400_BAD_REQUEST)
+        
