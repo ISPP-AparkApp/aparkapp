@@ -108,6 +108,8 @@ class Announcement(models.Model):
    )
    observation = models.CharField(max_length=500, default="Sin comentarios.")
    rated = models.BooleanField(default=False)
+   cancelled = models.BooleanField(default=False)
+   announcement = models.CharField(max_length=20, choices=[('yes','Esto es un anuncio')], default='yes')
 
    #Relationship
    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE)

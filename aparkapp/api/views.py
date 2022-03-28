@@ -23,7 +23,7 @@ from api.serializers import (AnnouncementSerializer,
                              SwaggerUserSerializer, SwaggerVehicleSerializer,
                              SwaggerVehicleSerializerId, UserSerializer,
                              VehicleSerializer, VehicleSerializerId,
-                             SwaggerCancelReservationSerializer)
+                             SwaggerCancelReservationSerializer, AnnouncementNestedVehicleSerializer)
 
 from .geolocator import address_to_coordinates, coordinates_to_address
 from .models import Announcement, Profile, Reservation, User, Vehicle
@@ -272,14 +272,10 @@ class AnnouncementAPI(APIView):
     def get(self,request,pk):
         an = self.get_object(pk)
         res_list = Reservation.objects.filter(user=request.user)
-        aux = list(res_list.values_list('announcement'))
-        announcement_list = []
+        announcement_list = list(res_list.values_list('announcement', flat=True))
 
-        for announcement in aux:
-            announcement_list.append(announcement[0])
-
-        if True or pk in announcement_list or request.user==an.user:   
-            serializer = AnnouncementSerializer(an)
+        if True or pk in announcement_list or request.user==an.user:
+            serializer = AnnouncementNestedVehicleSerializer(an)
             return Response(serializer.data)
         else:
             return Response({"detail": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
