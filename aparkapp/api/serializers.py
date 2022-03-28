@@ -91,18 +91,13 @@ class GeolocationToCoordinatesSerializer(serializers.Serializer):
     raw= serializers.BooleanField(default=True)
 
 class VehicleRegisterSerializer(serializers.ModelSerializer):
-    #license_plate = serializers.CharField(required=True, validators=[UniqueValidator(queryset=Vehicle.objects.all().values_list('license_plate',flat=True))])
-    
     class Meta:
         model = Vehicle
         fields = ['brand','model','license_plate','color','type', 'user']
 
 class RegisterSerializer(serializers.ModelSerializer):
-    #vehicle = VehicleRegisterSerializer()
-
     email = serializers.EmailField(required=True, validators=[UniqueValidator(queryset=User.objects.all())])
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
-    #password2 = serializers.CharField(write_only=True, required=True)
 
     class Meta:
         model = User
@@ -110,12 +105,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         extra_kwargs = {'first_name': {'required': True},
                      'last_name': {'required': True}
                         }
-
-        # def validate(self,attrs):
-        #     if attrs['password'] != attrs['password2']:
-        #         raise serializers.ValidationError({'password': 'Password fields did not match.'})
-            
-        #     return attrs
 
         def create(self, validated_data):
             user = User.objects.create(username=validated_data['username'],
@@ -127,51 +116,19 @@ class RegisterSerializer(serializers.ModelSerializer):
             user.set_password(validated_data['password'])
             user.save()
 
-        #     v=Vehicle.objects.create(VehicleRegisterSerializer(), validated_data=vehicle_data)
-        #     v.save()
-        #     print(validated_data)
-        #     user = User.objects.update_or_create(validated_data)
-
             return user
 
 class ProfileRegisterSerializer(serializers.ModelSerializer):
-    #user = RegisterSerializer()
-    #birthdate = serializers.DateField(required=True)
     class Meta:
         model = Profile
         fields = ['phone', 'birthdate', 'user']
-        extra_kwargs = {'phone': {'required': True}
-                        }
-        # def create(self, validated_data):
-        #     user_data = validated_data.pop('user')
-        #     user = RegisterSerializer.create(RegisterSerializer(), validated_data=user_data)
-        #     profile = Profile.objects.update_or_create(user=user,**validated_data)
 
-        #     return profile
 
-class SwaggerRegisterField(serializers.JSONField):
-    class Meta:
-        swagger_schema_fields = {
-            "username": "username",
-            "password": "password",
-            "email": "email",
-            "first_name": "first_name",
-            "last_name": "last_name",
-            "profile": {
-                "phone": "phone",
-                "birthdate": "birthdate"
-            },
-            "vehicle":{
-                "brand": "brand",
-                "model": "model",
-                "color": "color",
-                "type": "type"
-            }
-        }
-
-class SwaggerRegisterSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = "__all__"
-    
-    register = SwaggerRegisterField()
+class SwaggerRegisterSer(serializers.Serializer):
+    username = serializers.CharField(max_length=100)
+    password = serializers.CharField(max_length=100)
+    email = serializers.EmailField()
+    first_name = serializers.CharField(max_length=100)
+    last_name = serializers.CharField(max_length=100)
+    profile = ProfileSerializer()
+    vehicle = SwaggerVehicleSerializerId()

@@ -1,12 +1,10 @@
 from pyexpat import model
-import coreapi
 from django.shortcuts import render
 import jwt
 from django.contrib.auth.models import User
 
-#from api.serializers import SwaggerRegisterSerializer
 from .models import Profile, User, Vehicle, Announcement, Reservation
-from api.serializers import UserSerializer,VehicleSerializer, ProfileSerializer, RegisterSerializer, ProfileRegisterSerializer, VehicleRegisterSerializer
+from api.serializers import UserSerializer,VehicleSerializer, ProfileSerializer, RegisterSerializer, ProfileRegisterSerializer, VehicleRegisterSerializer, SwaggerRegisterSer
 import datetime
 from api.geolocator import coordinates_to_address
 from .models import Vehicle, Announcement, Reservation, User
@@ -30,7 +28,6 @@ from django.shortcuts import get_object_or_404
 from drf_yasg.utils import swagger_auto_schema
 from django.utils.timezone import make_aware
 from .geolocator import coordinates_to_address, address_to_coordinates
-from rest_framework.schemas import AutoSchema, openapi
 
 class VehiclesAPI(APIView):
     permission_classes = [IsAuthenticated]
@@ -414,23 +411,10 @@ class GeolocationToAddressAPI(APIView):
             response=Response("Petición incorrecta", status=status.HTTP_400_BAD_REQUEST)
         return response
 
-# class RegisterViewSchema(AutoSchema):
-    
-#     def get_manual_fields(self, path, method):
-#         extra_fields = []
-#         if method.lowe() == 'post':
-#             extra_fields = [
-#                 coreapi.Field('username'),
-#                 coreapi.Field('password')
-#             ]
-#         manual_fields = super().get_manual_fields(path, method)
-#         return manual_fields + extra_fields
-
 class RegisterAPI(APIView):
     permision_classes = (AllowAny,)
-    #schema = RegisterViewSchema()
     
-#    @swagger_auto_schema(request_body=SwaggerRegisterSerializer)
+    @swagger_auto_schema(request_body=SwaggerRegisterSer)
     def post(self, request):
         data = request.data.copy()
         serializer_data = RegisterSerializer(data=data)
