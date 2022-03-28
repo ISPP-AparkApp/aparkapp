@@ -1242,3 +1242,15 @@ class RegistrationTestCase(TestCase):
         client = APIClient()
         response = client.post('/api/register/', self.data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        
+        #Comprobamos que el usuario recién registrado puede logearse
+        second_response = client.post('/api/login/', {
+                'username': self.data['username'],
+                'password': self.data['password']
+            },
+            format='json'
+        )
+        self.assertEqual(second_response.status_code, status.HTTP_200_OK)
+        self.assertTrue('access' in second_response.data)
+        self.assertTrue('refresh' in second_response.data)
+    
