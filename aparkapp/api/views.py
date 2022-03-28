@@ -23,7 +23,7 @@ from api.serializers import (AnnouncementSerializer,
                              SwaggerUserSerializer, SwaggerVehicleSerializer,
                              SwaggerVehicleSerializerId, UserSerializer,
                              VehicleSerializer, VehicleSerializerId,
-                             SwaggerCancelAnnouncementSerializer,SwaggerCancelReservationSerializer)
+                             SwaggerCancelAnnouncementSerializer,SwaggerCancelReservationSerializer,
                              ProfileRegisterSerializer,VehicleRegisterSerializer, 
                              SwaggerRegisterSer, RegisterSerializer, 
                              AnnouncementNestedVehicleSerializer)
