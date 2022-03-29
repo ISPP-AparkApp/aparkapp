@@ -118,24 +118,23 @@ class GeolocationToCoordinatesSerializer(serializers.Serializer):
 
 ### REGISTER SERIALIZERS
 
-class VehicleRegisterSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Vehicle
-        fields = ['brand','model','license_plate','color','type', 'user']
-
 class RegisterSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True, validators=[UniqueValidator(queryset=User.objects.all())])
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
-
+    profile = ProfileSerializer()
+    vehicles = SwaggerVehicleSerializerId(many=True)
+    
     class Meta:
         model = User
-        fields = ['username', 'password', 'email', 'first_name', 'last_name']
+        fields = ('username', 'password', 'email', 'first_name', 'last_name', 'profile', 'vehicles')
         extra_kwargs = {'first_name': {'required': True},
                      'last_name': {'required': True}
                         }
 
     def create(self, validated_data):
-        user = User.objects.create_user(username=validated_data['username'],
+        profile_data = validated_data.pop('profile')
+        vehicles_data = validated_data.pop('vehicles')
+        user = User.objects.create(username=validated_data['username'],
             email=validated_data['email'],
             first_name=validated_data['first_name'],
             last_name=validated_data['last_name']
@@ -144,19 +143,8 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.set_password(validated_data['password'])
         user.save()
 
+        Profile.objects.create(user=user, **profile_data)
+        for vehicle_data in vehicles_data:
+            Vehicle.objects.create(user=user, **vehicle_data)
+
         return user
-
-class ProfileRegisterSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Profile
-        fields = ['phone', 'birthdate', 'user']
-
-
-class SwaggerRegisterSer(serializers.Serializer):
-    username = serializers.CharField(max_length=100)
-    password = serializers.CharField(max_length=100)
-    email = serializers.EmailField()
-    first_name = serializers.CharField(max_length=100)
-    last_name = serializers.CharField(max_length=100)
-    profile = ProfileSerializer()
-    vehicle = SwaggerVehicleSerializerId()
