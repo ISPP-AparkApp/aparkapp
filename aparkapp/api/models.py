@@ -53,7 +53,7 @@ class Vehicle(models.Model):
       default=SEGA,
    )
    #Relationship
-   user = models.ForeignKey(User, on_delete=models.CASCADE)
+   user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='vehicles')
    
 
    def __str__(self):
