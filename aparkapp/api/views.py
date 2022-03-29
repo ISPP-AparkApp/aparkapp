@@ -24,7 +24,8 @@ from api.serializers import (AnnouncementSerializer,
                              SwaggerVehicleSerializerId, UserSerializer,
                              VehicleSerializer, VehicleSerializerId,
                              SwaggerCancelAnnouncementSerializer,SwaggerCancelReservationSerializer,
-                             RegisterSerializer, AnnouncementNestedVehicleSerializer)
+                             RegisterSerializer, 
+                             AnnouncementNestedVehicleSerializer, UserNestedProfileSerializer)
 
 from .geolocator import address_to_coordinates, coordinates_to_address
 from .models import Announcement, Profile, Reservation, User, Vehicle
@@ -119,6 +120,14 @@ class UsersAPI(APIView):
         user=get_object_or_404(User,pk=pk)
         user.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+class UserAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        user = get_object_or_404(User, pk=pk)
+        serializer = UserNestedProfileSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     
 class ProfileApi(APIView):
     permission_classes = [IsAuthenticated]

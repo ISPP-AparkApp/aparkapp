@@ -379,14 +379,14 @@ class UserTestCase(TestCase):
         self.user.set_password('admin123')
         self.user.save()
 
-        user = User(
+        self.user2 = User(
             username="prueba",
             email="test@gmail.com",
             first_name="Testing",
             last_name="Testing"
         )
-        user.user = self.user
-        user.save()
+        self.user2 = self.user
+        self.user2.save()
 
         profile = Profile(
             id= self.user.id,
@@ -453,7 +453,17 @@ class UserTestCase(TestCase):
             HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-
+    
+    def test_get_user_and_profile(self):
+        client = APIClient()
+        response = client.get('/api/users/'+str(self.user2.id)+'/',HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+    
+    def test_get_profile_and_user_error(self):
+        client = APIClient()
+        response = client.get('/api/users/21/',HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        
 class AnnouncementTestCase(TestCase):
 
     def setUp(self):
