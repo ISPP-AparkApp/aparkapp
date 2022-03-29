@@ -215,7 +215,7 @@ class myAnnouncementsAPI(APIView):
     
     def get(self, request):
         announcements = Announcement.objects.filter(user=request.user)
-        serializer_class = AnnouncementSerializer(announcements,many=True)
+        serializer_class = AnnouncementNestedVehicleSerializer(announcements,many=True)
 
         return Response(serializer_class.data)
 
