@@ -1091,13 +1091,13 @@ class RegistrationTestCase(TestCase):
                     "phone": "618518923",
                     "birthdate": "1985-05-02"
                 },
-                "vehicle":{
+                "vehicles":[{
                     "brand": "Opel",
                     "model": "Corsa",
                     "license_plate": "5574 CKX",
                     "color": "Negro",
                     "type": "Segmento A"
-                }
+                }]
             }
     
     #Test register with an existing username
@@ -1107,8 +1107,6 @@ class RegistrationTestCase(TestCase):
         data['username'] = self.user.username
 
         response = client.post( '/api/register/', data, format='json')
-
-        self.assertTrue('username already exists.' in response.data['error'])
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     #Test register with an existing email
@@ -1179,7 +1177,6 @@ class RegistrationTestCase(TestCase):
         client = APIClient()
         data = self.data
         data.pop("profile", None)
-
         response = client.post('/api/register/', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -1187,7 +1184,7 @@ class RegistrationTestCase(TestCase):
     def test_invalid_register_vehicle(self):
         client = APIClient()
         data = self.data
-        data.pop("vehicle", None)
+        data.pop("vehicles", None)
 
         response = client.post('/api/register/', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -1196,7 +1193,7 @@ class RegistrationTestCase(TestCase):
     def test_invalid_register_brand(self):
         client = APIClient()
         data = self.data
-        data['vehicle'].pop("brand",None)
+        data['vehicles'][0].pop("brand",None)
 
         response = client.post('/api/register/', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -1205,7 +1202,7 @@ class RegistrationTestCase(TestCase):
     def test_invalid_register_model(self):
         client = APIClient()
         data = self.data
-        data['vehicle'].pop("model",None)
+        data['vehicles'][0].pop("model",None)
 
         response = client.post('/api/register/', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -1214,7 +1211,7 @@ class RegistrationTestCase(TestCase):
     def test_invalid_register_license_plate(self):
         client = APIClient()
         data = self.data
-        data['vehicle'].pop("license_plate",None)
+        data['vehicles'][0].pop("license_plate",None)
 
         response = client.post('/api/register/', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -1223,7 +1220,7 @@ class RegistrationTestCase(TestCase):
     def test_invalid_register_license_plate_exists(self):
         client = APIClient()
         data = self.data
-        data['vehicle']['license_plate'] = self.vehicle.license_plate
+        data['vehicles'][0]['license_plate'] = self.vehicle.license_plate
 
         response = client.post('/api/register/', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -1232,7 +1229,7 @@ class RegistrationTestCase(TestCase):
     def test_invalid_register_color(self):
         client = APIClient()
         data = self.data
-        data['vehicle'].pop("color",None)
+        data['vehicles'][0].pop("color",None)
 
         response = client.post('/api/register/', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

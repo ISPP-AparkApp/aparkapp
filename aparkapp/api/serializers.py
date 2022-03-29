@@ -135,6 +135,11 @@ class RegisterSerializer(serializers.ModelSerializer):
         extra_kwargs = {'first_name': {'required': True},
                      'last_name': {'required': True}
                         }
+ 
+    def validate_vehicles(self, value):
+        if not value:
+            raise serializers.ValidationError(("Inserte un vehículo"))
+        return value
 
     def create(self, validated_data):
         profile_data = validated_data.pop('profile')

@@ -24,9 +24,7 @@ from api.serializers import (AnnouncementSerializer,
                              SwaggerVehicleSerializerId, UserSerializer,
                              VehicleSerializer, VehicleSerializerId,
                              SwaggerCancelAnnouncementSerializer,SwaggerCancelReservationSerializer,
-                             ProfileRegisterSerializer,VehicleRegisterSerializer, 
-                             SwaggerRegisterSer, RegisterSerializer, 
-                             AnnouncementNestedVehicleSerializer)
+                             RegisterSerializer, AnnouncementNestedVehicleSerializer)
 
 from .geolocator import address_to_coordinates, coordinates_to_address
 from .models import Announcement, Profile, Reservation, User, Vehicle
@@ -459,40 +457,44 @@ class GeolocationToAddressAPI(APIView):
         else:
             response=Response("Petición incorrecta", status=status.HTTP_400_BAD_REQUEST)
         return response
-
-# class RegisterAPI(APIView):
-#     permision_classes = (AllowAny,)
-    
-#     @swagger_auto_schema(request_body=SwaggerRegisterSer)
-#     def post(self, request):
-#         data = request.data.copy()
-#         serializer_data = RegisterSerializer(data=data)
-#         if serializer_data.is_valid():
-#             serializer_data.save()
-#             userId = User.objects.filter(username=data['username']).get().id
-#             if 'profile' in data and 'vehicle' in data:
-#                 data['profile']['user'] = userId
-#                 data['vehicle']['user'] = userId
-#                 profile_data = ProfileRegisterSerializer(data=data['profile'])
-#                 vehicle_data = VehicleRegisterSerializer(data=data['vehicle'])
-#                 if profile_data.is_valid() and vehicle_data.is_valid():
-#                     profile_data.save()
-#                     vehicle_data.save()
-#                     return Response({"mensaje":"Registrado correctamente","user":serializer_data.data},status=status.HTTP_201_CREATED)
-#                 else:
-#                     profile_data.is_valid()
-#                     vehicle_data.is_valid()
-#                     User.objects.filter(id=userId).delete()
-#                     err=[str(vehicle_data.errors),str(profile_data.errors)]
-#                     return Response({"error":err}, status=status.HTTP_400_BAD_REQUEST)
-#             else:
-#                 User.objects.filter(id=userId).delete()
-#                 return Response({"error":"Debe insertar un vehiculo e información relacionada con el perfil."}, status=status.HTTP_400_BAD_REQUEST)        
-#         else:
-#             return Response({"error":str(serializer_data.errors)},status=status.HTTP_400_BAD_REQUEST)
         
 class RegisterAPI(APIView):
     permision_classes = (AllowAny,)
+
+    def return_errors(self,dic):
+        err = {}
+        keys = dic.keys()
+        for k in keys:
+            if k == 'profile':
+                profile = dic[k]
+                if isinstance(profile, list):
+                    err[k] = profile[0].capitalize()
+                else:
+                    for p in profile.keys():
+                        err[p] = profile[p][0].capitalize()
+            elif k == 'vehicles':
+                vehicles = dic[k]
+                for v in vehicles:
+                    if isinstance(v, dict):
+                        for vKey in v.keys():
+                            if vKey == 'license_plate':
+                                err[vKey] = v[vKey][0].replace('este license plate','esta matrícula').replace('vehicle','un vehículo').capitalize() 
+                            elif vKey == 'type':
+                                x = v[vKey][0].split("\"")
+                                title = x[1] + x[2]
+                                err[vKey] = title
+                            else:
+                                err[vKey] = v[vKey][0].capitalize()
+                    else:
+                        err[k] = vehicles[0].capitalize()
+            elif k == 'password':
+                    x = dic[k][0].split(".")
+                    title = x[0] + '.'+ x[1] + '.'
+                    err[k] = title
+            else:
+                    err[k] = dic[k][0].capitalize()
+        
+        return err
 
     @swagger_auto_schema(request_body=RegisterSerializer)
     def post(self, request):
@@ -502,31 +504,5 @@ class RegisterAPI(APIView):
             serializer_data.save()
             return Response({"mensaje":"Registrado correctamente","user":serializer_data.data},status=status.HTTP_201_CREATED)       
         else:
-            err = {}
-            dic = serializer_data.errors
-            keys = serializer_data.errors.keys()
-            for k in keys:
-                if k == 'profile':
-                    profile = dic[k]
-                    for p in profile.keys():
-                        err[p] = profile[p][0].capitalize()
-                elif k == 'vehicles':
-                    vehicles = dic[k]
-                    for v in vehicles:
-                        for vKey in v.keys():
-                            if vKey == 'license_plate':
-                                err[vKey] = v[vKey][0].replace('este license plate','esta matrícula').replace('vehicle','un vehículo').capitalize() 
-                            elif vKey == 'type':
-                                x = v[vKey][0].split("\"")
-                                print(x)
-                                title = x[1] + x[2]
-                                err[vKey] = title
-                            else:
-                                err[vKey] = v[vKey][0].capitalize()
-                elif k == 'password':
-                        x = dic[k][0].split(".")
-                        title = x[0] + '.'+ x[1] + '.'
-                        err[k] = title
-                else:
-                        err[k] = dic[k][0].capitalize()
+            err = self.return_errors(serializer_data.errors)
             return Response({"error":err},status=status.HTTP_400_BAD_REQUEST)
