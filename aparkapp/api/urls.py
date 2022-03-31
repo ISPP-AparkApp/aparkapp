@@ -28,6 +28,6 @@ urlpatterns = [
     path('geolocatorToAddress/', GeolocationToAddressAPI.as_view()),
     path('geolocatorToCoordinates/', GeolocationToCoordinatesAPI.as_view()),
     path('register/', RegisterAPI.as_view()),
-    path('cancel/announcement/<int:pk>', CancelAnnouncementsAPI.as_view()),
+    path('cancel/announcement/<int:pk>/', CancelAnnouncementsAPI.as_view()),
     path('cancel/reservation/<int:pk>/', CancelReservationAPI.as_view()),
 ]
