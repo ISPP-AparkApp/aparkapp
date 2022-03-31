@@ -1283,7 +1283,7 @@ class CancelTestCase(TestCase):
 
         self.vehicle.save()
 
-        self.announcement = Announcement(id=1,date="2022-08-14 13:43", wait_time=5,
+        self.announcement = Announcement(date="2022-08-14 13:43", wait_time=5,
                                 price=3.5,  allow_wait=True, location='Reina Mercedes', latitude=38.35865724531185, longitude=-5.986121868933244,
                                 zone='Zona libre', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
                                 vehicle=self.vehicle, user=self.user)
@@ -1303,15 +1303,14 @@ class CancelTestCase(TestCase):
         self.refresh = response.data['refresh']
     
     def test_cancel_announcement(self):
-        print("----------")
         client = APIClient()
-        response = client.put('/api/cancel/announcement/' + str(1) + '/', 
+        response = client.put('/api/cancel/announcement/' + str(self.announcement.id) + '/', 
             {
                 'cancelled':'true'
             },
             format='json',
             HTTP_AUTHORIZATION='Bearer {0}'.format(self.access),
         )
-        print(self.announcement.cancelled)
+        self.announcement = Announcement.objects.get(pk=self.announcement.id)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertTrue(self.announcement.cancelled)

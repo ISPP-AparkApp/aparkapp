@@ -335,8 +335,13 @@ class CancelAnnouncementsAPI(APIView):
             if request.data["cancelled"]:
                 announcement_to_update= Announcement.objects.filter(pk=pk)
                 if announcement_to_update:
-                    announcement_to_update.update(cancelled=request.data["cancelled"])
-                    res = Response("El anuncio se ha actualizado con éxito", status=status.HTTP_204_NO_CONTENT)
+                    if(request.data["cancelled"].lower() == "true"):
+                        res = True
+
+                    if(request.data["cancelled"].lower() == "false"):
+                        res = False
+                    announcement_to_update.update(cancelled=res)
+                    res = Response(status=status.HTTP_204_NO_CONTENT)
                 else:
                     raise Exception()
             else:
@@ -430,7 +435,11 @@ class CancelReservationAPI(APIView):
             if request.data["cancelled"]:
                 reservation_to_update= Reservation.objects.filter(pk=pk)
                 if reservation_to_update:
-                    reservation_to_update.update(cancelled=request.data["cancelled"])
+                    if(request.data["cancelled"].lower() == "true"):
+                        res = True
+                    if(request.data["cancelled"].lower() == "false"):
+                        res = False
+                    reservation_to_update.update(cancelled=res)
                     res = Response("La reserva se ha actualizado con éxito", status=status.HTTP_204_NO_CONTENT)
                 else:
                     raise Exception()
