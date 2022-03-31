@@ -1289,6 +1289,10 @@ class CancelTestCase(TestCase):
                                 vehicle=self.vehicle, user=self.user)
         self.announcement.save()
 
+        self.reservation = Reservation(date=self.announcement.date, n_extend=1,
+                                       cancelled=False, rated=False, user=self.user, announcement=self.announcement)
+        self.reservation.save()
+
         
         client = APIClient()
         response = client.post(
@@ -1314,3 +1318,16 @@ class CancelTestCase(TestCase):
         self.announcement = Announcement.objects.get(pk=self.announcement.id)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertTrue(self.announcement.cancelled)
+
+    def test_cancel_reservation(self):
+        client = APIClient()
+        response = client.put('/api/cancel/reservation/' + str(self.reservation.id) + '/', 
+            {
+                'cancelled':'true'
+            },
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access),
+        )
+        self.reservation = Reservation.objects.get(pk=self.reservation.id)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertTrue(self.reservation.cancelled)

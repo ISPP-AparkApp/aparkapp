@@ -440,7 +440,7 @@ class CancelReservationAPI(APIView):
                     if(request.data["cancelled"].lower() == "false"):
                         res = False
                     reservation_to_update.update(cancelled=res)
-                    res = Response("La reserva se ha actualizado con éxito", status=status.HTTP_204_NO_CONTENT)
+                    res = Response(status=status.HTTP_204_NO_CONTENT)
                 else:
                     raise Exception()
             else:
