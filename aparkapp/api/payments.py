@@ -17,6 +17,7 @@ stripe.api_key=API_KEY
 
 class StripePaymentsAPI(APIView):
     permission_classes = [IsAuthenticated]
+    swagger_tags= ["Endpoints de pagos"]
 
     def post(self,request, pk):
         announcement_to_buy=Announcement.objects.filter(pk=pk)
@@ -39,7 +40,8 @@ class StripePaymentsAPI(APIView):
 
 class StripeExtendedPaymentsAPI(APIView):
     permission_classes = [IsAuthenticated]
-
+    swagger_tags= ["Endpoints de pagos"]
+    
     def post(self,request, pk):
         announcement_to_buy=Announcement.objects.filter(pk=pk)
         if announcement_to_buy:

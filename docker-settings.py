@@ -112,14 +112,13 @@ WSGI_APPLICATION = 'aparkapp.wsgi.application'
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
 DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': 'aparkapp',
-            'USER': 'aparkapp',
-            'PASSWORD': 'aparkapp',
-            'HOST': 'db',
-            'PORT': '3306',
-        }
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'HOST': 'db',
+        'NAME': 'aparkapp',
+        'USER': 'postgres',
+        'PASSWORD': 'postgres',
+    }
 }
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators

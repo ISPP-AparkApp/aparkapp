@@ -1,7 +1,7 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.auth.models import User
-from django.forms import ValidationError
+from drf_yasg.inspectors import SwaggerAutoSchema
 
 class Profile(models.Model):
    id = models.AutoField(primary_key=True)
@@ -53,7 +53,7 @@ class Vehicle(models.Model):
       default=SEGA,
    )
    #Relationship
-   user = models.ForeignKey(User, on_delete=models.CASCADE)
+   user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='vehicles')
    
 
    def __str__(self):
@@ -108,6 +108,8 @@ class Announcement(models.Model):
    )
    observation = models.CharField(max_length=500, default="Sin comentarios.")
    rated = models.BooleanField(default=False)
+   cancelled = models.BooleanField(default=False)
+   announcement = models.BooleanField(choices=[(True,'Esto es un anuncio')], default=True)
 
    #Relationship
    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE)
@@ -131,3 +133,17 @@ class Reservation(models.Model):
    def __str__(self):
       return str(self.id)
 
+
+
+## Tagging for Swagger
+class CustomSwaggerAutoSchema(SwaggerAutoSchema):
+    def get_tags(self, operation_keys=None):
+        operation_keys = operation_keys or self.operation_keys
+
+        tags = self.overrides.get('tags')
+        if not tags:
+            tags = [operation_keys[0]]
+        if hasattr(self.view, "swagger_tags"):
+            tags = self.view.swagger_tags
+
+        return tags

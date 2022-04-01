@@ -35,7 +35,6 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
-    'rest_framework_swagger',
     'drf_yasg',
 ]
 
@@ -61,6 +60,7 @@ SWAGGER_SETTINGS = {
             'name': 'Authorization' 
         }
     }, 
+   'DEFAULT_AUTO_SCHEMA_CLASS': 'api.models.CustomSwaggerAutoSchema',
 }
 
 MIDDLEWARE = [
@@ -99,14 +99,14 @@ WSGI_APPLICATION = 'aparkapp.wsgi.application'
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
 DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': 'aparkapp',
-            'USER': 'aparkapp',
-            'PASSWORD': 'aparkapp',
-            'HOST': 'localhost',
-            'PORT': '3306',
-        }
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'aparkapp',
+        'USER': 'postgres',
+        'PASSWORD': 'postgres',
+        'HOST': 'localhost',
+        'PORT': '5432',
+    }
 }
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
@@ -130,7 +130,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'es-es'
 
 TIME_ZONE = 'Europe/Madrid'
 

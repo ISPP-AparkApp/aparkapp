@@ -1,4 +1,3 @@
-from pyexpat import model
 from django.contrib.auth.models import User
 from .models import Profile, User, Vehicle, Announcement, Reservation
 from api.serializers import UserSerializer,VehicleSerializer, ProfileSerializer
@@ -16,12 +15,37 @@ from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from django.http import Http404
 from django.shortcuts import get_object_or_404
-from drf_yasg.utils import swagger_auto_schema
 from django.utils.timezone import make_aware
-from .geolocator import coordinates_to_address, address_to_coordinates
+from django_filters.rest_framework import DjangoFilterBackend
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework import filters, generics, status
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from api.geolocator import coordinates_to_address
+from api.serializers import (AnnouncementSerializer,
+                             GeolocationToAddressSerializer,
+                             GeolocationToCoordinatesSerializer,
+                             ProfileSerializer, ReservationSerializer,
+                             SwaggerAnnouncementSerializer,
+                             SwaggerCreateReservationSerializer,
+                             SwaggerProfileSerializer,
+                             SwaggerUpdateAnnouncementSerializer,
+                             SwaggerUpdateReservationSerializer,
+                             SwaggerUserSerializer, SwaggerVehicleSerializer,
+                             SwaggerVehicleSerializerId, UserSerializer,
+                             VehicleSerializer, VehicleSerializerId,
+                             SwaggerCancelAnnouncementSerializer,SwaggerCancelReservationSerializer,
+                             RegisterSerializer, 
+                             AnnouncementNestedVehicleSerializer, UserNestedProfileSerializer)
+
+from .geolocator import address_to_coordinates, coordinates_to_address
+from .models import Announcement, Profile, Reservation, User, Vehicle
+from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 
 class VehiclesAPI(APIView):
     permission_classes = [IsAuthenticated]
+    swagger_tags= ["Endpoints de vehiculos"]
 
     @swagger_auto_schema(request_body=SwaggerVehicleSerializer)
     def post(self,request):
@@ -42,6 +66,7 @@ class VehiclesAPI(APIView):
 
 class VehiclesIdAPI(APIView):
     permission_classes = [IsAuthenticated]
+    swagger_tags= ["Endpoints de vehiculos"]
 
     def get_object(self,pk):
         try:
@@ -74,6 +99,7 @@ class VehiclesIdAPI(APIView):
 
 class UsersVehiclesAPI(APIView):
     permission_classes = [IsAuthenticated]
+    swagger_tags= ["Endpoints de usuarios"]
 
     def get(self,request):
         pk = request.user.id
@@ -86,6 +112,7 @@ class UsersVehiclesAPI(APIView):
 class UsersAPI(APIView):
     permission_classes = [IsAuthenticated]
     model = Profile
+    swagger_tags= ["Endpoints de usuarios"]
 
     def get_object(self,pk):
         try:
@@ -109,10 +136,20 @@ class UsersAPI(APIView):
         user=get_object_or_404(User,pk=pk)
         user.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+class UserAPI(APIView):
+    permission_classes = [IsAuthenticated]
+    swagger_tags= ["Endpoints de usuarios"]
+
+    def get(self, request, pk):
+        user = get_object_or_404(User, pk=pk)
+        serializer = UserNestedProfileSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     
 class ProfileApi(APIView):
     permission_classes = [IsAuthenticated]
     model=Profile
+    swagger_tags= ["Endpoints de perfiles"]
 
     def get_object(self,pk):
         try:
@@ -136,13 +173,14 @@ class ProfileApi(APIView):
 
 class AnnouncementsAPI(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
+    swagger_tags= ["Endpoints de anuncios"]
 
     filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend)
 
     serializer_class = AnnouncementSerializer
     search_fields = ('zone','location','longitude','latitude',)
     ordering_fields = ('price',)
-    filterset_fields = ('vehicle__type',)
+    filterset_fields = ('vehicle__type','date')
 
     def filter_queryset(self, queryset):
         for backend in list(self.filter_backends):
@@ -164,7 +202,7 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
 
         return Response(serializer_class.data)
 
-    @swagger_auto_schema(request_body=SwaggerAnnouncementSerializer)
+    @swagger_auto_schema(tags=["Announcement Endpoints"],request_body=SwaggerAnnouncementSerializer)
     def post(self, request):
         data = request.data.copy()
         data['user'] = request.user.id
@@ -198,7 +236,19 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)    
 
+class myAnnouncementsAPI(APIView):
+    permission_classes = [IsAuthenticated]
+    swagger_tags= ["Endpoints de anuncios"]
+
+    def get(self, request):
+        announcements = Announcement.objects.filter(user=request.user)
+        serializer_class = AnnouncementNestedVehicleSerializer(announcements,many=True)
+
+        return Response(serializer_class.data)
+
 class AnnouncementsUserAPI(APIView):
+    swagger_tags= ["Endpoints de anuncios"]
+
     def get(self,request):
         pk = request.user.id
         announcements = Announcement.objects.filter(user=pk)
@@ -206,11 +256,10 @@ class AnnouncementsUserAPI(APIView):
 
         return Response(announcement_serializer.data, status=status.HTTP_200_OK)
 
-
-    
 class AnnouncementStatusAPI(APIView):
     permission_classes = [IsAuthenticated]
-    
+    swagger_tags= ["Endpoints de anuncios"]
+
     def get_object(self,pk):
         try:
             return Announcement.objects.get(id=pk)
@@ -244,6 +293,7 @@ class AnnouncementStatusAPI(APIView):
     
 class AnnouncementAPI(APIView):
     permission_classes = [IsAuthenticated]
+    swagger_tags= ["Endpoints de anuncios"]
 
     def get_object(self,pk):
         try:
@@ -254,14 +304,10 @@ class AnnouncementAPI(APIView):
     def get(self,request,pk):
         an = self.get_object(pk)
         res_list = Reservation.objects.filter(user=request.user)
-        aux = list(res_list.values_list('announcement'))
-        announcement_list = []
+        announcement_list = list(res_list.values_list('announcement', flat=True))
 
-        for announcement in aux:
-            announcement_list.append(announcement[0])
-
-        if True or pk in announcement_list or request.user==an.user:   
-            serializer = AnnouncementSerializer(an)
+        if True or pk in announcement_list or request.user==an.user:  ##TODO: Check ALWAYS True
+            serializer = AnnouncementNestedVehicleSerializer(an)
             return Response(serializer.data)
         else:
             return Response({"detail": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
@@ -296,13 +342,36 @@ class AnnouncementAPI(APIView):
                 announcement = self.get_object(pk)
                 if announcement.user.id == request.user.id:
                     announcement.delete()
-                    return Response(status.HTTP_204_NO_CONTENT)
+                    return Response(status.HTTP_200_OK)
                 else:
                     return Response("No se puede borrar un anuncio que usted no ha publicado.", status.HTTP_401_UNAUTHORIZED)
             except:
                 return Response("No existe el anuncio que desea borrar.", status.HTTP_400_BAD_REQUEST)
-    
+
+class CancelAnnouncementsAPI(APIView):
+    permission_classes = [IsAuthenticated]
+    swagger_tags= ["Endpoints de anuncios"]
+
+    @swagger_auto_schema(request_body=SwaggerCancelAnnouncementSerializer)
+    def put(self, request, pk):
+        try:
+            if request.data["cancelled"]:
+                announcement_to_update= Announcement.objects.filter(pk=pk)
+                if announcement_to_update:
+                    announcement_to_update.update(cancelled=request.data["cancelled"])
+                    res = Response("El anuncio se ha actualizado con éxito", status=status.HTTP_204_NO_CONTENT)
+                else:
+                    raise Exception()
+            else:
+                res = Response("La petición es inválida",status=status.HTTP_400_BAD_REQUEST)
+        except Exception:
+            res = Response("No existe el anuncio especificado", status=status.HTTP_404_NOT_FOUND)
+
+        return res
+
 class ReservationByAnouncementAPI(APIView):
+    swagger_tags= ["Endpoints de reservas"]
+
     def get(self, request,pk):
         reservation = Reservation.objects.filter(announcement=pk, cancelled=False)
         if reservation: 
@@ -317,9 +386,15 @@ class ReservationByAnouncementAPI(APIView):
 
 class ReservationAPI(APIView):
     permission_classes = [IsAuthenticated]
+    swagger_tags= ["Endpoints de reservas"]
 
     def get(self, request,pk):
-        return Response(ReservationSerializer(get_object_or_404(Reservation, pk=pk)).data)
+        try:
+            reservation=Reservation.objects.get(pk=pk)
+            res=Response(ReservationSerializer(reservation).data, status=status.HTTP_200_OK)
+        except (MultipleObjectsReturned,ObjectDoesNotExist) as e:
+            res=Response("No se ha encontrado ninguna reserva con tal identificador", status=status.HTTP_404_NOT_FOUND)
+        return res
     
     def delete(self, request, pk):
         try:
@@ -327,7 +402,7 @@ class ReservationAPI(APIView):
             reservation.cancelled=True
             reservation.announcement=None
             reservation.save()
-            res=Response(status.HTTP_204_NO_CONTENT)
+            res=Response(status.HTTP_200_OK)
         except:
             res=Response("No existe tal reserva en tu historial",status.HTTP_404_NOT_FOUND)
         return res   
@@ -350,17 +425,15 @@ class ReservationAPI(APIView):
 
 class ReservationsAPI(APIView):
     permission_classes = [IsAuthenticated]
+    swagger_tags= ["Endpoints de reservas"]
+    
     # Returns own reservations
     def get(self, request):
         reservations=Reservation.objects.filter(user=request.user)
         reservations_data=[]
-        if reservations:
-            for r in reservations:
-                reservations_data.append(ReservationSerializer(r).data)
-            response=Response(data=reservations_data,status=status.HTTP_200_OK)
-        else:
-            response=Response("No se han encontrado reservas para este usuario",status=status.HTTP_404_NOT_FOUND)
-        return response
+        for r in reservations:
+            reservations_data.append(ReservationSerializer(r).data)
+        return Response(data=reservations_data,status=status.HTTP_200_OK)
 
     @swagger_auto_schema(request_body=SwaggerCreateReservationSerializer)        
     def post(self, request):
@@ -377,9 +450,31 @@ class ReservationsAPI(APIView):
 
         return response
 
+class CancelReservationAPI(APIView):
+    permission_classes = [IsAuthenticated]
+    swagger_tags= ["Endpoints de reservas"]
+
+    @swagger_auto_schema(request_body=SwaggerCancelReservationSerializer)
+    def put(self, request, pk):
+        try:
+            if request.data["cancelled"]:
+                reservation_to_update= Reservation.objects.filter(pk=pk)
+                if reservation_to_update:
+                    reservation_to_update.update(cancelled=request.data["cancelled"])
+                    res = Response("La reserva se ha actualizado con éxito", status=status.HTTP_204_NO_CONTENT)
+                else:
+                    raise Exception()
+            else:
+                res = Response("La petición es inválida",status=status.HTTP_400_BAD_REQUEST)
+        except Exception:
+            res = Response("No existe la reserva especificada", status=status.HTTP_404_NOT_FOUND)
+
+        return res
+
 class GeolocationToCoordinatesAPI(APIView):
     permission_classes = [IsAuthenticated]
-    # I don't like this validation seems inefficient but not time to redo it for now
+    swagger_tags= ["Endpoints de geolocalización"]
+
     @swagger_auto_schema(request_body=GeolocationToCoordinatesSerializer) 
     def post(self, request):
         serializer = GeolocationToCoordinatesSerializer(data=request.data)
@@ -393,6 +488,8 @@ class GeolocationToCoordinatesAPI(APIView):
 
 class GeolocationToAddressAPI(APIView):
     permission_classes = [IsAuthenticated]
+    swagger_tags= ["Endpoints de geolocalización"]
+
     @swagger_auto_schema(request_body=GeolocationToAddressSerializer) 
     def post(self, request):
         serializer = GeolocationToAddressSerializer(data=request.data)
@@ -402,4 +499,53 @@ class GeolocationToAddressAPI(APIView):
         else:
             response=Response("Petición incorrecta", status=status.HTTP_400_BAD_REQUEST)
         return response
+        
+class RegisterAPI(APIView):
+    permision_classes = (AllowAny,)
+    swagger_tags=["Endpoints de registro"]
 
+    def return_errors(self,dic):
+        err = {}
+        keys = dic.keys()
+        for k in keys:
+            if k == 'profile':
+                profile = dic[k]
+                if isinstance(profile, list):
+                    err[k] = profile[0].capitalize()
+                else:
+                    for p in profile.keys():
+                        err[p] = profile[p][0].capitalize()
+            elif k == 'vehicles':
+                vehicles = dic[k]
+                for v in vehicles:
+                    if isinstance(v, dict):
+                        for vKey in v.keys():
+                            if vKey == 'license_plate':
+                                err[vKey] = v[vKey][0].replace('este license plate','esta matrícula').replace('vehicle','un vehículo').capitalize() 
+                            elif vKey == 'type':
+                                x = v[vKey][0].split("\"")
+                                title = x[1] + x[2]
+                                err[vKey] = title
+                            else:
+                                err[vKey] = v[vKey][0].capitalize()
+                    else:
+                        err[k] = vehicles[0].capitalize()
+            elif k == 'password':
+                    x = dic[k][0].split(".")
+                    title = x[0] + '.'+ x[1] + '.'
+                    err[k] = title
+            else:
+                    err[k] = dic[k][0].capitalize()
+        
+        return err
+
+    @swagger_auto_schema(request_body=RegisterSerializer)
+    def post(self, request):
+        data = request.data.copy()
+        serializer_data = RegisterSerializer(data=data)
+        if serializer_data.is_valid():
+            serializer_data.save()
+            return Response({"mensaje":"Registrado correctamente","user":serializer_data.data},status=status.HTTP_201_CREATED)       
+        else:
+            err = self.return_errors(serializer_data.errors)
+            return Response({"error":err},status=status.HTTP_400_BAD_REQUEST)

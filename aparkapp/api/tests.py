@@ -1,9 +1,10 @@
-from django.test import TestCase
-from rest_framework.test import APIClient
-from api.models import User, Vehicle, Announcement, Reservation,Profile
-from rest_framework import status
 from datetime import datetime, timedelta
+from django.test import TestCase
 from django.utils.timezone import make_aware
+from rest_framework import status
+from rest_framework.test import APIClient
+
+from api.models import Announcement, Profile, Reservation, User, Vehicle
 
 
 class AuthenticationTestCase(TestCase):
@@ -378,14 +379,14 @@ class UserTestCase(TestCase):
         self.user.set_password('admin123')
         self.user.save()
 
-        user = User(
+        self.user2 = User(
             username="prueba",
             email="test@gmail.com",
             first_name="Testing",
             last_name="Testing"
         )
-        user.user = self.user
-        user.save()
+        self.user2 = self.user
+        self.user2.save()
 
         profile = Profile(
             id= self.user.id,
@@ -452,7 +453,17 @@ class UserTestCase(TestCase):
             HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-
+    
+    def test_get_user_and_profile(self):
+        client = APIClient()
+        response = client.get('/api/users/'+str(self.user2.id)+'/',HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+    
+    def test_get_profile_and_user_error(self):
+        client = APIClient()
+        response = client.get('/api/users/21/',HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        
 class AnnouncementTestCase(TestCase):
 
     def setUp(self):
@@ -650,7 +661,7 @@ class AnnouncementTestCase(TestCase):
         client = APIClient()
         response = client.delete('/api/announcement/' + str(self.announcement.id)+'/',
                                  HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_delete_announcement_fail(self):
         client = APIClient()
@@ -728,12 +739,29 @@ class AnnouncementTestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     # Test obtaining details of an advertisement that is not reserved by the user
+    '''
     def test_details_announcement_unauthorized(self):
         client = APIClient()
         response = client.get('/api/announcement/' + str(self.announcement4.id) +
                               '/', format='json', HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+    '''
 
+
+    def test_get_my_announcements(self):
+        client = APIClient()
+        response = client.get('/api/myAnnouncements/', format='json',
+                              HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+    
+    def test_filter_announcements_by_datetime(self):
+        client = APIClient()
+        response = client.get('/api/announcements/?date=2022-08-14 17:43',
+                              format='json', HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        results = response.json()
+        for r in results:
+            self.assertEqual(r['date'], '2022-08-14 17:43')
 
 class UserVehiclesTestCase(TestCase):
     def setUp(self):
@@ -919,7 +947,7 @@ class ReservationTestCase(TestCase):
         self.second_access = second_login.data['access']
         self.second_refresh = second_login.data['refresh']
 
-    # APP - 20/03/2022 - Test which get a valid reservation given its ID and invalid one
+    # Test which get a valid reservation given its ID and invalid one
     def test_get_reservation(self):
         client = APIClient()
 
@@ -938,7 +966,7 @@ class ReservationTestCase(TestCase):
 
         self.assertTrue(second_response.status_code, status.HTTP_404_NOT_FOUND)
 
-    # APP - 20/03/2022 - Test which retrieve list of reservations of the logged user
+    # Test which retrieve list of reservations of the logged user
     def test_get_reservations(self):
         client = APIClient()
 
@@ -949,7 +977,7 @@ class ReservationTestCase(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    # APP - 20/03/2022 - Test which creates a reservation for an announcement already reserved
+    # Test which creates a reservation for an announcement already reserved
     def test_delete_reservation(self):
         client = APIClient()
         first_response = client.delete(
@@ -962,10 +990,10 @@ class ReservationTestCase(TestCase):
             format='json',
             HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
         )
-        self.assertEqual(first_response.status_code,status.HTTP_204_NO_CONTENT)
+        self.assertEqual(first_response.status_code,status.HTTP_200_OK)
         self.assertEqual(second_response.status_code,status.HTTP_404_NOT_FOUND)
 
-    # APP - 20/03/2022 - Test which creates three reservations one already reserved, one from itself and another valid
+    # Test which creates three reservations one already reserved, one from itself and another valid
     def test_create_reservation(self):
         client = APIClient()
         first_response = client.post(
@@ -1043,3 +1071,193 @@ class ReservationTestCase(TestCase):
         self.assertEqual(second_response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(third_response.status_code, status.HTTP_204_NO_CONTENT)
 
+class RegistrationTestCase(TestCase):
+    
+    def setUp(self):
+        self.user = User(
+            username='Pedro',
+            email='pedroHdez@gmail.com'
+        )
+        self.user.set_password('ped123')
+        self.user.save()
+
+        self.vehicle = Vehicle(
+            brand="Mercedes",
+            model="Clase A",
+            license_plate="6716 MUV",
+            color="Gris",
+            type="Segmento C",
+            user=self.user
+        )
+        self.vehicle.save()
+
+        self.data = {
+                "username": "Romario",
+                "password": "roma4win125",
+                "email": "romper@gmail.com",
+                "first_name": "Romario",
+                "last_name": "Velázquez",
+                "profile": {
+                    "phone": "618518923",
+                    "birthdate": "1985-05-02"
+                },
+                "vehicles":[{
+                    "brand": "Opel",
+                    "model": "Corsa",
+                    "license_plate": "5574 CKX",
+                    "color": "Negro",
+                    "type": "Segmento A"
+                }]
+            }
+    
+    #Test register with an existing username
+    def test_invalid_register_username_exists(self):
+        client = APIClient()
+        data = self.data
+        data['username'] = self.user.username
+
+        response = client.post( '/api/register/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    #Test register with an existing email
+    def test_invalid_register_email_exist(self):
+        client = APIClient()
+        data = self.data
+        data['email'] = self.user.email
+
+        response = client.post('/api/register/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    #Test register with a short or common password
+    def test_invalid_register_password(self):
+        client = APIClient()
+        data = self.data
+        data['password'] = "hola"
+
+        response = client.post('/api/register/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    #Test register without first name
+    def test_invalid_register_first_name(self):
+        client = APIClient()
+        data = self.data
+        data.pop("first_name", None)
+
+        response = client.post('/api/register/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    #Test register without last name
+    def test_invalid_register_last_name(self):
+        client = APIClient()
+        data = self.data
+        data.pop("last_name", None)
+
+        response = client.post('/api/register/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    #Test register without phone
+    def test_invalid_register_phone(self):
+        client = APIClient()
+        data = self.data
+        data['profile'].pop("phone", None)
+
+        response = client.post('/api/register/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    #Test register without birthdate
+    def test_invalid_register_birthdate(self):
+        client = APIClient()
+        data = self.data
+        data['profile'].pop("phone", None)
+
+        response = client.post('/api/register/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    #Test register with a birthdate that is not a date
+    def test_invalid_register_birthdate_not_date(self):
+        client = APIClient()
+        data = self.data
+        data['profile']['birthdate'] = "fecha"
+
+        response = client.post('/api/register/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    #Test register without profile data
+    def test_invalid_register_profile(self):
+        client = APIClient()
+        data = self.data
+        data.pop("profile", None)
+        response = client.post('/api/register/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    #Test register without vehicle data
+    def test_invalid_register_vehicle(self):
+        client = APIClient()
+        data = self.data
+        data.pop("vehicles", None)
+
+        response = client.post('/api/register/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    #Test register without vehicle brand
+    def test_invalid_register_brand(self):
+        client = APIClient()
+        data = self.data
+        data['vehicles'][0].pop("brand",None)
+
+        response = client.post('/api/register/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    #Test register without vehicle model
+    def test_invalid_register_model(self):
+        client = APIClient()
+        data = self.data
+        data['vehicles'][0].pop("model",None)
+
+        response = client.post('/api/register/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+    
+    #Test register without vehicle license_plate
+    def test_invalid_register_license_plate(self):
+        client = APIClient()
+        data = self.data
+        data['vehicles'][0].pop("license_plate",None)
+
+        response = client.post('/api/register/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    #Test register with an existing license_plate
+    def test_invalid_register_license_plate_exists(self):
+        client = APIClient()
+        data = self.data
+        data['vehicles'][0]['license_plate'] = self.vehicle.license_plate
+
+        response = client.post('/api/register/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    #Test register without vehicle color
+    def test_invalid_register_color(self):
+        client = APIClient()
+        data = self.data
+        data['vehicles'][0].pop("color",None)
+
+        response = client.post('/api/register/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    #Test succesfully register
+    def test_successfully_register(self):
+        client = APIClient()
+        response = client.post('/api/register/', self.data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        
+        #Comprobamos que el usuario recién registrado puede logearse
+        second_response = client.post('/api/login/', {
+                'username': self.data['username'],
+                'password': self.data['password']
+            },
+            format='json'
+        )
+        self.assertEqual(second_response.status_code, status.HTTP_200_OK)
+        self.assertTrue('access' in second_response.data)
+        self.assertTrue('refresh' in second_response.data)
+    
