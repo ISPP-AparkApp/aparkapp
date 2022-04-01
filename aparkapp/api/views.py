@@ -233,7 +233,7 @@ class AnnouncementStatusAPI(APIView):
                 announcement_to_update=Announcement.objects.filter(pk=pk)
                 if announcement_to_update:
                     announcement_to_update.update(status=request.data["status"])
-                    res=Response("Se ha actualizado con éxito el anuncio",status=status.HTTP_204_NO_CONTENT)
+                    res=Response(status=status.HTTP_204_NO_CONTENT)
             else:
                 res=Response("La petición es inválida", status=status.HTTP_400_BAD_REQUEST)
         except Exception:
@@ -296,7 +296,7 @@ class AnnouncementAPI(APIView):
                 announcement = self.get_object(pk)
                 if announcement.user.id == request.user.id:
                     announcement.delete()
-                    return Response("Se ha borrado correctamente el anuncio.", status.HTTP_204_NO_CONTENT)
+                    return Response(status.HTTP_204_NO_CONTENT)
                 else:
                     return Response("No se puede borrar un anuncio que usted no ha publicado.", status.HTTP_401_UNAUTHORIZED)
             except:
@@ -327,7 +327,7 @@ class ReservationAPI(APIView):
             reservation.cancelled=True
             reservation.announcement=None
             reservation.save()
-            res=Response("La reserva se ha borrado con éxito",status.HTTP_204_NO_CONTENT)
+            res=Response(status.HTTP_204_NO_CONTENT)
         except:
             res=Response("No existe tal reserva en tu historial",status.HTTP_404_NOT_FOUND)
         return res   
@@ -343,7 +343,7 @@ class ReservationAPI(APIView):
             response= Response("No puedes asginar tu propio anuncio.",status=status.HTTP_405_METHOD_NOT_ALLOWED)
         elif serializer.is_valid():
             serializer.save()
-            return Response("La reserva ha sido actualizada", status=status.HTTP_204_NO_CONTENT)
+            return Response(status=status.HTTP_204_NO_CONTENT)
         else:
             response=Response("Los datos de la reserva introducidos no son válidos", status.HTTP_400_BAD_REQUEST)
         return response
