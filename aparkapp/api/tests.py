@@ -65,7 +65,7 @@ class AnnouncementsUserTestCase(TestCase):
             model="Testing",
             license_plate="Testing",
             color="Testing",
-            type="Segmento A",
+            type="Pequeño",
             user=self.user
         )
 
@@ -76,7 +76,7 @@ class AnnouncementsUserTestCase(TestCase):
             model="Testing2",
             license_plate="Testing2",
             color="Testing2",
-            type="Segmento A",
+            type="Pequeño",
             user=self.user2
         )
         self.vehicle2.save()
@@ -147,7 +147,7 @@ class AnnouncementStatusAPI(TestCase):
             model="Testing",
             license_plate="Testing",
             color="Testing",
-            type="Segmento A",
+            type="Pequeño",
             user=self.user
         )
 
@@ -158,7 +158,7 @@ class AnnouncementStatusAPI(TestCase):
             model="Testing2",
             license_plate="Testing2",
             color="Testing2",
-            type="Segmento A",
+            type="Pequeño",
             user=self.user2
         )
         self.vehicle2.save()
@@ -238,7 +238,7 @@ class VehiclesTestCase(TestCase):
             model="Testing",
             license_plate="Testing",
             color="Testing",
-            type="Segmento A"
+            type="Pequeño"
         )
         vehicle.user = self.user
         vehicle.save()
@@ -264,7 +264,7 @@ class VehiclesTestCase(TestCase):
                 "model": "Prueba",
                 "license_plate": "Testing2",
                 "color": "Prueba",
-                "type": "Segmento A"
+                "type": "Pequeño"
             },
             format='json',
             HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
@@ -282,7 +282,7 @@ class VehiclesTestCase(TestCase):
                 "model": "Prueba",
                 "license_plate": "Testing",
                 "color": "Prueba",
-                "type": "Segmento A"
+                "type": "Pequeño"
             },
             format='json',
             HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
@@ -307,7 +307,7 @@ class VehiclesIDTestCase(TestCase):
             model="Testing",
             license_plate="Testing",
             color="Testing",
-            type="Segmento A"
+            type="Pequeño"
         )
         vehicle.user = self.user
         vehicle.save()
@@ -318,7 +318,7 @@ class VehiclesIDTestCase(TestCase):
             model="Testing",
             license_plate="Testing1",
             color="Testing",
-            type="Segmento A"
+            type="Pequeño"
         )
         vehicle2.user = self.user
         vehicle2.save()
@@ -346,7 +346,7 @@ class VehiclesIDTestCase(TestCase):
                     "model":"Prueba",
                     "license_plate":"Testing2",
                     "color":"Prueba",
-                    "type":"Segmento A"
+                    "type":"Pequeño"
             },
             format='json',
             HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
@@ -479,7 +479,7 @@ class AnnouncementTestCase(TestCase):
             model="Testing",
             license_plate="Testing",
             color="Testing",
-            type="Segmento A",
+            type="Pequeño",
             user=self.user
         )
 
@@ -490,7 +490,7 @@ class AnnouncementTestCase(TestCase):
             model="Testing2",
             license_plate="Testing2",
             color="Testing2",
-            type="Segmento A",
+            type="Pequeño",
             user=self.user2
         )
         self.vehicle2.save()
@@ -723,13 +723,13 @@ class AnnouncementTestCase(TestCase):
     # Test filter announcements by vehicle type
     def test_filter_announcements_by_vehicle_type(self):
         client = APIClient()
-        response = client.get('/api/announcements/?vehicle__type=Segmento+A',
+        response = client.get('/api/announcements/?vehicle__type=Pequeño',
                               format='json', HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
         results = response.json()
         for r in results:
             vehicleId = r['vehicle']
             vehicle = Vehicle.objects.get(id=vehicleId)
-            self.assertEqual(vehicle.type, 'Segmento A')
+            self.assertEqual(vehicle.type, 'Pequeño')
 
     # Test obtaining details of an advertisement that is reserved by the user
     def test_details_announcement(self):
@@ -774,7 +774,7 @@ class UserVehiclesTestCase(TestCase):
             model="Testing",
             license_plate="Testing",
             color="Testing",
-            type="Segmento A",
+            type="Pequeño",
             user=self.user
         )
         self.vehicle.save()
@@ -784,7 +784,7 @@ class UserVehiclesTestCase(TestCase):
             model="Testing1",
             license_plate="Testing1",
             color="Testing1",
-            type="Segmento A1",
+            type="Pequeño",
             user=self.user
         )
 
@@ -842,7 +842,7 @@ class ReservationTestCase(TestCase):
             model="X5",
             license_plate="4982 FW",
             color="Red",
-            type="Segmento A"
+            type="Pequeño"
         )
         vehicle.user = self.user
         vehicle.save()
@@ -853,7 +853,7 @@ class ReservationTestCase(TestCase):
             model="Z3",
             license_plate="7777 NN",
             color="Black",
-            type="Segmento D"
+            type="Mediano"
         )
         second_vehicle.user = self.second_user
         second_vehicle.save()
@@ -864,7 +864,7 @@ class ReservationTestCase(TestCase):
             model="M1",
             license_plate="3128 FC",
             color="Grey",
-            type="Segmento E"
+            type="Mediano"
         )
         third_vehicle.user = self.third_user
         third_vehicle.save()
@@ -1086,7 +1086,7 @@ class RegistrationTestCase(TestCase):
             model="Clase A",
             license_plate="6716 MUV",
             color="Gris",
-            type="Segmento C",
+            type="Mediano",
             user=self.user
         )
         self.vehicle.save()
@@ -1106,7 +1106,7 @@ class RegistrationTestCase(TestCase):
                     "model": "Corsa",
                     "license_plate": "5574 CKX",
                     "color": "Negro",
-                    "type": "Segmento A"
+                    "type": "Pequeño"
                 }]
             }
     
@@ -1277,7 +1277,7 @@ class CancelTestCase(TestCase):
             model="Testing",
             license_plate="Testing",
             color="Testing",
-            type="Segmento A",
+            type="Pequeño",
             user=self.user
         )
 
