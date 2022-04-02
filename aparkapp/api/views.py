@@ -332,22 +332,14 @@ class CancelAnnouncementsAPI(APIView):
     @swagger_auto_schema(request_body=SwaggerCancelAnnouncementSerializer)
     def put(self, request, pk):
         try:
-            if request.data["cancelled"]:
-                announcement_to_update= Announcement.objects.filter(pk=pk)
-                if announcement_to_update:
-                    if(request.data["cancelled"].lower() == "true"):
-                        res = True
-
-                    if(request.data["cancelled"].lower() == "false"):
-                        res = False
-                    announcement_to_update.update(cancelled=res)
-                    res = Response(status=status.HTTP_204_NO_CONTENT)
-                else:
-                    raise Exception()
+            announcement_to_update= Announcement.objects.filter(pk=pk)
+            if announcement_to_update:
+                announcement_to_update.update(cancelled=request.data["cancelled"])
+                res = Response(status=status.HTTP_204_NO_CONTENT)
             else:
-                res = Response("La petición es inválida",status=status.HTTP_400_BAD_REQUEST)
+                raise Exception()
         except Exception:
-            res = Response("No existe el anuncio especificado", status=status.HTTP_404_NOT_FOUND)
+            res = Response("No existe el anuncio especificado o la petición es inválida", status=status.HTTP_404_NOT_FOUND)
 
         return res
 
@@ -432,21 +424,14 @@ class CancelReservationAPI(APIView):
     @swagger_auto_schema(request_body=SwaggerCancelReservationSerializer)
     def put(self, request, pk):
         try:
-            if request.data["cancelled"]:
-                reservation_to_update= Reservation.objects.filter(pk=pk)
-                if reservation_to_update:
-                    if(request.data["cancelled"].lower() == "true"):
-                        res = True
-                    if(request.data["cancelled"].lower() == "false"):
-                        res = False
-                    reservation_to_update.update(cancelled=res)
-                    res = Response(status=status.HTTP_204_NO_CONTENT)
-                else:
-                    raise Exception()
+            reservation_to_update= Reservation.objects.filter(pk=pk)
+            if reservation_to_update:
+                reservation_to_update.update(cancelled=request.data["cancelled"])
+                res = Response(status=status.HTTP_204_NO_CONTENT)
             else:
-                res = Response("La petición es inválida",status=status.HTTP_400_BAD_REQUEST)
+                raise Exception()
         except Exception:
-            res = Response("No existe la reserva especificada", status=status.HTTP_404_NOT_FOUND)
+            res = Response("No existe la reserva especificada o la petición es inválida", status=status.HTTP_404_NOT_FOUND)
 
         return res
 

@@ -1310,7 +1310,7 @@ class CancelTestCase(TestCase):
         client = APIClient()
         response = client.put('/api/cancel/announcement/' + str(self.announcement.id) + '/', 
             {
-                'cancelled':'true'
+                'cancelled': True
             },
             format='json',
             HTTP_AUTHORIZATION='Bearer {0}'.format(self.access),
@@ -1323,7 +1323,7 @@ class CancelTestCase(TestCase):
         client = APIClient()
         response = client.put('/api/cancel/reservation/' + str(self.reservation.id) + '/', 
             {
-                'cancelled':'true'
+                'cancelled': True
             },
             format='json',
             HTTP_AUTHORIZATION='Bearer {0}'.format(self.access),
