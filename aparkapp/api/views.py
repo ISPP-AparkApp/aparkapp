@@ -293,26 +293,33 @@ class AnnouncementAPI(APIView):
     @swagger_auto_schema(request_body=SwaggerAnnouncementSerializer)
     def put(self, request, pk):
         announcement = self.get_object(pk)
+        res_list = Reservation.objects.all()
+        announcement_list = list(res_list.values_list('announcement', flat=True))
 
-        data = request.data.copy()
-        data['user'] = announcement.user.id
+        if request.user != announcement.user:
+            return Response("No puede editar un anuncio de otro usuario", status=status.HTTP_401_UNAUTHORIZED)
+        elif pk in announcement_list:
+            return Response("No puede editar un anuncio reservado", status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        else:
+            data = request.data.copy()
+            data['user'] = announcement.user.id
 
-        #Coordinates to address
-        coordinates = (float(data['latitude']), float(data['longitude']))
-        direction = coordinates_to_address(coordinates)
-        try:
-            data['location'] = str(direction[0]['display_name'])
-        except:
-            data['location'] = str(direction[0])
-        serializer = AnnouncementSerializer(announcement, data=data)
-        query = Announcement.objects.filter(date=data["date"], vehicle=data["vehicle"])
-        
-        if query and query.get().id != pk:
-            return Response("Ya existe un anuncio para este vehículo a la misma hora.",status=status.HTTP_401_UNAUTHORIZED)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+            #Coordinates to address
+            coordinates = (float(data['latitude']), float(data['longitude']))
+            direction = coordinates_to_address(coordinates)
+            try:
+                data['location'] = str(direction[0]['display_name'])
+            except:
+                data['location'] = str(direction[0])
+            serializer = AnnouncementSerializer(announcement, data=data)
+            query = Announcement.objects.filter(date=data["date"], vehicle=data["vehicle"])
+            
+            if query and query.get().id != pk:
+                return Response("Ya existe un anuncio para este vehículo a la misma hora.",status=status.HTTP_401_UNAUTHORIZED)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
 
     def delete(self, request, pk):
@@ -333,9 +340,16 @@ class CancelAnnouncementsAPI(APIView):
     def put(self, request, pk):
         try:
             announcement_to_update= Announcement.objects.filter(pk=pk)
-            if announcement_to_update:
+            res_list = Reservation.objects.all()
+            announcement_list = list(res_list.values_list('announcement', flat=True))
+
+            if request.user != announcement_to_update[0].user:
+                return Response("No puede cancelar un anuncio de otro usuario", status=status.HTTP_401_UNAUTHORIZED)
+            if announcement_to_update and pk not in announcement_list:
                 announcement_to_update.update(cancelled=request.data["cancelled"])
                 res = Response(status=status.HTTP_204_NO_CONTENT)
+            elif pk in announcement_list:
+                res = Response("No puede cancelar un anuncio reservado", status=status.HTTP_405_METHOD_NOT_ALLOWED)
             else:
                 raise Exception()
         except Exception:

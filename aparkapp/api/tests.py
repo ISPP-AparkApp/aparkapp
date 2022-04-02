@@ -1262,7 +1262,7 @@ class RegistrationTestCase(TestCase):
         self.assertTrue('refresh' in second_response.data)
 
 class CancelTestCase(TestCase):
-    # APP - 31/03/2022 - Create user and announcement, and get tokens
+
     access = ""
     refresh = ""
     def setUp(self):
@@ -1272,6 +1272,12 @@ class CancelTestCase(TestCase):
         self.user.set_password('admin123')
         self.user.save()
 
+        self.user2 = User(
+            username='testing2_login',
+        )
+        self.user2.set_password('admin123')
+        self.user2.save()
+        
         self.vehicle = Vehicle(
             brand="Testing",
             model="Testing",
@@ -1283,16 +1289,38 @@ class CancelTestCase(TestCase):
 
         self.vehicle.save()
 
+        self.vehicle2 = Vehicle(
+            brand="Testing",
+            model="Testing",
+            license_plate="Testing2",
+            color="Testing",
+            type="Pequeño",
+            user=self.user2
+        )
+
+        self.vehicle2.save()
+
         self.announcement = Announcement(date="2022-08-14 13:43", wait_time=5,
                                 price=3.5,  allow_wait=True, location='Reina Mercedes', latitude=38.35865724531185, longitude=-5.986121868933244,
-                                zone='Zona libre', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
+                                zone='Zona libre', limited_mobility=False, status='Initial', observation='Ninguna', rated=False, cancelled=False,
                                 vehicle=self.vehicle, user=self.user)
         self.announcement.save()
 
         self.reservation = Reservation(date=self.announcement.date, n_extend=1,
                                        cancelled=False, rated=False, user=self.user, announcement=self.announcement)
         self.reservation.save()
+    
+        self.announcement2 = Announcement(date="2022-08-15 13:43", wait_time=5,
+                                price=3.5,  allow_wait=True, location='Reina Mercedes', latitude=38.35865724531185, longitude=-5.986121868933244,
+                                zone='Zona libre', limited_mobility=False, status='Initial', observation='Ninguna', rated=False, cancelled=False,
+                                vehicle=self.vehicle, user=self.user)
+        self.announcement2.save()
 
+        self.announcement3 = Announcement(date="2022-08-15 17:43", wait_time=5,
+                                price=4,  allow_wait=True, location='Reina Mercedes', latitude=38.4567724531185, longitude=-2.236121868933244,
+                                zone='Zona libre', limited_mobility=False, status='Initial', observation='Ninguna', rated=False, cancelled=False,
+                                vehicle=self.vehicle2, user=self.user2)
+        self.announcement3.save()
         
         client = APIClient()
         response = client.post(
@@ -1306,7 +1334,22 @@ class CancelTestCase(TestCase):
         self.access = response.data['access']
         self.refresh = response.data['refresh']
     
+    #Test to cancel announcement successfully
     def test_cancel_announcement(self):
+        client = APIClient()
+        response = client.put('/api/cancel/announcement/' + str(self.announcement2.id) + '/', 
+            {
+                'cancelled': True
+            },
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access),
+        )
+        self.announcement2 = Announcement.objects.get(pk=self.announcement2.id)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertTrue(self.announcement2.cancelled)
+
+    #Test cancel reserved announcement
+    def test_cancel_reserved_announcement(self):
         client = APIClient()
         response = client.put('/api/cancel/announcement/' + str(self.announcement.id) + '/', 
             {
@@ -1316,8 +1359,22 @@ class CancelTestCase(TestCase):
             HTTP_AUTHORIZATION='Bearer {0}'.format(self.access),
         )
         self.announcement = Announcement.objects.get(pk=self.announcement.id)
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertTrue(self.announcement.cancelled)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        self.assertFalse(self.announcement.cancelled)
+
+    #Test cancel of another user's announcement
+    def test_cancel_announcement_different_user(self):
+        client = APIClient()
+        response = client.put('/api/cancel/announcement/' + str(self.announcement3.id) + '/', 
+            {
+                'cancelled': True
+            },
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access),
+        )
+        self.announcement3 = Announcement.objects.get(pk=self.announcement3.id)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertFalse(self.announcement.cancelled)
 
     def test_cancel_reservation(self):
         client = APIClient()
