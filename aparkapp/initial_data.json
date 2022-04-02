@@ -22,7 +22,7 @@
       "model": "León",
       "license_plate": "2193ELO",
       "color": "Verde",
-      "type": "Segmento C",
+      "type": "Mediano",
       "user": 1
     }
   },{
@@ -33,7 +33,7 @@
       "model": "A4",
       "license_plate": "9102MXN",
       "color": "Gris",
-      "type": "Segmento D",
+      "type": "Mediano",
       "user": 1
     }
   },
@@ -45,7 +45,7 @@
       "model": "Corsa",
       "license_plate": "6602MXN",
       "color": "Rojo",
-      "type": "Segmento A",
+      "type": "Mediano",
       "user": 2
     }
   },
@@ -57,7 +57,7 @@
       "model": "Toledo",
       "license_plate": "9002MXN",
       "color": "Gris",
-      "type": "Segmento A",
+      "type": "Pequeño",
       "user": 3
     }
   },

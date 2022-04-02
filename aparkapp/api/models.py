@@ -26,20 +26,15 @@ class Rating(models.Model):
 
 class Vehicle(models.Model):
 
-   SEGA = 'Segmento A'
-   SEGB = 'Segmento B'
-   SEGC = 'Segmento C'
-   SEGD = 'Segmento D'
-   SEGE = 'Segmento E'
-   SEGF = 'Segmento F'
+   S = 'Pequeño'
+   M = 'Mediano'
+   L = 'Grande'
+
 
    TYPE = [
-      (SEGA, ('El vehículo pertenece al segmento A')),
-      (SEGB, ('El vehículo pertenece al segmento B')),
-      (SEGC, ('El vehículo pertenece al segmento C')),
-      (SEGD, ('El vehículo pertenece al segmento D')),
-      (SEGE, ('El vehículo pertenece al segmento E')),
-      (SEGF, ('El vehículo pertenece al segmento F'))
+      (S, ('El vehículo es pequeño')),
+      (M, ('El vehículo es mediano')),
+      (L, ('El vehículo es grande')),
 
    ] 
    id = models.AutoField(primary_key=True)
@@ -50,7 +45,7 @@ class Vehicle(models.Model):
    type = models.CharField(
       max_length=256,
       choices=TYPE,
-      default=SEGA,
+      default=S,
    )
    #Relationship
    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='vehicles')
