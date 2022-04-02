@@ -1277,7 +1277,7 @@ class CancelTestCase(TestCase):
             model="Testing",
             license_plate="Testing",
             color="Testing",
-            type="Segmento A",
+            type="Pequeño",
             user=self.user
         )
 
