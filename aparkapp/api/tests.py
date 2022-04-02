@@ -1260,4 +1260,74 @@ class RegistrationTestCase(TestCase):
         self.assertEqual(second_response.status_code, status.HTTP_200_OK)
         self.assertTrue('access' in second_response.data)
         self.assertTrue('refresh' in second_response.data)
+
+class CancelTestCase(TestCase):
+    # APP - 31/03/2022 - Create user and announcement, and get tokens
+    access = ""
+    refresh = ""
+    def setUp(self):
+        self.user = User(
+            username='testing_login',
+        )
+        self.user.set_password('admin123')
+        self.user.save()
+
+        self.vehicle = Vehicle(
+            brand="Testing",
+            model="Testing",
+            license_plate="Testing",
+            color="Testing",
+            type="Segmento A",
+            user=self.user
+        )
+
+        self.vehicle.save()
+
+        self.announcement = Announcement(date="2022-08-14 13:43", wait_time=5,
+                                price=3.5,  allow_wait=True, location='Reina Mercedes', latitude=38.35865724531185, longitude=-5.986121868933244,
+                                zone='Zona libre', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
+                                vehicle=self.vehicle, user=self.user)
+        self.announcement.save()
+
+        self.reservation = Reservation(date=self.announcement.date, n_extend=1,
+                                       cancelled=False, rated=False, user=self.user, announcement=self.announcement)
+        self.reservation.save()
+
+        
+        client = APIClient()
+        response = client.post(
+                '/api/login/', {
+                'username': 'testing_login',
+                'password': 'admin123'
+            },
+            format='json'
+        )
+        
+        self.access = response.data['access']
+        self.refresh = response.data['refresh']
     
+    def test_cancel_announcement(self):
+        client = APIClient()
+        response = client.put('/api/cancel/announcement/' + str(self.announcement.id) + '/', 
+            {
+                'cancelled': True
+            },
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access),
+        )
+        self.announcement = Announcement.objects.get(pk=self.announcement.id)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertTrue(self.announcement.cancelled)
+
+    def test_cancel_reservation(self):
+        client = APIClient()
+        response = client.put('/api/cancel/reservation/' + str(self.reservation.id) + '/', 
+            {
+                'cancelled': True
+            },
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access),
+        )
+        self.reservation = Reservation.objects.get(pk=self.reservation.id)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertTrue(self.reservation.cancelled)
