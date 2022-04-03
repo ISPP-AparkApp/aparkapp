@@ -1,4 +1,5 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
+from urllib import response
 from django.test import TestCase
 from django.utils.timezone import make_aware
 from rest_framework import status
@@ -206,7 +207,7 @@ class AnnouncementStatusAPI(TestCase):
     def test_modify_announcement_status(self):
         client = APIClient()
 
-        response = client.put('/api/announcements/status/' + str(self.announcement2.id)+'/', 
+        response = client.put('/api/announcements/status/' + str(self.announcement2.id)+'/',
         {
             "status":"Initial"
         }
@@ -331,7 +332,7 @@ class VehiclesIDTestCase(TestCase):
             },
             format='json'
         )
-        
+
         self.access = response.data['access']
         self.refresh = response.data['refresh']
 
@@ -352,7 +353,7 @@ class VehiclesIDTestCase(TestCase):
             HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-    
+
     # APP - 20/03/2022 - Test get vehicle with token access in the header
     def test_get_vehicle(self):
         client = APIClient()
@@ -385,16 +386,22 @@ class UserTestCase(TestCase):
             first_name="Testing",
             last_name="Testing"
         )
-        self.user2 = self.user
+        #self.user2 = self.user
         self.user2.save()
 
-        profile = Profile(
-            id= self.user.id,
+        self.profile = Profile(
             phone= "692069179",
-	        birthdate= "2022-03-15",
+	        birthdate= "2000-03-15",
             user= self.user
         )
-        profile.save()
+        self.profile.save()
+
+        self.profile2 = Profile(
+            phone= "610069178",
+	        birthdate= "1998-07-25",
+            user= self.user2
+        )
+        self.profile2.save()
 
         client = APIClient()
         response = client.post(
@@ -404,7 +411,7 @@ class UserTestCase(TestCase):
             },
             format='json'
         )
-        
+
         self.access = response.data['access']
         self.refresh = response.data['refresh']
 
@@ -422,48 +429,74 @@ class UserTestCase(TestCase):
             HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-    
+
     # APP - 21/03/2022 - Test get user with token access in the header
     def test_get_user(self):
         client = APIClient()
         response = client.get('/api/users/',HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-    
+
     # APP - 21/03/2022 - Test delete vehicle with token access in the header
     def test_delete_user(self):
         client = APIClient()
         response = client.delete('/api/users/',HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-    
+
     # APP - 21/03/2022 - Test get profile with token access in the header
     def test_get_profile(self):
         client = APIClient()
         response = client.get('/api/profiles/',HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-    
+
     # APP - 21/03/2022 - Test update user with token access in the header
-    def test_update_profile(self):
+    def test_successfully_update_profile(self):
         client = APIClient()
         response = client.put(
                 '/api/profiles/', {
                 "phone": "692069173",
-	            "birthdate": "2022-03-15"
+	            "birthdate": "2000-03-15"
             },
             format='json',
             HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-    
+
+    def test_invalid_update_profile_phone(self):
+        client = APIClient()
+        response = client.put(
+                '/api/profiles/', {
+                "phone": "610069178",
+	            "birthdate": "2000-03-15"
+            },
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_invalid_update_profile_birthdate(self):
+        client = APIClient()
+        response = client.put(
+                '/api/profiles/', {
+                "phone": "610069178",
+	            "birthdate": date.today()
+            },
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_get_user_and_profile(self):
         client = APIClient()
         response = client.get('/api/users/'+str(self.user2.id)+'/',HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-    
+
     def test_get_profile_and_user_error(self):
         client = APIClient()
         response = client.get('/api/users/21/',HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        
+
 class AnnouncementTestCase(TestCase):
 
     def setUp(self):
@@ -591,7 +624,7 @@ class AnnouncementTestCase(TestCase):
 
     def test_create_announcement_fail_bad_request(self):
         client = APIClient()
-        
+
         response = client.post('/api/announcements/', {
             "date": "2022-08-14 13:53",
                     "wait_time": 5,
@@ -753,7 +786,7 @@ class AnnouncementTestCase(TestCase):
         response = client.get('/api/myAnnouncements/', format='json',
                               HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-    
+
     def test_filter_announcements_by_datetime(self):
         client = APIClient()
         response = client.get('/api/announcements/?date=2022-08-14 17:43',
@@ -1072,7 +1105,7 @@ class ReservationTestCase(TestCase):
         self.assertEqual(third_response.status_code, status.HTTP_204_NO_CONTENT)
 
 class RegistrationTestCase(TestCase):
-    
+
     def setUp(self):
         self.user = User(
             username='Pedro',
@@ -1080,6 +1113,13 @@ class RegistrationTestCase(TestCase):
         )
         self.user.set_password('ped123')
         self.user.save()
+
+        self.profile = Profile(
+            phone= "692069179",
+	        birthdate= "2000-03-15",
+            user= self.user
+        )
+        self.profile.save()
 
         self.vehicle = Vehicle(
             brand="Mercedes",
@@ -1109,7 +1149,7 @@ class RegistrationTestCase(TestCase):
                     "type": "Pequeño"
                 }]
             }
-    
+
     #Test register with an existing username
     def test_invalid_register_username_exists(self):
         client = APIClient()
@@ -1164,11 +1204,29 @@ class RegistrationTestCase(TestCase):
         response = client.post('/api/register/', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    #Test register with an existing phone
+    def test_invalid_register_phone(self):
+        client = APIClient()
+        data = self.data
+        data['profile']['phone'] = self.profile.phone
+
+        response = client.post('/api/register/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST) 
+
     #Test register without birthdate
     def test_invalid_register_birthdate(self):
         client = APIClient()
         data = self.data
         data['profile'].pop("phone", None)
+
+        response = client.post('/api/register/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    #Registration test with minor user
+    def test_invalid_register_birthdate_lowe_than_eighteen(self):
+        client = APIClient()
+        data = self.data
+        data['profile']['birthdate'] = date.today()
 
         response = client.post('/api/register/', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -1216,7 +1274,7 @@ class RegistrationTestCase(TestCase):
 
         response = client.post('/api/register/', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-    
+
     #Test register without vehicle license_plate
     def test_invalid_register_license_plate(self):
         client = APIClient()
@@ -1249,7 +1307,7 @@ class RegistrationTestCase(TestCase):
         client = APIClient()
         response = client.post('/api/register/', self.data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        
+
         #Comprobamos que el usuario recién registrado puede logearse
         second_response = client.post('/api/login/', {
                 'username': self.data['username'],
@@ -1293,7 +1351,7 @@ class CancelTestCase(TestCase):
                                        cancelled=False, rated=False, user=self.user, announcement=self.announcement)
         self.reservation.save()
 
-        
+
         client = APIClient()
         response = client.post(
                 '/api/login/', {
@@ -1302,13 +1360,13 @@ class CancelTestCase(TestCase):
             },
             format='json'
         )
-        
+
         self.access = response.data['access']
         self.refresh = response.data['refresh']
-    
+
     def test_cancel_announcement(self):
         client = APIClient()
-        response = client.put('/api/cancel/announcement/' + str(self.announcement.id) + '/', 
+        response = client.put('/api/cancel/announcement/' + str(self.announcement.id) + '/',
             {
                 'cancelled': True
             },
@@ -1321,7 +1379,7 @@ class CancelTestCase(TestCase):
 
     def test_cancel_reservation(self):
         client = APIClient()
-        response = client.put('/api/cancel/reservation/' + str(self.reservation.id) + '/', 
+        response = client.put('/api/cancel/reservation/' + str(self.reservation.id) + '/',
             {
                 'cancelled': True
             },
