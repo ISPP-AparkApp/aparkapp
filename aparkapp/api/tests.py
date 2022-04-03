@@ -501,25 +501,25 @@ class AnnouncementTestCase(TestCase):
                                          vehicle=self.vehicle, user=self.user)
         self.announcement.save()
 
-        self.announcement2 = Announcement(date="2022-08-14 15:43", wait_time=5,
+        self.announcement2 = Announcement(date="2023-08-14 15:43", wait_time=5,
                                           price=2,  allow_wait=True, location='Triana', latitude=38.35865724531185, longitude=-5.986121868933244,
                                           zone='Zona libre', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
                                           vehicle=self.vehicle, user=self.user)
         self.announcement2.save()
 
-        self.announcement3 = Announcement(date="2022-08-14 17:43", wait_time=5,
+        self.announcement3 = Announcement(date="2023-08-14 17:43", wait_time=5,
                                           price=4,  allow_wait=True, location='Triana', latitude=38.35585724531185, longitude=-5.986231868933244,
                                           zone='Zona Azul', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
                                           vehicle=self.vehicle2, user=self.user2)
         self.announcement3.save()
 
-        self.announcement4 = Announcement(date="2022-08-15 17:43", wait_time=5,
+        self.announcement4 = Announcement(date="2023-08-15 17:43", wait_time=5,
                                           price=4,  allow_wait=True, location='Triana', latitude=38.35585724531185, longitude=-5.986231868933244,
                                           zone='Zona Azul', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
                                           vehicle=self.vehicle2, user=self.user2)
         self.announcement4.save()
 
-        self.announcement5 = Announcement(date="2022-08-16 18:43", wait_time=5,
+        self.announcement5 = Announcement(date="2023-08-16 18:43", wait_time=5,
                                           price=3.5,  allow_wait=True, location='Nervion', latitude=38.35582224531185, longitude=-5.986231318933244,
                                           zone='Zona Azul', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
                                           vehicle=self.vehicle2, user=self.user2)
