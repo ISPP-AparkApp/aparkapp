@@ -7,6 +7,7 @@ from .views import (AnnouncementAPI, AnnouncementsAPI, AnnouncementStatusAPI,
                     ReservationByAnouncementAPI, ReservationsAPI, UsersAPI,
                     UsersVehiclesAPI, VehiclesAPI, VehiclesIdAPI,
                     myAnnouncementsAPI, RegisterAPI, UserAPI)
+from api.auxiliary import stripe_webhook_view
 
 urlpatterns = [
     path('register/', RegisterAPI.as_view()),
@@ -33,4 +34,5 @@ urlpatterns = [
     path('geolocatorToCoordinates/', GeolocationToCoordinatesAPI.as_view()),
     path('payments/<int:pk>/', StripePaymentsAPI.as_view()),
     path('paymentsExtended/<int:pk>/', StripeExtendedPaymentsAPI.as_view()),
+    path('stripeWebhook/', stripe_webhook_view)
 ]

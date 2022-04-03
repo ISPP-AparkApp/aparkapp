@@ -1,7 +1,8 @@
-from django.db import models
-from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.auth.models import User
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
 from drf_yasg.inspectors import SwaggerAutoSchema
+
 
 class Profile(models.Model):
    id = models.AutoField(primary_key=True)
@@ -105,6 +106,7 @@ class Announcement(models.Model):
    rated = models.BooleanField(default=False)
    cancelled = models.BooleanField(default=False)
    announcement = models.BooleanField(choices=[(True,'Esto es un anuncio')], default=True)
+   n_extend = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(3)], default=0)
 
    #Relationship
    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE)
@@ -116,7 +118,6 @@ class Announcement(models.Model):
 class Reservation(models.Model):
    id = models.AutoField(primary_key=True)
    date = models.DateTimeField()
-   n_extend = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(3)])
    cancelled = models.BooleanField(default=False)
    rated = models.BooleanField(default=False)
 

@@ -7,4 +7,5 @@ COPY /aparkapp/initial_data.json /code/
 RUN pip install --upgrade pip && pip install -r requirements.txt
 COPY /aparkapp/ /code/
 RUN rm aparkapp/settings.py
-ADD docker-settings.py aparkapp/settings.py
+COPY docker-settings.py aparkapp/settings.py
+COPY .env /code/

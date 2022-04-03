@@ -1,47 +1,38 @@
-from django.contrib.auth.models import User
-from .models import Profile, User, Vehicle, Announcement, Reservation
-from api.serializers import UserSerializer,VehicleSerializer, ProfileSerializer
 import datetime
-from api.geolocator import coordinates_to_address
-from .models import Vehicle, Announcement, Reservation, User
-from api.serializers import (VehicleSerializer, AnnouncementSerializer, ReservationSerializer, 
-SwaggerVehicleSerializer, SwaggerAnnouncementSerializer,SwaggerCreateReservationSerializer, UserSerializer,
-SwaggerUpdateReservationSerializer, GeolocationToAddressSerializer, GeolocationToCoordinatesSerializer, SwaggerVehicleSerializer,
-VehicleSerializerId, SwaggerVehicleSerializerId,SwaggerUserSerializer,SwaggerProfileSerializer, SwaggerUpdateAnnouncementSerializer)
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status, filters, generics
-from rest_framework.permissions import IsAuthenticated
-from django_filters.rest_framework import DjangoFilterBackend
+
+from django.contrib.auth.models import User
+from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.http import Http404
 from django.shortcuts import get_object_or_404
-from django.utils.timezone import make_aware
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import filters, generics, status
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from api.geolocator import coordinates_to_address
-from api.serializers import (AnnouncementSerializer,
+
+from api.auxiliary import post_reservation_logic
+from api.serializers import (AnnouncementNestedVehicleSerializer,
+                             AnnouncementSerializer,
                              GeolocationToAddressSerializer,
                              GeolocationToCoordinatesSerializer,
-                             ProfileSerializer, ReservationSerializer,
+                             ProfileSerializer, RegisterSerializer,
+                             ReservationSerializer,
                              SwaggerAnnouncementSerializer,
+                             SwaggerCancelAnnouncementSerializer,
+                             SwaggerCancelReservationSerializer,
                              SwaggerCreateReservationSerializer,
                              SwaggerProfileSerializer,
                              SwaggerUpdateAnnouncementSerializer,
                              SwaggerUpdateReservationSerializer,
                              SwaggerUserSerializer, SwaggerVehicleSerializer,
-                             SwaggerVehicleSerializerId, UserSerializer,
-                             VehicleSerializer, VehicleSerializerId,
-                             SwaggerCancelAnnouncementSerializer,SwaggerCancelReservationSerializer,
-                             RegisterSerializer, 
-                             AnnouncementNestedVehicleSerializer, UserNestedProfileSerializer)
+                             SwaggerVehicleSerializerId,
+                             UserNestedProfileSerializer, UserSerializer,
+                             VehicleSerializer, VehicleSerializerId)
 
 from .geolocator import address_to_coordinates, coordinates_to_address
 from .models import Announcement, Profile, Reservation, User, Vehicle
-from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
+
 
 class VehiclesAPI(APIView):
     permission_classes = [IsAuthenticated]
@@ -212,7 +203,7 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
         direction = coordinates_to_address(coordinates)
         try:
             data['location'] = str(direction[0]['display_name'])
-        except:
+        except Exception as e:
             data['location'] = str(direction[0])
 
         serializer = AnnouncementSerializer(data=data)
@@ -278,10 +269,14 @@ class AnnouncementStatusAPI(APIView):
     @swagger_auto_schema(request_body=SwaggerUpdateAnnouncementSerializer)
     def put(self,request,pk):
         try:
-            if request.data.get("status"):
+            request_status= request.data.get("status")
+            if request_status:
                 announcement_to_update=Announcement.objects.filter(pk=pk)
                 if announcement_to_update:
-                    announcement_to_update.update(status=request.data["status"])
+                    if request_status=="AcceptDelay" and announcement_to_update.n_extend<3:
+                        announcement_to_update.update(status=request_status, wait_time=announcement_to_update+5, n_extend=announcement_to_update+1)
+                    else:
+                        announcement_to_update.update(status=request_status)
                     res=Response(status=status.HTTP_204_NO_CONTENT)
             else:
                 res=Response("La petición es inválida", status=status.HTTP_400_BAD_REQUEST)
@@ -324,7 +319,7 @@ class AnnouncementAPI(APIView):
         direction = coordinates_to_address(coordinates)
         try:
             data['location'] = str(direction[0]['display_name'])
-        except:
+        except Exception as e:
             data['location'] = str(direction[0])
         serializer = AnnouncementSerializer(announcement, data=data)
         query = Announcement.objects.filter(date=data["date"], vehicle=data["vehicle"])
@@ -345,7 +340,7 @@ class AnnouncementAPI(APIView):
                     return Response(status.HTTP_200_OK)
                 else:
                     return Response("No se puede borrar un anuncio que usted no ha publicado.", status.HTTP_401_UNAUTHORIZED)
-            except:
+            except Exception as e:
                 return Response("No existe el anuncio que desea borrar.", status.HTTP_400_BAD_REQUEST)
 
 class CancelAnnouncementsAPI(APIView):
@@ -361,7 +356,7 @@ class CancelAnnouncementsAPI(APIView):
                 res = Response(status=status.HTTP_204_NO_CONTENT)
             else:
                 raise Exception()
-        except Exception:
+        except Exception as e:
             res = Response("No existe el anuncio especificado o la petición es inválida", status=status.HTTP_404_NOT_FOUND)
 
         return res
@@ -400,7 +395,7 @@ class ReservationAPI(APIView):
             reservation.announcement=None
             reservation.save()
             res=Response(status.HTTP_200_OK)
-        except:
+        except (MultipleObjectsReturned,ObjectDoesNotExist) as e:
             res=Response("No existe tal reserva en tu historial",status.HTTP_404_NOT_FOUND)
         return res   
 
@@ -434,18 +429,7 @@ class ReservationsAPI(APIView):
 
     @swagger_auto_schema(request_body=SwaggerCreateReservationSerializer)        
     def post(self, request):
-        announcement_to_book=get_object_or_404(Announcement,pk=request.data['announcement'])
-        temp_date=make_aware(datetime.datetime.now())
-        if Reservation.objects.filter(announcement=announcement_to_book):
-            response= Response("El anuncio ya está reservado.",status=status.HTTP_409_CONFLICT)
-        elif announcement_to_book.user == request.user:
-            response= Response("No puedes reservar tu propio anuncio.",status=status.HTTP_405_METHOD_NOT_ALLOWED)
-        else:
-            Reservation.objects.create(date=datetime.datetime(temp_date.year, temp_date.month, temp_date.day, temp_date.hour, temp_date.minute), 
-            n_extend=0, cancelled=False, rated=False, user=request.user, announcement=announcement_to_book)
-            response=Response("La reserva ha sido creada",status=status.HTTP_201_CREATED)
-
-        return response
+        return post_reservation_logic(request)
 
 class CancelReservationAPI(APIView):
     permission_classes = [IsAuthenticated]

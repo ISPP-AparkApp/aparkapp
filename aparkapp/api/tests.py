@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+
 from django.test import TestCase
 from django.utils.timezone import make_aware
 from rest_framework import status
@@ -105,7 +106,7 @@ class AnnouncementsUserTestCase(TestCase):
                                           vehicle=self.vehicle2, user=self.user2)
         self.announcement4.save()
 
-        self.reservation = Reservation(date=self.announcement3.date, n_extend=1,
+        self.reservation = Reservation(date=self.announcement3.date,
                                        cancelled=False, rated=False, user=self.user, announcement=self.announcement3)
         self.reservation.save()
 
@@ -187,7 +188,7 @@ class AnnouncementStatusAPI(TestCase):
                                           vehicle=self.vehicle2, user=self.user2)
         self.announcement4.save()
 
-        self.reservation = Reservation(date=self.announcement3.date, n_extend=1,
+        self.reservation = Reservation(date=self.announcement3.date,
                                        cancelled=False, rated=False, user=self.user, announcement=self.announcement3)
         self.reservation.save()
 
@@ -525,7 +526,7 @@ class AnnouncementTestCase(TestCase):
                                           vehicle=self.vehicle2, user=self.user2)
         self.announcement5.save()
 
-        self.reservation = Reservation(date=self.announcement3.date, n_extend=1,
+        self.reservation = Reservation(date=self.announcement3.date,
                                        cancelled=False, rated=False, user=self.user, announcement=self.announcement3)
         self.reservation.save()
 
@@ -911,7 +912,6 @@ class ReservationTestCase(TestCase):
         reservation = Reservation(
             id=1,
             date=announcement.date+timedelta(hours=2),
-            n_extend=0,
             user=self.second_user,
             announcement=announcement
         )
@@ -920,7 +920,6 @@ class ReservationTestCase(TestCase):
         second_reservation = Reservation(
             id=2,
             date=announcement.date+timedelta(hours=7),
-            n_extend=0,
             user=self.user,
             announcement=second_announcement
         )
@@ -999,7 +998,6 @@ class ReservationTestCase(TestCase):
         first_response = client.post(
             '/api/reservations/', {
                 "date": "2022-03-21T23:19:13.277Z",
-                "n_extend": 0,
                 "user": 1,
                 "announcement": 1
             },
@@ -1010,7 +1008,6 @@ class ReservationTestCase(TestCase):
         second_response = client.post(
             '/api/reservations/', {
                 "date": "2022-03-22T23:19:13.277Z",
-                "n_extend": 0,
                 "user": 2,
                 "announcement": 3
             },
@@ -1021,7 +1018,6 @@ class ReservationTestCase(TestCase):
         third_response = client.post(
             '/api/reservations/', {
                 "date": "2022-03-23T23:19:13.277Z",
-                "n_extend": 0,
                 "user": 1,
                 "announcement": 3
             },
@@ -1032,14 +1028,12 @@ class ReservationTestCase(TestCase):
         self.assertEqual(second_response.status_code,status.HTTP_405_METHOD_NOT_ALLOWED)
         self.assertEqual(third_response.status_code, status.HTTP_201_CREATED)
 
-    # APP - 20/03/2022 - Test which updates reservations one which doesn't exist, one already reserved
-    # and one valid
+    # Test which updates reservations one which doesn't exist, one already reserved and one valid
     def test_update_reservation(self):
         client = APIClient()
         first_response = client.put(
             '/api/reservation/1/', {
                 "date": "2022-03-21T23:19:13.277Z",
-                "n_extend": 1,
                 "user": 2,
                 "announcement": 99
             },
@@ -1049,7 +1043,6 @@ class ReservationTestCase(TestCase):
         second_response = client.put(
             '/api/reservation/1/', {
                 "date": "2022-03-21T23:19:13.277Z",
-                "n_extend": 1,
                 "user": 2,
                 "announcement": 2
             },
@@ -1060,7 +1053,6 @@ class ReservationTestCase(TestCase):
         third_response = client.put(
             '/api/reservation/2/', {
                 "date": "2022-03-21T23:19:13.277Z",
-                "n_extend": 1,
                 "user": 3,
                 "announcement": 3
             },
@@ -1285,11 +1277,11 @@ class CancelTestCase(TestCase):
 
         self.announcement = Announcement(date="2022-08-14 13:43", wait_time=5,
                                 price=3.5,  allow_wait=True, location='Reina Mercedes', latitude=38.35865724531185, longitude=-5.986121868933244,
-                                zone='Zona libre', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
+                                zone='Zona libre', limited_mobility=False, status='Initial', observation='Ninguna', rated=False, n_extend=1,
                                 vehicle=self.vehicle, user=self.user)
         self.announcement.save()
 
-        self.reservation = Reservation(date=self.announcement.date, n_extend=1,
+        self.reservation = Reservation(date=self.announcement.date,
                                        cancelled=False, rated=False, user=self.user, announcement=self.announcement)
         self.reservation.save()
 
@@ -1331,3 +1323,121 @@ class CancelTestCase(TestCase):
         self.reservation = Reservation.objects.get(pk=self.reservation.id)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertTrue(self.reservation.cancelled)
+
+class PaymentsTestCase(TestCase):
+    access = ""
+    refresh = ""
+    second_access=""
+    second_refresh=""
+
+    def setUp(self):
+        self.user = User(
+            id=1,
+            username='user_for_reservation',
+        )
+        self.user.set_password('prueba12345')
+        self.user.save()
+
+        self.second_user = User(
+            id=2,
+            username='second_user',
+        )
+        self.second_user.set_password('mecpe1234567')
+        self.second_user.save()
+
+        self.vehicle = Vehicle(
+            brand="BMW",
+            model="Z3",
+            license_plate="4123 BMT",
+            color="Verde",
+            type="Mediano",
+            user=self.user
+        )
+
+        self.vehicle.save()
+
+        self.vehicle2 = Vehicle(
+            brand="Mercedes",
+            model="F7",
+            license_plate="5429 XZ",
+            color="Azul",
+            type="Grande",
+            user=self.second_user
+        )
+        self.vehicle2.save()
+
+        self.announcement = Announcement(date="2023-10-05 13:43", wait_time=5,
+                                         price=6.2,  allow_wait=True, location='Reina Mercedes', latitude=38.35865256131185, longitude=-5.98612186891111,
+                                         zone='Zona libre', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
+                                         vehicle=self.vehicle, user=self.user)
+        self.announcement.save()
+        self.announcement2 = Announcement(date="2023-10-07 11:43", wait_time=5,
+                                         price=6.8,  allow_wait=True, location='Triana', latitude=38.35865256131185, longitude=-5.98612186891111,
+                                         zone='Zona libre', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
+                                         n_extend=2, vehicle=self.vehicle, user=self.second_user)
+        self.announcement2.save()
+
+        self.client = APIClient()
+        first_login = self.client.post(
+            '/api/login/', {
+                'username': 'user_for_reservation',
+                'password': 'prueba12345'
+            },
+            format='json'
+        )
+        self.access = first_login.data['access']
+        self.refresh = first_login.data['refresh']
+
+        second_login = self.client.post(
+            '/api/login/', {
+                'username': 'second_user',
+                'password': 'mecpe1234567',
+            },
+            format='json'
+        )
+
+        self.second_access = second_login.data['access']
+        self.second_refresh = second_login.data['refresh']
+
+    def test_create_payment(self):
+        first_response = self.client.post('/api/payments/' + str(self.announcement.id) + '/',
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access),
+        )
+        second_response = self.client.post('/api/payments/' + str(999) + '/',
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.second_access),
+        )
+        third_response = self.client.post('/api/payments/' + str(self.announcement.id) + '/',
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.second_access),
+        )
+        self.assertEqual(first_response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(second_response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(third_response.status_code, status.HTTP_200_OK)
+
+
+    def test_extend_payment(self):
+        first_response = self.client.post('/api/paymentsExtended/' + str(self.announcement2.id) + '/',
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.second_access),
+        )
+        second_response = self.client.post('/api/paymentsExtended/' + str(999) + '/',
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access),
+        )
+        third_response = self.client.post('/api/paymentsExtended/' + str(self.announcement2.id) + '/',
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access),
+        )
+        self.announcement2.n_extend=3
+        self.announcement2.save()
+
+        forth_response = self.client.post('/api/paymentsExtended/' + str(self.announcement2.id) + '/',
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access),
+        )
+        self.assertEqual(first_response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(second_response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(third_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(forth_response.status_code, status.HTTP_400_BAD_REQUEST)
