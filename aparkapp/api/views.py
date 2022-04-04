@@ -172,7 +172,7 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
     def get_queryset(self, request):
         res_list = Reservation.objects.all()
         ann_id_list = list(res_list.values_list('announcement', flat=True))
-        query = Announcement.objects.exclude(user=request.user).exclude(id__in=ann_id_list)
+        query = Announcement.objects.exclude(user=request.user).exclude(id__in=ann_id_list).exclude(cancelled=True).exclude(date__lt=datetime.datetime.now())
         
         return query
 
