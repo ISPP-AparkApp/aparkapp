@@ -271,13 +271,21 @@ class AnnouncementStatusAPI(APIView):
         try:
             request_status= request.data.get("status")
             if request_status:
-                announcement_to_update=Announcement.objects.filter(pk=pk)
+                announcement_to_update=Announcement.objects.get(pk=pk)
                 if announcement_to_update:
-                    if request_status=="AcceptDelay" and announcement_to_update.n_extend<3:
-                        announcement_to_update.update(status=request_status, wait_time=announcement_to_update+5, n_extend=announcement_to_update+1)
+                    if request_status=="AcceptDelay":
+                        if announcement_to_update.n_extend>3:
+                            res=Response("error: n_extend es mayor o igual a 3",status=status.HTTP_400_BAD_REQUEST)
+                        else:
+                            announcement_to_update.status = request_status
+                            announcement_to_update.wait_time += 5
+                            announcement_to_update.n_extend += 1
+                            announcement_to_update.save()
+                            res=Response(status=status.HTTP_204_NO_CONTENT)
                     else:
-                        announcement_to_update.update(status=request_status)
-                    res=Response(status=status.HTTP_204_NO_CONTENT)
+                        announcement_to_update.status = request_status
+                        announcement_to_update.save()
+                        res=Response(status=status.HTTP_204_NO_CONTENT)
             else:
                 res=Response("La petición es inválida", status=status.HTTP_400_BAD_REQUEST)
         except Exception:

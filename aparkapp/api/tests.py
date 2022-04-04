@@ -140,9 +140,6 @@ class AnnouncementStatusAPI(TestCase):
         self.user.set_password('aparkapp123')
         self.user.save()
 
-        self.user2 = User(username='user_test2')
-        self.user2.save()
-
         self.vehicle = Vehicle(
             brand="Testing",
             model="Testing",
@@ -154,42 +151,14 @@ class AnnouncementStatusAPI(TestCase):
 
         self.vehicle.save()
 
-        self.vehicle2 = Vehicle(
-            brand="Testing2",
-            model="Testing2",
-            license_plate="Testing2",
-            color="Testing2",
-            type="Pequeño",
-            user=self.user2
-        )
-        self.vehicle2.save()
-
         self.announcement = Announcement(date="2022-08-14 13:43", wait_time=5,
                                          price=3.5,  allow_wait=True, location='Reina Mercedes', latitude=38.35865724531185, longitude=-5.986121868933244,
                                          zone='Zona libre', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
                                          vehicle=self.vehicle, user=self.user)
         self.announcement.save()
 
-        self.announcement2 = Announcement(date="2022-08-14 15:43", wait_time=5,
-                                          price=2,  allow_wait=True, location='Triana', latitude=38.35865724531185, longitude=-5.986121868933244,
-                                          zone='Zona libre', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
-                                          vehicle=self.vehicle, user=self.user)
-        self.announcement2.save()
-
-        self.announcement3 = Announcement(date="2022-08-14 17:43", wait_time=5,
-                                          price=4,  allow_wait=True, location='Triana', latitude=38.35585724531185, longitude=-5.986231868933244,
-                                          zone='Zona Azul', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
-                                          vehicle=self.vehicle2, user=self.user2)
-        self.announcement3.save()
-
-        self.announcement4 = Announcement(date="2022-08-15 17:43", wait_time=5,
-                                          price=4,  allow_wait=True, location='Triana', latitude=38.35585724531185, longitude=-5.986231868933244,
-                                          zone='Zona Azul', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
-                                          vehicle=self.vehicle2, user=self.user2)
-        self.announcement4.save()
-
-        self.reservation = Reservation(date=self.announcement3.date,
-                                       cancelled=False, rated=False, user=self.user, announcement=self.announcement3)
+        self.reservation = Reservation(date=self.announcement.date,
+                                       cancelled=False, rated=False, user=self.user, announcement=self.announcement)
         self.reservation.save()
 
         client = APIClient()
@@ -203,17 +172,32 @@ class AnnouncementStatusAPI(TestCase):
 
         self.access = response.data['access']
 
-    #PROBLEMAS
+
     def test_modify_announcement_status(self):
         client = APIClient()
 
-        response = client.put('/api/announcements/status/' + str(self.announcement2.id)+'/', 
+        response = client.put('/api/announcements/status/' + str(self.announcement.id)+'/', 
         {
             "status":"Initial"
         }
-            ,HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
+        ,HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
+        self.announcement = Announcement.objects.get(pk=self.announcement.id)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertEqual(self.announcement2.status, "Initial")
+        self.assertEqual(self.announcement.status, "Initial")
+
+    def test_modify_announcement_status_delay(self):
+        client = APIClient()
+
+        response = client.put('/api/announcements/status/' + str(self.announcement.id)+'/', 
+        {
+            "status":"AcceptDelay"
+        }
+        ,HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
+        self.announcement_updated = Announcement.objects.get(pk=self.announcement.id)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(self.announcement_updated.status, "AcceptDelay")
+        self.assertEqual(self.announcement_updated.wait_time, self.announcement.wait_time+5)
+        self.assertEqual(self.announcement_updated.n_extend, self.announcement.n_extend+1)
 
     def test_search_announcements(self):
         client = APIClient()
