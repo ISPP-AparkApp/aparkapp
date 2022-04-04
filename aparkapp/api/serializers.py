@@ -1,8 +1,10 @@
+import email
 from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator, MinValueValidator
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
+from datetime import date
 
 from api.models import Announcement, Profile, Reservation, Vehicle
 
@@ -12,6 +14,24 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = ['phone', 'birthdate']
+    
+    def validate_birthdate(self, value):
+        print(value<date(1900,1,1))
+        if value > date.today() or value < date(1900,1,1):
+            raise serializers.ValidationError("Inserte una fecha válida")
+        elif (date.today().year - value.year) < 18:
+            raise serializers.ValidationError("Debe tener 18 años para usar la aplicación")
+        return value
+
+    def validate_phone(self, value):
+        user = None
+        request = self.context.get('request')
+        if request and hasattr(request, "user"):
+            user = request.user
+        
+        if Profile.objects.filter(phone=value).exists() and Profile.objects.get(phone=value).user != user:
+            raise serializers.ValidationError("Ya existe un usuario registrado con el mismo número de teléfono")
+        return value
 
 class SwaggerProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -133,7 +153,7 @@ class GeolocationToCoordinatesSerializer(serializers.Serializer):
 ### REGISTER SERIALIZERS
 
 class RegisterSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(required=True, validators=[UniqueValidator(queryset=User.objects.all())])
+    email = serializers.EmailField(required=True)
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     profile = ProfileSerializer()
     vehicles = SwaggerVehicleSerializerId(many=True)
@@ -148,6 +168,11 @@ class RegisterSerializer(serializers.ModelSerializer):
     def validate_vehicles(self, value):
         if not value:
             raise serializers.ValidationError(("Inserte un vehículo"))
+        return value
+    
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Ya existe un usuario registrado con el mismo email")
         return value
 
     def create(self, validated_data):
