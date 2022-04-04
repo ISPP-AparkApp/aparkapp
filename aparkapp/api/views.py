@@ -142,24 +142,24 @@ class ProfileApi(APIView):
     model=Profile
     swagger_tags= ["Endpoints de perfiles"]
 
-    def get_object(self,pk):
+    def get_object(self,user):
         try:
-            return Profile.objects.get(id=pk)
+            return Profile.objects.get(user=user)
         except Profile.DoesNotExist:
             raise Http404
 
     @swagger_auto_schema(request_body=SwaggerProfileSerializer)
     def put(self, request, *args, **kwargs):
-        pk = request.user.id
-        user = self.get_object(pk)
-        serializer = ProfileSerializer(user, data=request.data, partial=True)
+        user = request.user
+        profile = self.get_object(user)
+        serializer = ProfileSerializer(profile,data=request.data, partial=True, context={'request': request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     def get(self, request):
-        pk = request.user.id
-        return Response(ProfileSerializer(get_object_or_404(Profile, pk=pk)).data)
+
+        return Response(ProfileSerializer(get_object_or_404(Profile, user=request.user)).data)
 
 
 class AnnouncementsAPI(generics.ListCreateAPIView):
@@ -182,7 +182,7 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
     def get_queryset(self, request):
         res_list = Reservation.objects.all()
         ann_id_list = list(res_list.values_list('announcement', flat=True))
-        query = Announcement.objects.exclude(user=request.user).exclude(id__in=ann_id_list)
+        query = Announcement.objects.exclude(user=request.user).exclude(id__in=ann_id_list).exclude(cancelled=True).exclude(date__lt=datetime.datetime.now())
         
         return query
 
@@ -528,7 +528,7 @@ class RegisterAPI(APIView):
     @swagger_auto_schema(request_body=RegisterSerializer)
     def post(self, request):
         data = request.data.copy()
-        serializer_data = RegisterSerializer(data=data)
+        serializer_data = RegisterSerializer(data=data, context={'request': request})
         if serializer_data.is_valid():
             serializer_data.save()
             return Response({"mensaje":"Registrado correctamente","user":serializer_data.data},status=status.HTTP_201_CREATED)       
