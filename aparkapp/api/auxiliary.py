@@ -36,12 +36,12 @@ def stripe_webhook_view(request):
     if (event['type'] == 'checkout.session.completed' or event['type'] == 'payment_intent.succeeded' 
     or event['type'] == 'checkout.session.async_payment_succeeded'):
         session = event['data']['object']
-        session['cancel_url']='https://aparkapp-s2.herokuapp.com/home/'
+        session['cancel_url']='https://aparkapp-s2.herokuapp.com/home'
         # Fulfill the purchase
         post_order_operations(session, session['metadata'])
     elif event['type'] == 'checkout.session.expired' or event['type'] == 'checkout.session.async_payment_failed':
         session = event['data']['object']
-        session['cancel_url']='https://aparkapp-s2.herokuapp.com/home/'
+        session['cancel_url']='https://aparkapp-s2.herokuapp.com/home'
     # Passed signature verification
     return res
 
