@@ -1,5 +1,6 @@
-from datetime import datetime, timedelta, date
+from datetime import date, datetime, timedelta
 from urllib import response
+
 from django.test import TestCase
 from django.utils.timezone import make_aware
 from rest_framework import status
@@ -586,9 +587,7 @@ class AnnouncementTestCase(TestCase):
         },
             format='json',
             HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertEqual(
-            response.data, 'Ya existe un anuncio para este vehículo a la misma hora.')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_create_announcement_fail(self):
         client = APIClient()
@@ -972,14 +971,21 @@ class ReservationTestCase(TestCase):
             HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
         )
         second_response = client.get(
+            '/api/reservation/2/',
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
+        )
+        third_response = client.get(
             '/api/reservation/999/',
             format='json',
             HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
         )
-        self.assertEqual(first_response.status_code, status.HTTP_200_OK)
-        self.assertTrue(first_response.data['announcement'])
+        self.assertEqual(first_response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-        self.assertTrue(second_response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(second_response.status_code, status.HTTP_200_OK)
+        self.assertTrue(second_response.data['announcement'])
+
+        self.assertTrue(third_response.status_code, status.HTTP_404_NOT_FOUND)
 
     # Test which retrieve list of reservations of the logged user
     def test_get_reservations(self):

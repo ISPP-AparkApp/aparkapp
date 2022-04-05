@@ -80,7 +80,9 @@ def payment_builder(price, productId, url, user_id, announcement_id):
             metadata={'user_id': user_id, 'announcement_id': announcement_id})
 
 
-### POST RESERVATION LOGIC
+
+
+### RESERVATION LOGIC
 
 def post_reservation_logic(request):
     announcement_to_book=get_object_or_404(Announcement,pk=request.data['announcement'])

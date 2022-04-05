@@ -136,6 +136,7 @@
       "price": 1,
       "location": "Triana",
       "longitude": -5.99629,
+      "n_extend": 0,
       "latitude": 37.3826,
       "vehicle": 3,
       "user": 2
@@ -149,6 +150,7 @@
       "price": 1,
       "location": "Triana",
       "longitude": -5.99629,
+      "n_extend": 0,
       "latitude": 37.3726,
       "vehicle": 3,
       "user": 2
@@ -161,6 +163,7 @@
       "date": "2022-07-27 00:00:00",
       "price": 3,
       "location": "Triana",
+      "n_extend": 0,
       "longitude": -5.99629,
       "latitude": 37.9826,
       "vehicle": 4,
@@ -173,6 +176,7 @@
     "fields": {
       "date": "2022-07-26 00:00:00",
       "price": 1,
+      "n_extend": 0,
       "location": "Triana",
       "longitude": -5.99629,
       "latitude": 37.9816,
@@ -185,7 +189,6 @@
     "pk": 1,
     "fields": {
       "date": "2022-04-04T23:03:00+02:00",
-      "n_extend": 0,
       "cancelled": false,
       "rated": false,
       "announcement": 2,
