@@ -33,14 +33,15 @@ def stripe_webhook_view(request):
         res=HttpResponse(status=400)
 
     # Handle operations after payment succeeded event
-    if event['type'] == 'payment_intent.succeeded' or event['type'] == 'checkout.session.async_payment_succeeded':
+    if (event['type'] == 'checkout.session.completed' or event['type'] == 'payment_intent.succeeded' 
+    or event['type'] == 'checkout.session.async_payment_succeeded'):
         session = event['data']['object']
-        session['cancel_url']='https://stripe.com'
+        session['cancel_url']='https://aparkapp-s2.herokuapp.com/home'
         # Fulfill the purchase
         post_order_operations(session, session['metadata'])
     elif event['type'] == 'checkout.session.expired' or event['type'] == 'checkout.session.async_payment_failed':
         session = event['data']['object']
-        session['cancel_url']='https://stripe.com' ## TODO change URL for cancelation 
+        session['cancel_url']='https://aparkapp-s2.herokuapp.com/home'
     # Passed signature verification
     return res
 
@@ -79,7 +80,9 @@ def payment_builder(price, productId, url, user_id, announcement_id):
             metadata={'user_id': user_id, 'announcement_id': announcement_id})
 
 
-### POST RESERVATION LOGIC
+
+
+### RESERVATION LOGIC
 
 def post_reservation_logic(request):
     announcement_to_book=get_object_or_404(Announcement,pk=request.data['announcement'])

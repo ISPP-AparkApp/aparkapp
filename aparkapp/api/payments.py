@@ -55,7 +55,7 @@ class StripeExtendedPaymentsAPI(APIView):
                         product=extended_product_builder(announcement_to_buy)
                         pay_link=payment_builder(50, product['id'],
                         "https://aparkapp-s2.herokuapp.com/reserve/" + str(announcement_to_buy.id), 
-                        request.user.id, announcement_to_buy.id) ## TODO: check URL redirect
+                        request.user.id, announcement_to_buy.id) 
                         res=Response({"id":pay_link.id, "object":pay_link.object, 
                         "active": pay_link.active, "url":pay_link.url}, status.HTTP_200_OK)
                     else:

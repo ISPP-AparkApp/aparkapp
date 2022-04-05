@@ -10,7 +10,7 @@ from rest_framework import filters, generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
+from django.utils.timezone import make_aware
 from api.auxiliary import post_reservation_logic
 from api.serializers import (AnnouncementNestedVehicleSerializer,
                              AnnouncementSerializer,
@@ -182,7 +182,8 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
     def get_queryset(self, request):
         res_list = Reservation.objects.all()
         ann_id_list = list(res_list.values_list('announcement', flat=True))
-        query = Announcement.objects.exclude(user=request.user).exclude(id__in=ann_id_list).exclude(cancelled=True).exclude(date__lt=datetime.datetime.now())
+        query = Announcement.objects.exclude(user=request.user).exclude(id__in=ann_id_list).exclude(
+            cancelled=True).exclude(date__lt=make_aware(datetime.datetime.now()))
         
         return query
 
@@ -214,8 +215,8 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
         query2 = Vehicle.objects.filter(user=user)
 
         if query:
-            return Response("Ya existe un anuncio para este vehículo a la misma hora.", status=status.HTTP_401_UNAUTHORIZED)
-
+            if query.get().cancelled:
+                res=Response("El anuncio ya está reservado", status=status.HTTP_409_CONFLICT)    
         if query2:
             vhs = query2.all().values()
             ls = [v['id'] for v in vhs]
@@ -224,8 +225,10 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
 
         if serializer.is_valid() and not query:
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)    
+            res = Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            res=Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return res    
 
 class myAnnouncementsAPI(APIView):
     permission_classes = [IsAuthenticated]
@@ -258,8 +261,8 @@ class AnnouncementStatusAPI(APIView):
             raise Http404
 
     def get(self, request, pk):
-        low = datetime.datetime.now() - datetime.timedelta(minutes=10)
-        major = datetime.datetime.now() + datetime.timedelta(minutes=60)
+        low = make_aware(datetime.datetime.now() - datetime.timedelta(minutes=10))
+        major = make_aware(datetime.datetime.now() + datetime.timedelta(minutes=60))
         announcements =  Announcement.objects.filter(user=pk and status!='Departure', date__gte=low, date__lte=major)
         aux=[]
         for a in announcements:
@@ -309,7 +312,7 @@ class AnnouncementAPI(APIView):
         res_list = Reservation.objects.filter(user=request.user)
         announcement_list = list(res_list.values_list('announcement', flat=True))
 
-        if True or pk in announcement_list or request.user==an.user:  ##TODO: Check ALWAYS True
+        if pk in announcement_list or request.user==an.user: 
             serializer = AnnouncementNestedVehicleSerializer(an)
             return Response(serializer.data)
         else:
@@ -368,7 +371,6 @@ class CancelAnnouncementsAPI(APIView):
             announcement_to_update= Announcement.objects.filter(pk=pk)
             res_list = Reservation.objects.all()
             announcement_list = list(res_list.values_list('announcement', flat=True))
-
             if request.user != announcement_to_update[0].user:
                 return Response("No puede cancelar un anuncio de otro usuario", status=status.HTTP_401_UNAUTHORIZED)
             if announcement_to_update and pk not in announcement_list:
@@ -404,8 +406,13 @@ class ReservationAPI(APIView):
 
     def get(self, request,pk):
         try:
+            
             reservation=Reservation.objects.get(pk=pk)
-            res=Response(ReservationSerializer(reservation).data, status=status.HTTP_200_OK)
+            
+            if request.user == reservation.user:
+                res=Response(ReservationSerializer(reservation).data, status=status.HTTP_200_OK)
+            else:
+                res=Response("No puede ver las reservas de otros usuarios", status=status.HTTP_401_UNAUTHORIZED)
         except (MultipleObjectsReturned,ObjectDoesNotExist) as e:
             res=Response("No se ha encontrado ninguna reserva con tal identificador", status=status.HTTP_404_NOT_FOUND)
         return res

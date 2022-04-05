@@ -24,7 +24,7 @@ urlpatterns = [
     path('announcements/status/<int:pk>/', AnnouncementStatusAPI.as_view()),
     path('announcement/<int:pk>/', AnnouncementAPI.as_view()),
     path('announcement/user/', AnnouncementsUserAPI.as_view()),
-    path('cancel/announcement/<int:pk>', CancelAnnouncementsAPI.as_view()),
+    path('cancel/announcement/<int:pk>/', CancelAnnouncementsAPI.as_view()),
     path('reservation/<int:pk>/', ReservationAPI.as_view()),
     path('reservation/anouncement/<int:pk>/', ReservationByAnouncementAPI.as_view()),
     path('reservations/', ReservationsAPI.as_view()),

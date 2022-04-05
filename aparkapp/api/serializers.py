@@ -1,10 +1,9 @@
-import email
+from datetime import date
+
 from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
 from django.core.validators import MaxValueValidator, MinValueValidator
 from rest_framework import serializers
-from rest_framework.validators import UniqueValidator
-from django.contrib.auth.password_validation import validate_password
-from datetime import date
 
 from api.models import Announcement, Profile, Reservation, Vehicle
 
@@ -16,7 +15,6 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = ['phone', 'birthdate']
     
     def validate_birthdate(self, value):
-        print(value<date(1900,1,1))
         if value > date.today() or value < date(1900,1,1):
             raise serializers.ValidationError("Inserte una fecha válida")
         elif (date.today().year - value.year) < 18:
