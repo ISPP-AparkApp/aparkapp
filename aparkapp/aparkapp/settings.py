@@ -1,5 +1,6 @@
 from pathlib import Path
-
+from dotenv import load_dotenv
+import os, stripe
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -8,6 +9,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-0c@al$25nzv(s7y96$adhg38hv-at!4=9k+278iyn##2dks!vb'
+
+
+# STRIPE CONFIGURATION
+load_dotenv() 
+API_KEY = os.environ['STRIPE_SECRET']
+PUBLISHABLE_KEY = os.environ['STRIPE_PUBLISHABLE_KEY']
+stripe.api_key=API_KEY
+ENDPOINT_SECRET=os.environ['STRIPE_WEBHOOK_SECRET']
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -35,7 +44,6 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
-    'rest_framework_swagger',
     'drf_yasg',
 ]
 
@@ -61,6 +69,7 @@ SWAGGER_SETTINGS = {
             'name': 'Authorization' 
         }
     }, 
+   'DEFAULT_AUTO_SCHEMA_CLASS': 'api.models.CustomSwaggerAutoSchema',
 }
 
 MIDDLEWARE = [

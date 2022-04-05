@@ -95,6 +95,7 @@ class AnnouncementNestedVehicleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Announcement
         fields = '__all__'
+        
 class SwaggerAnnouncementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Announcement
@@ -119,7 +120,7 @@ class ReservationSerializer(serializers.ModelSerializer):
     announcement = AnnouncementNestedVehicleSerializer(read_only = True)
     class Meta:
         model = Reservation
-        fields = ['id','date','n_extend','cancelled','rated','announcement', 'user']
+        fields = ['id','date','cancelled','rated','announcement', 'user']
         
 class SwaggerCreateReservationSerializer(serializers.ModelSerializer):
     class Meta:
@@ -129,7 +130,7 @@ class SwaggerCreateReservationSerializer(serializers.ModelSerializer):
 class SwaggerUpdateReservationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reservation
-        fields = ['date','n_extend','cancelled','rated','announcement', 'user']
+        fields = ['date','cancelled','rated','announcement', 'user']
 
 class SwaggerCancelReservationSerializer(serializers.ModelSerializer):
     class Meta:

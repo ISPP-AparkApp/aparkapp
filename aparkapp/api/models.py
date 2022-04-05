@@ -1,7 +1,8 @@
-from django.db import models
-from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.auth.models import User
-from django.forms import ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
+from drf_yasg.inspectors import SwaggerAutoSchema
+
 
 class Profile(models.Model):
    id = models.AutoField(primary_key=True)
@@ -73,11 +74,18 @@ class Announcement(models.Model):
    ] 
 
    INITIAL = 'Initial'
+   DELAY = 'Delay'
+   ACCEPT_DELAY = 'AcceptDelay'
+   DENY_DELAY = 'DenyDelay'
    ARRIVAL = 'Arrival'
    DEPARTURE = 'Departure'
+   
 
    STATUS = [
       (INITIAL, ('Estado inicial')),
+      (DELAY, ('Estado retraso')),
+      (ACCEPT_DELAY, ('Estado aceptar retraso')),
+      (DENY_DELAY, ('Estado rechazar retraso')),
       (ARRIVAL, ('Estado llegada')),
       (DEPARTURE, ('Estado salida')),
    ] 
@@ -105,6 +113,7 @@ class Announcement(models.Model):
    rated = models.BooleanField(default=False)
    cancelled = models.BooleanField(default=False)
    announcement = models.BooleanField(choices=[(True,'Esto es un anuncio')], default=True)
+   n_extend = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(3)], default=0)
 
    #Relationship
    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE)
@@ -116,7 +125,6 @@ class Announcement(models.Model):
 class Reservation(models.Model):
    id = models.AutoField(primary_key=True)
    date = models.DateTimeField()
-   n_extend = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(3)])
    cancelled = models.BooleanField(default=False)
    rated = models.BooleanField(default=False)
 
@@ -128,3 +136,17 @@ class Reservation(models.Model):
    def __str__(self):
       return str(self.id)
 
+
+
+## Tagging for Swagger
+class CustomSwaggerAutoSchema(SwaggerAutoSchema):
+    def get_tags(self, operation_keys=None):
+        operation_keys = operation_keys or self.operation_keys
+
+        tags = self.overrides.get('tags')
+        if not tags:
+            tags = [operation_keys[0]]
+        if hasattr(self.view, "swagger_tags"):
+            tags = self.view.swagger_tags
+
+        return tags
