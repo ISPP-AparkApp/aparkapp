@@ -142,24 +142,24 @@ class ProfileApi(APIView):
     model=Profile
     swagger_tags= ["Endpoints de perfiles"]
 
-    def get_object(self,pk):
+    def get_object(self,user):
         try:
-            return Profile.objects.get(id=pk)
+            return Profile.objects.get(user=user)
         except Profile.DoesNotExist:
             raise Http404
 
     @swagger_auto_schema(request_body=SwaggerProfileSerializer)
     def put(self, request, *args, **kwargs):
-        pk = request.user.id
-        user = self.get_object(pk)
-        serializer = ProfileSerializer(user, data=request.data, partial=True)
+        user = request.user
+        profile = self.get_object(user)
+        serializer = ProfileSerializer(profile,data=request.data, partial=True, context={'request': request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     def get(self, request):
-        pk = request.user.id
-        return Response(ProfileSerializer(get_object_or_404(Profile, pk=pk)).data)
+
+        return Response(ProfileSerializer(get_object_or_404(Profile, user=request.user)).data)
 
 
 class AnnouncementsAPI(generics.ListCreateAPIView):
@@ -182,7 +182,7 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
     def get_queryset(self, request):
         res_list = Reservation.objects.all()
         ann_id_list = list(res_list.values_list('announcement', flat=True))
-        query = Announcement.objects.exclude(user=request.user).exclude(id__in=ann_id_list)
+        query = Announcement.objects.exclude(user=request.user).exclude(id__in=ann_id_list).exclude(cancelled=True).exclude(date__lt=datetime.datetime.now())
         
         return query
 
@@ -271,13 +271,21 @@ class AnnouncementStatusAPI(APIView):
         try:
             request_status= request.data.get("status")
             if request_status:
-                announcement_to_update=Announcement.objects.filter(pk=pk)
+                announcement_to_update=Announcement.objects.get(pk=pk)
                 if announcement_to_update:
-                    if request_status=="AcceptDelay" and announcement_to_update.n_extend<3:
-                        announcement_to_update.update(status=request_status, wait_time=announcement_to_update+5, n_extend=announcement_to_update+1)
+                    if request_status=="AcceptDelay":
+                        if announcement_to_update.n_extend>3:
+                            res=Response("error: n_extend es mayor o igual a 3",status=status.HTTP_400_BAD_REQUEST)
+                        else:
+                            announcement_to_update.status = request_status
+                            announcement_to_update.wait_time += 5
+                            announcement_to_update.n_extend += 1
+                            announcement_to_update.save()
+                            res=Response(status=status.HTTP_204_NO_CONTENT)
                     else:
-                        announcement_to_update.update(status=request_status)
-                    res=Response(status=status.HTTP_204_NO_CONTENT)
+                        announcement_to_update.status = request_status
+                        announcement_to_update.save()
+                        res=Response(status=status.HTTP_204_NO_CONTENT)
             else:
                 res=Response("La petición es inválida", status=status.HTTP_400_BAD_REQUEST)
         except Exception:
@@ -310,26 +318,33 @@ class AnnouncementAPI(APIView):
     @swagger_auto_schema(request_body=SwaggerAnnouncementSerializer)
     def put(self, request, pk):
         announcement = self.get_object(pk)
+        res_list = Reservation.objects.all()
+        announcement_list = list(res_list.values_list('announcement', flat=True))
 
-        data = request.data.copy()
-        data['user'] = announcement.user.id
+        if request.user != announcement.user:
+            return Response("No puede editar un anuncio de otro usuario", status=status.HTTP_401_UNAUTHORIZED)
+        elif pk in announcement_list:
+            return Response("No puede editar un anuncio reservado", status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        else:
+            data = request.data.copy()
+            data['user'] = announcement.user.id
 
-        #Coordinates to address
-        coordinates = (float(data['latitude']), float(data['longitude']))
-        direction = coordinates_to_address(coordinates)
-        try:
-            data['location'] = str(direction[0]['display_name'])
-        except Exception as e:
-            data['location'] = str(direction[0])
-        serializer = AnnouncementSerializer(announcement, data=data)
-        query = Announcement.objects.filter(date=data["date"], vehicle=data["vehicle"])
-        
-        if query and query.get().id != pk:
-            return Response("Ya existe un anuncio para este vehículo a la misma hora.",status=status.HTTP_401_UNAUTHORIZED)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+            #Coordinates to address
+            coordinates = (float(data['latitude']), float(data['longitude']))
+            direction = coordinates_to_address(coordinates)
+            try:
+                data['location'] = str(direction[0]['display_name'])
+            except:
+                data['location'] = str(direction[0])
+            serializer = AnnouncementSerializer(announcement, data=data)
+            query = Announcement.objects.filter(date=data["date"], vehicle=data["vehicle"])
+            
+            if query and query.get().id != pk:
+                return Response("Ya existe un anuncio para este vehículo a la misma hora.",status=status.HTTP_401_UNAUTHORIZED)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
 
     def delete(self, request, pk):
@@ -351,9 +366,16 @@ class CancelAnnouncementsAPI(APIView):
     def put(self, request, pk):
         try:
             announcement_to_update= Announcement.objects.filter(pk=pk)
-            if announcement_to_update:
+            res_list = Reservation.objects.all()
+            announcement_list = list(res_list.values_list('announcement', flat=True))
+
+            if request.user != announcement_to_update[0].user:
+                return Response("No puede cancelar un anuncio de otro usuario", status=status.HTTP_401_UNAUTHORIZED)
+            if announcement_to_update and pk not in announcement_list:
                 announcement_to_update.update(cancelled=request.data["cancelled"])
                 res = Response(status=status.HTTP_204_NO_CONTENT)
+            elif pk in announcement_list:
+                res = Response("No puede cancelar un anuncio reservado", status=status.HTTP_405_METHOD_NOT_ALLOWED)
             else:
                 raise Exception()
         except Exception as e:
@@ -520,7 +542,7 @@ class RegisterAPI(APIView):
     @swagger_auto_schema(request_body=RegisterSerializer)
     def post(self, request):
         data = request.data.copy()
-        serializer_data = RegisterSerializer(data=data)
+        serializer_data = RegisterSerializer(data=data, context={'request': request})
         if serializer_data.is_valid():
             serializer_data.save()
             return Response({"mensaje":"Registrado correctamente","user":serializer_data.data},status=status.HTTP_201_CREATED)       

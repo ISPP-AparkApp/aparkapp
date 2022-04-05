@@ -74,11 +74,18 @@ class Announcement(models.Model):
    ] 
 
    INITIAL = 'Initial'
+   DELAY = 'Delay'
+   ACCEPT_DELAY = 'AcceptDelay'
+   DENY_DELAY = 'DenyDelay'
    ARRIVAL = 'Arrival'
    DEPARTURE = 'Departure'
+   
 
    STATUS = [
       (INITIAL, ('Estado inicial')),
+      (DELAY, ('Estado retraso')),
+      (ACCEPT_DELAY, ('Estado aceptar retraso')),
+      (DENY_DELAY, ('Estado rechazar retraso')),
       (ARRIVAL, ('Estado llegada')),
       (DEPARTURE, ('Estado salida')),
    ] 

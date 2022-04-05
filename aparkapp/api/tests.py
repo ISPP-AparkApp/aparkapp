@@ -1,5 +1,5 @@
-from datetime import datetime, timedelta
-
+from datetime import datetime, timedelta, date
+from urllib import response
 from django.test import TestCase
 from django.utils.timezone import make_aware
 from rest_framework import status
@@ -140,9 +140,6 @@ class AnnouncementStatusAPI(TestCase):
         self.user.set_password('aparkapp123')
         self.user.save()
 
-        self.user2 = User(username='user_test2')
-        self.user2.save()
-
         self.vehicle = Vehicle(
             brand="Testing",
             model="Testing",
@@ -154,42 +151,14 @@ class AnnouncementStatusAPI(TestCase):
 
         self.vehicle.save()
 
-        self.vehicle2 = Vehicle(
-            brand="Testing2",
-            model="Testing2",
-            license_plate="Testing2",
-            color="Testing2",
-            type="Pequeño",
-            user=self.user2
-        )
-        self.vehicle2.save()
-
         self.announcement = Announcement(date="2022-08-14 13:43", wait_time=5,
                                          price=3.5,  allow_wait=True, location='Reina Mercedes', latitude=38.35865724531185, longitude=-5.986121868933244,
                                          zone='Zona libre', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
                                          vehicle=self.vehicle, user=self.user)
         self.announcement.save()
 
-        self.announcement2 = Announcement(date="2022-08-14 15:43", wait_time=5,
-                                          price=2,  allow_wait=True, location='Triana', latitude=38.35865724531185, longitude=-5.986121868933244,
-                                          zone='Zona libre', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
-                                          vehicle=self.vehicle, user=self.user)
-        self.announcement2.save()
-
-        self.announcement3 = Announcement(date="2022-08-14 17:43", wait_time=5,
-                                          price=4,  allow_wait=True, location='Triana', latitude=38.35585724531185, longitude=-5.986231868933244,
-                                          zone='Zona Azul', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
-                                          vehicle=self.vehicle2, user=self.user2)
-        self.announcement3.save()
-
-        self.announcement4 = Announcement(date="2022-08-15 17:43", wait_time=5,
-                                          price=4,  allow_wait=True, location='Triana', latitude=38.35585724531185, longitude=-5.986231868933244,
-                                          zone='Zona Azul', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
-                                          vehicle=self.vehicle2, user=self.user2)
-        self.announcement4.save()
-
-        self.reservation = Reservation(date=self.announcement3.date,
-                                       cancelled=False, rated=False, user=self.user, announcement=self.announcement3)
+        self.reservation = Reservation(date=self.announcement.date,
+                                       cancelled=False, rated=False, user=self.user, announcement=self.announcement)
         self.reservation.save()
 
         client = APIClient()
@@ -203,17 +172,32 @@ class AnnouncementStatusAPI(TestCase):
 
         self.access = response.data['access']
 
-    #PROBLEMAS
+
     def test_modify_announcement_status(self):
         client = APIClient()
 
-        response = client.put('/api/announcements/status/' + str(self.announcement2.id)+'/', 
+        response = client.put('/api/announcements/status/' + str(self.announcement.id)+'/', 
         {
             "status":"Initial"
         }
-            ,HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
+        ,HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
+        self.announcement = Announcement.objects.get(pk=self.announcement.id)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertEqual(self.announcement2.status, "Initial")
+        self.assertEqual(self.announcement.status, "Initial")
+
+    def test_modify_announcement_status_delay(self):
+        client = APIClient()
+
+        response = client.put('/api/announcements/status/' + str(self.announcement.id)+'/', 
+        {
+            "status":"AcceptDelay"
+        }
+        ,HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
+        self.announcement_updated = Announcement.objects.get(pk=self.announcement.id)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(self.announcement_updated.status, "AcceptDelay")
+        self.assertEqual(self.announcement_updated.wait_time, self.announcement.wait_time+5)
+        self.assertEqual(self.announcement_updated.n_extend, self.announcement.n_extend+1)
 
     def test_search_announcements(self):
         client = APIClient()
@@ -332,7 +316,7 @@ class VehiclesIDTestCase(TestCase):
             },
             format='json'
         )
-        
+
         self.access = response.data['access']
         self.refresh = response.data['refresh']
 
@@ -353,7 +337,7 @@ class VehiclesIDTestCase(TestCase):
             HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-    
+
     # APP - 20/03/2022 - Test get vehicle with token access in the header
     def test_get_vehicle(self):
         client = APIClient()
@@ -386,16 +370,22 @@ class UserTestCase(TestCase):
             first_name="Testing",
             last_name="Testing"
         )
-        self.user2 = self.user
+        #self.user2 = self.user
         self.user2.save()
 
-        profile = Profile(
-            id= self.user.id,
+        self.profile = Profile(
             phone= "692069179",
-	        birthdate= "2022-03-15",
+	        birthdate= "2000-03-15",
             user= self.user
         )
-        profile.save()
+        self.profile.save()
+
+        self.profile2 = Profile(
+            phone= "610069178",
+	        birthdate= "1998-07-25",
+            user= self.user2
+        )
+        self.profile2.save()
 
         client = APIClient()
         response = client.post(
@@ -405,7 +395,7 @@ class UserTestCase(TestCase):
             },
             format='json'
         )
-        
+
         self.access = response.data['access']
         self.refresh = response.data['refresh']
 
@@ -423,48 +413,74 @@ class UserTestCase(TestCase):
             HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-    
+
     # APP - 21/03/2022 - Test get user with token access in the header
     def test_get_user(self):
         client = APIClient()
         response = client.get('/api/users/',HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-    
+
     # APP - 21/03/2022 - Test delete vehicle with token access in the header
     def test_delete_user(self):
         client = APIClient()
         response = client.delete('/api/users/',HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-    
+
     # APP - 21/03/2022 - Test get profile with token access in the header
     def test_get_profile(self):
         client = APIClient()
         response = client.get('/api/profiles/',HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-    
+
     # APP - 21/03/2022 - Test update user with token access in the header
-    def test_update_profile(self):
+    def test_successfully_update_profile(self):
         client = APIClient()
         response = client.put(
                 '/api/profiles/', {
                 "phone": "692069173",
-	            "birthdate": "2022-03-15"
+	            "birthdate": "2000-03-15"
             },
             format='json',
             HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-    
+
+    def test_invalid_update_profile_phone(self):
+        client = APIClient()
+        response = client.put(
+                '/api/profiles/', {
+                "phone": "610069178",
+	            "birthdate": "2000-03-15"
+            },
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_invalid_update_profile_birthdate(self):
+        client = APIClient()
+        response = client.put(
+                '/api/profiles/', {
+                "phone": "610069178",
+	            "birthdate": date.today()
+            },
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_get_user_and_profile(self):
         client = APIClient()
         response = client.get('/api/users/'+str(self.user2.id)+'/',HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-    
+
     def test_get_profile_and_user_error(self):
         client = APIClient()
         response = client.get('/api/users/21/',HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        
+
 class AnnouncementTestCase(TestCase):
 
     def setUp(self):
@@ -502,25 +518,25 @@ class AnnouncementTestCase(TestCase):
                                          vehicle=self.vehicle, user=self.user)
         self.announcement.save()
 
-        self.announcement2 = Announcement(date="2022-08-14 15:43", wait_time=5,
+        self.announcement2 = Announcement(date="2023-08-14 15:43", wait_time=5,
                                           price=2,  allow_wait=True, location='Triana', latitude=38.35865724531185, longitude=-5.986121868933244,
                                           zone='Zona libre', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
                                           vehicle=self.vehicle, user=self.user)
         self.announcement2.save()
 
-        self.announcement3 = Announcement(date="2022-08-14 17:43", wait_time=5,
+        self.announcement3 = Announcement(date="2023-08-14 17:43", wait_time=5,
                                           price=4,  allow_wait=True, location='Triana', latitude=38.35585724531185, longitude=-5.986231868933244,
                                           zone='Zona Azul', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
                                           vehicle=self.vehicle2, user=self.user2)
         self.announcement3.save()
 
-        self.announcement4 = Announcement(date="2022-08-15 17:43", wait_time=5,
+        self.announcement4 = Announcement(date="2023-08-15 17:43", wait_time=5,
                                           price=4,  allow_wait=True, location='Triana', latitude=38.35585724531185, longitude=-5.986231868933244,
                                           zone='Zona Azul', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
                                           vehicle=self.vehicle2, user=self.user2)
         self.announcement4.save()
 
-        self.announcement5 = Announcement(date="2022-08-16 18:43", wait_time=5,
+        self.announcement5 = Announcement(date="2023-08-16 18:43", wait_time=5,
                                           price=3.5,  allow_wait=True, location='Nervion', latitude=38.35582224531185, longitude=-5.986231318933244,
                                           zone='Zona Azul', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
                                           vehicle=self.vehicle2, user=self.user2)
@@ -592,7 +608,7 @@ class AnnouncementTestCase(TestCase):
 
     def test_create_announcement_fail_bad_request(self):
         client = APIClient()
-        
+
         response = client.post('/api/announcements/', {
             "date": "2022-08-14 13:53",
                     "wait_time": 5,
@@ -754,7 +770,7 @@ class AnnouncementTestCase(TestCase):
         response = client.get('/api/myAnnouncements/', format='json',
                               HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-    
+
     def test_filter_announcements_by_datetime(self):
         client = APIClient()
         response = client.get('/api/announcements/?date=2022-08-14 17:43',
@@ -1064,7 +1080,7 @@ class ReservationTestCase(TestCase):
         self.assertEqual(third_response.status_code, status.HTTP_204_NO_CONTENT)
 
 class RegistrationTestCase(TestCase):
-    
+
     def setUp(self):
         self.user = User(
             username='Pedro',
@@ -1072,6 +1088,13 @@ class RegistrationTestCase(TestCase):
         )
         self.user.set_password('ped123')
         self.user.save()
+
+        self.profile = Profile(
+            phone= "692069179",
+	        birthdate= "2000-03-15",
+            user= self.user
+        )
+        self.profile.save()
 
         self.vehicle = Vehicle(
             brand="Mercedes",
@@ -1101,7 +1124,7 @@ class RegistrationTestCase(TestCase):
                     "type": "Pequeño"
                 }]
             }
-    
+
     #Test register with an existing username
     def test_invalid_register_username_exists(self):
         client = APIClient()
@@ -1156,11 +1179,29 @@ class RegistrationTestCase(TestCase):
         response = client.post('/api/register/', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    #Test register with an existing phone
+    def test_invalid_register_phone(self):
+        client = APIClient()
+        data = self.data
+        data['profile']['phone'] = self.profile.phone
+
+        response = client.post('/api/register/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST) 
+
     #Test register without birthdate
     def test_invalid_register_birthdate(self):
         client = APIClient()
         data = self.data
         data['profile'].pop("phone", None)
+
+        response = client.post('/api/register/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    #Registration test with minor user
+    def test_invalid_register_birthdate_lowe_than_eighteen(self):
+        client = APIClient()
+        data = self.data
+        data['profile']['birthdate'] = date.today()
 
         response = client.post('/api/register/', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -1208,7 +1249,7 @@ class RegistrationTestCase(TestCase):
 
         response = client.post('/api/register/', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-    
+
     #Test register without vehicle license_plate
     def test_invalid_register_license_plate(self):
         client = APIClient()
@@ -1241,7 +1282,7 @@ class RegistrationTestCase(TestCase):
         client = APIClient()
         response = client.post('/api/register/', self.data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        
+
         #Comprobamos que el usuario recién registrado puede logearse
         second_response = client.post('/api/login/', {
                 'username': self.data['username'],
@@ -1254,7 +1295,7 @@ class RegistrationTestCase(TestCase):
         self.assertTrue('refresh' in second_response.data)
 
 class CancelTestCase(TestCase):
-    # APP - 31/03/2022 - Create user and announcement, and get tokens
+
     access = ""
     refresh = ""
     def setUp(self):
@@ -1264,6 +1305,12 @@ class CancelTestCase(TestCase):
         self.user.set_password('admin123')
         self.user.save()
 
+        self.user2 = User(
+            username='testing2_login',
+        )
+        self.user2.set_password('admin123')
+        self.user2.save()
+        
         self.vehicle = Vehicle(
             brand="Testing",
             model="Testing",
@@ -1275,16 +1322,38 @@ class CancelTestCase(TestCase):
 
         self.vehicle.save()
 
+        self.vehicle2 = Vehicle(
+            brand="Testing",
+            model="Testing",
+            license_plate="Testing2",
+            color="Testing",
+            type="Pequeño",
+            user=self.user2
+        )
+
+        self.vehicle2.save()
+
         self.announcement = Announcement(date="2022-08-14 13:43", wait_time=5,
                                 price=3.5,  allow_wait=True, location='Reina Mercedes', latitude=38.35865724531185, longitude=-5.986121868933244,
-                                zone='Zona libre', limited_mobility=False, status='Initial', observation='Ninguna', rated=False, n_extend=1,
+                                zone='Zona libre', limited_mobility=False, status='Initial', observation='Ninguna', rated=False, cancelled=False,
                                 vehicle=self.vehicle, user=self.user)
         self.announcement.save()
 
         self.reservation = Reservation(date=self.announcement.date,
                                        cancelled=False, rated=False, user=self.user, announcement=self.announcement)
         self.reservation.save()
+    
+        self.announcement2 = Announcement(date="2022-08-15 13:43", wait_time=5,
+                                price=3.5,  allow_wait=True, location='Reina Mercedes', latitude=38.35865724531185, longitude=-5.986121868933244,
+                                zone='Zona libre', limited_mobility=False, status='Initial', observation='Ninguna', rated=False, cancelled=False,
+                                vehicle=self.vehicle, user=self.user)
+        self.announcement2.save()
 
+        self.announcement3 = Announcement(date="2022-08-15 17:43", wait_time=5,
+                                price=4,  allow_wait=True, location='Reina Mercedes', latitude=38.4567724531185, longitude=-2.236121868933244,
+                                zone='Zona libre', limited_mobility=False, status='Initial', observation='Ninguna', rated=False, cancelled=False,
+                                vehicle=self.vehicle2, user=self.user2)
+        self.announcement3.save()
         
         client = APIClient()
         response = client.post(
@@ -1294,11 +1363,26 @@ class CancelTestCase(TestCase):
             },
             format='json'
         )
-        
+
         self.access = response.data['access']
         self.refresh = response.data['refresh']
     
+    #Test to cancel announcement successfully
     def test_cancel_announcement(self):
+        client = APIClient()
+        response = client.put('/api/cancel/announcement/' + str(self.announcement2.id) + '/', 
+            {
+                'cancelled': True
+            },
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access),
+        )
+        self.announcement2 = Announcement.objects.get(pk=self.announcement2.id)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertTrue(self.announcement2.cancelled)
+
+    #Test cancel reserved announcement
+    def test_cancel_reserved_announcement(self):
         client = APIClient()
         response = client.put('/api/cancel/announcement/' + str(self.announcement.id) + '/', 
             {
@@ -1308,12 +1392,26 @@ class CancelTestCase(TestCase):
             HTTP_AUTHORIZATION='Bearer {0}'.format(self.access),
         )
         self.announcement = Announcement.objects.get(pk=self.announcement.id)
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertTrue(self.announcement.cancelled)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        self.assertFalse(self.announcement.cancelled)
+
+    #Test cancel of another user's announcement
+    def test_cancel_announcement_different_user(self):
+        client = APIClient()
+        response = client.put('/api/cancel/announcement/' + str(self.announcement3.id) + '/', 
+            {
+                'cancelled': True
+            },
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access),
+        )
+        self.announcement3 = Announcement.objects.get(pk=self.announcement3.id)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertFalse(self.announcement.cancelled)
 
     def test_cancel_reservation(self):
         client = APIClient()
-        response = client.put('/api/cancel/reservation/' + str(self.reservation.id) + '/', 
+        response = client.put('/api/cancel/reservation/' + str(self.reservation.id) + '/',
             {
                 'cancelled': True
             },
