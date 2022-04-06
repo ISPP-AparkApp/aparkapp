@@ -1,0 +1,25 @@
+version: "3"
+
+services:
+  web:
+    build:
+      context: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/aparkapp
+    command: sh -c "sleep 5 && python manage.py makemigrations && python manage.py migrate && python manage.py loaddata initial_data.json && python manage.py runserver 0.0.0.0:8000"
+
+    environment:
+      - DB_HOST=localhost
+      - DB_NAME=aparkapp
+      - DB_USER=postgres
+      - DB_PASS=postgres
+    depends_on:
+      - db
+  db:
+    image: postgres:13.0-alpine
+    environment:
+      - POSTGRES_DB=aparkapp
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres

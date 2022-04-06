@@ -1,0 +1,198 @@
+[
+  {
+    "model": "api.profile",
+    "pk": 1,
+    "fields": {
+      "phone": "633917766",
+      "birthdate": "2000-02-15",
+      "user": 1
+    }
+  },
+  {
+    "model": "api.profile",
+    "pk": 2,
+    "fields": {
+      "phone": "633917333",
+      "birthdate": "2000-01-10",
+      "user": 2
+    }
+  },
+  {
+    "model": "api.profile",
+    "pk": 3,
+    "fields": {
+      "phone": "78542011",
+      "birthdate": "2000-12-10",
+      "user": 3
+    }
+  },
+  {
+    "model": "api.vehicle",
+    "pk": 1,
+    "fields": {
+      "brand": "Seat",
+      "model": "León",
+      "license_plate": "2193ELO",
+      "color": "Verde",
+      "type": "Mediano",
+      "user": 1
+    }
+  },
+  {
+    "model": "api.vehicle",
+    "pk": 2,
+    "fields": {
+      "brand": "Audi",
+      "model": "A4",
+      "license_plate": "9102MXN",
+      "color": "Gris",
+      "type": "Mediano",
+      "user": 1
+    }
+  },
+  {
+    "model": "api.vehicle",
+    "pk": 3,
+    "fields": {
+      "brand": "Open",
+      "model": "Corsa",
+      "license_plate": "6602MXN",
+      "color": "Rojo",
+      "type": "Mediano",
+      "user": 2
+    }
+  },
+  {
+    "model": "api.vehicle",
+    "pk": 4,
+    "fields": {
+      "brand": "Fiat",
+      "model": "Toledo",
+      "license_plate": "9002MXN",
+      "color": "Gris",
+      "type": "Pequeño",
+      "user": 3
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 1,
+    "fields": {
+      "password": "pbkdf2_sha256$320000$rsak8BCXOomY87FZRYWAeH$9Il8uVbuHOGj+pMBGctIJNs7Z3+5jz3uAU2oseyFac4=",
+      "last_login": "2022-03-21T07:35:56Z",
+      "is_superuser": true,
+      "username": "admin",
+      "first_name": "Jorge",
+      "last_name": "López",
+      "email": "admin@hotmail.com",
+      "is_staff": true,
+      "is_active": true,
+      "date_joined": "2022-03-21T07:35:40Z",
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 2,
+    "fields": {
+      "password": "pbkdf2_sha256$320000$rsak8BCXOomY87FZRYWAeH$9Il8uVbuHOGj+pMBGctIJNs7Z3+5jz3uAU2oseyFac4=",
+      "last_login": "2022-03-21T07:35:56Z",
+      "is_superuser": true,
+      "username": "user",
+      "first_name": "Luis",
+      "last_name": "Ibáñez",
+      "email": "user@hotmail.com",
+      "is_staff": true,
+      "is_active": true,
+      "date_joined": "2022-03-21T07:35:40Z",
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 3,
+    "fields": {
+      "password": "pbkdf2_sha256$320000$rsak8BCXOomY87FZRYWAeH$9Il8uVbuHOGj+pMBGctIJNs7Z3+5jz3uAU2oseyFac4=",
+      "last_login": "2022-03-21T07:35:56Z",
+      "is_superuser": false,
+      "username": "user2",
+      "first_name": "Fran",
+      "last_name": "Diaz",
+      "email": "user2@hotmail.com",
+      "is_staff": true,
+      "is_active": true,
+      "date_joined": "2022-03-21T07:35:40Z",
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "api.announcement",
+    "pk": 1,
+    "fields": {
+      "date": "2022-07-29 00:00:00",
+      "price": 1,
+      "location": "Triana",
+      "longitude": -5.99629,
+      "n_extend": 0,
+      "latitude": 37.3826,
+      "vehicle": 3,
+      "user": 2
+    }
+  },
+  {
+    "model": "api.announcement",
+    "pk": 2,
+    "fields": {
+      "date": "2022-07-25 00:00:00",
+      "price": 1,
+      "location": "Triana",
+      "longitude": -5.99629,
+      "n_extend": 0,
+      "latitude": 37.3726,
+      "vehicle": 3,
+      "user": 2
+    }
+  },
+  {
+    "model": "api.announcement",
+    "pk": 3,
+    "fields": {
+      "date": "2022-07-27 00:00:00",
+      "price": 3,
+      "location": "Triana",
+      "n_extend": 0,
+      "longitude": -5.99629,
+      "latitude": 37.9826,
+      "vehicle": 4,
+      "user": 3
+    }
+  },
+  {
+    "model": "api.announcement",
+    "pk": 4,
+    "fields": {
+      "date": "2022-07-26 00:00:00",
+      "price": 1,
+      "n_extend": 0,
+      "location": "Triana",
+      "longitude": -5.99629,
+      "latitude": 37.9816,
+      "vehicle": 4,
+      "user": 3
+    }
+  },
+  {
+    "model": "api.reservation",
+    "pk": 1,
+    "fields": {
+      "date": "2022-04-04T23:03:00+02:00",
+      "cancelled": false,
+      "rated": false,
+      "announcement": 2,
+      "user": 1
+    }
+  }
+]
