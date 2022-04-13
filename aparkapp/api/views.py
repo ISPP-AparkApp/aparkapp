@@ -12,6 +12,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.utils.timezone import make_aware
 from api.auxiliary import post_reservation_logic
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from api.serializers import (AnnouncementNestedVehicleSerializer,
                              AnnouncementSerializer,
                              GeolocationToAddressSerializer,
@@ -31,12 +32,46 @@ from api.serializers import (AnnouncementNestedVehicleSerializer,
                              VehicleSerializer, VehicleSerializerId,
                              RatingSerializer)
 
+from rest_framework_simplejwt.views import TokenObtainPairView
 from .geolocator import address_to_coordinates, coordinates_to_address
-from .models import Announcement, Profile, Reservation, User, Vehicle, Rating
+from .models import Announcement, Profile, Rating, Reservation, User, Vehicle
+from django.contrib.auth import authenticate
+from rest_framework import permissions, exceptions
 
+class NotIsBanned(permissions.BasePermission):
+    message = "El usuario está baneado"
+    def has_permission(self, request, view):
+        profile = Profile.objects.get(user__username=request.user.username)
+        if profile.is_banned:
+            raise exceptions.PermissionDenied(detail=self.message) 
+        return True
+
+class Login(TokenObtainPairView):
+    serialer_class = TokenObtainPairSerializer
+
+    def post(self,request,*args,**kwargs):
+        username = request.data.get('username','')
+        password = request.data.get('password','')
+        user = authenticate(username=username, password=password)
+        if user:
+            login_serializer = self.serialer_class(data=request.data)
+            if login_serializer.is_valid():
+                profile = Profile.objects.get(user__username=username)
+                if profile.is_banned:
+                    return Response({'error': 'El usuario está bloqueado'}, status=status.HTTP_403_FORBIDDEN)
+                else:
+                    return Response({
+                        'access': login_serializer.validated_data['access'],
+                        'refresh': login_serializer.validated_data['refresh'],
+                        'message': 'Inicio de sesión realizado con éxito'
+                    }, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'Contraseña o nombre de usuario incorrectos'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({'error': 'Contraseña o nombre de usuario incorrectos'}, status=status.HTTP_400_BAD_REQUEST)
 
 class VehiclesAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     swagger_tags= ["Endpoints de vehiculos"]
 
     @swagger_auto_schema(request_body=SwaggerVehicleSerializer)
@@ -57,7 +92,7 @@ class VehiclesAPI(APIView):
         
 
 class VehiclesIdAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     swagger_tags= ["Endpoints de vehiculos"]
 
     def get_object(self,pk):
@@ -90,7 +125,7 @@ class VehiclesIdAPI(APIView):
         return Response(VehicleSerializerId(get_object_or_404(Vehicle, pk=pk)).data)
 
 class UsersVehiclesAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     swagger_tags= ["Endpoints de usuarios"]
 
     def get(self,request):
@@ -102,7 +137,7 @@ class UsersVehiclesAPI(APIView):
 
 
 class UsersAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     model = Profile
     swagger_tags= ["Endpoints de usuarios"]
 
@@ -130,7 +165,7 @@ class UsersAPI(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 class UserAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     swagger_tags= ["Endpoints de usuarios"]
 
     def get(self, request, pk):
@@ -139,7 +174,7 @@ class UserAPI(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
 class ProfileApi(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     model=Profile
     swagger_tags= ["Endpoints de perfiles"]
 
@@ -164,7 +199,7 @@ class ProfileApi(APIView):
 
 
 class AnnouncementsAPI(generics.ListCreateAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     swagger_tags= ["Endpoints de anuncios"]
 
     filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend)
@@ -232,7 +267,7 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
         return res    
 
 class myAnnouncementsAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     swagger_tags= ["Endpoints de anuncios"]
 
     def get(self, request):
@@ -252,7 +287,7 @@ class AnnouncementsUserAPI(APIView):
         return Response(announcement_serializer.data, status=status.HTTP_200_OK)
 
 class AnnouncementStatusAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     swagger_tags= ["Endpoints de anuncios"]
 
     def get_object(self,pk):
@@ -299,7 +334,7 @@ class AnnouncementStatusAPI(APIView):
         
     
 class AnnouncementAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     swagger_tags= ["Endpoints de anuncios"]
 
     def get_object(self,pk):
@@ -363,7 +398,7 @@ class AnnouncementAPI(APIView):
                 return Response("No existe el anuncio que desea borrar.", status.HTTP_400_BAD_REQUEST)
 
 class CancelAnnouncementsAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     swagger_tags= ["Endpoints de anuncios"]
 
     @swagger_auto_schema(request_body=SwaggerCancelAnnouncementSerializer)
@@ -402,7 +437,7 @@ class ReservationByAnouncementAPI(APIView):
 
 
 class ReservationAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     swagger_tags= ["Endpoints de reservas"]
 
     def get(self, request,pk):
@@ -446,7 +481,7 @@ class ReservationAPI(APIView):
         return response
 
 class ReservationsAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     swagger_tags= ["Endpoints de reservas"]
     
     # Returns own reservations
@@ -462,7 +497,7 @@ class ReservationsAPI(APIView):
         return post_reservation_logic(request)
 
 class CancelReservationAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     swagger_tags= ["Endpoints de reservas"]
 
     @swagger_auto_schema(request_body=SwaggerCancelReservationSerializer)
@@ -480,7 +515,7 @@ class CancelReservationAPI(APIView):
         return res
 
 class GeolocationToCoordinatesAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     swagger_tags= ["Endpoints de geolocalización"]
 
     @swagger_auto_schema(request_body=GeolocationToCoordinatesSerializer) 
@@ -495,7 +530,7 @@ class GeolocationToCoordinatesAPI(APIView):
         return response
 
 class GeolocationToAddressAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     swagger_tags= ["Endpoints de geolocalización"]
 
     @swagger_auto_schema(request_body=GeolocationToAddressSerializer) 

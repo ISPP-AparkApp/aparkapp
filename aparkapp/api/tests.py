@@ -18,6 +18,13 @@ class AuthenticationTestCase(TestCase):
         user.set_password('admin123')
         user.save()
 
+        profile = Profile(
+            phone = "+34621321221",
+            birthdate = datetime(1994, 12, 6),
+            user = user
+        )
+        profile.save()
+
     # APP - 19/03/2022 - Login Test
     def test_login(self):
         client = APIClient()
@@ -59,8 +66,22 @@ class AnnouncementsUserTestCase(TestCase):
         self.user.set_password('aparkapp123')
         self.user.save()
 
+        profile = Profile(
+            phone = "+34621321221",
+            birthdate = datetime(1994, 12, 6),
+            user = self.user
+        )
+        profile.save()
+
         self.user2 = User(username='user_test2')
         self.user2.save()
+
+        profile2 = Profile(
+            phone = "+34621321221",
+            birthdate = datetime(1993, 12, 6),
+            user = self.user2
+        )
+        profile2.save()
 
         self.vehicle = Vehicle(
             brand="Testing",
@@ -141,6 +162,13 @@ class AnnouncementStatusAPI(TestCase):
         self.user.set_password('aparkapp123')
         self.user.save()
 
+        profile = Profile(
+            phone = "+34621321221",
+            birthdate = datetime(1994, 12, 6),
+            user = self.user
+        )
+        profile.save()
+
         self.vehicle = Vehicle(
             brand="Testing",
             model="Testing",
@@ -219,6 +247,13 @@ class VehiclesTestCase(TestCase):
         self.user.set_password('admin123')
         self.user.save()
 
+        profile = Profile(
+            phone = "+34621321221",
+            birthdate = datetime(1994, 12, 6),
+            user = self.user
+        )
+        profile.save()
+
         vehicle = Vehicle(
             brand="Testing",
             model="Testing",
@@ -286,6 +321,13 @@ class VehiclesIDTestCase(TestCase):
         )
         self.user.set_password('admin123')
         self.user.save()
+
+        profile = Profile(
+            phone = "+34621321221",
+            birthdate = datetime(1994, 12, 6),
+            user = self.user
+        )
+        profile.save()
 
         vehicle = Vehicle(
             id=99,
@@ -488,9 +530,23 @@ class AnnouncementTestCase(TestCase):
         self.user = User(username='user_test')
         self.user.set_password('aparkapp123')
         self.user.save()
+        
+        profile = Profile(
+            phone = "+34621321221",
+            birthdate = datetime(1994, 12, 6),
+            user = self.user
+        )
+        profile.save()
 
         self.user2 = User(username='user_test2')
         self.user2.save()
+
+        profile2 = Profile(
+            phone = "+34621321221",
+            birthdate = datetime(1994, 12, 6),
+            user = self.user2
+        )
+        profile2.save()
 
         self.vehicle = Vehicle(
             brand="Testing",
@@ -785,6 +841,13 @@ class UserVehiclesTestCase(TestCase):
         self.user.set_password('aparkapp123')
         self.user.save()
 
+        profile = Profile(
+            phone = "+34621321221",
+            birthdate = datetime(1994, 12, 6),
+            user = self.user
+        )
+        profile.save()
+
         self.vehicle = Vehicle(
             brand="Testing",
             model="Testing",
@@ -838,6 +901,13 @@ class ReservationTestCase(TestCase):
         self.user.set_password('prueba12345')
         self.user.save()
 
+        profile = Profile(
+            phone = "+34621321221",
+            birthdate = datetime(1994, 12, 6),
+            user = self.user
+        )
+        profile.save()
+
         self.second_user = User(
             id=2,
             username='second_user',
@@ -845,12 +915,26 @@ class ReservationTestCase(TestCase):
         self.second_user.set_password('Mecpe1234567')
         self.second_user.save()
 
+        profile2 = Profile(
+            phone = "+34621321221",
+            birthdate = datetime(1994, 12, 6),
+            user = self.second_user
+        )
+        profile2.save()
+
         self.third_user = User(
             id=3,
             username='third_user',
         )
         self.third_user.set_password('pepperoni1234567')
         self.third_user.save()
+
+        profile3 = Profile(
+            phone = "+34621321221",
+            birthdate = datetime(1994, 12, 6),
+            user = self.third_user
+        )
+        profile3.save()
 
         vehicle = Vehicle(
             id=1,
@@ -1311,11 +1395,25 @@ class CancelTestCase(TestCase):
         self.user.set_password('admin123')
         self.user.save()
 
+        profile = Profile(
+            phone = "+34621321221",
+            birthdate = datetime(1994, 12, 6),
+            user = self.user
+        )
+        profile.save()
+
         self.user2 = User(
             username='testing2_login',
         )
         self.user2.set_password('admin123')
         self.user2.save()
+
+        profile2 = Profile(
+            phone = "+34621321221",
+            birthdate = datetime(1994, 12, 6),
+            user = self.user2
+        )
+        profile2.save()
         
         self.vehicle = Vehicle(
             brand="Testing",
@@ -1442,12 +1540,26 @@ class PaymentsTestCase(TestCase):
         self.user.set_password('prueba12345')
         self.user.save()
 
+        profile = Profile(
+            phone = "+34621321221",
+            birthdate = datetime(1994, 12, 6),
+            user = self.user
+        )
+        profile.save()
+
         self.second_user = User(
             id=2,
             username='second_user',
         )
         self.second_user.set_password('mecpe1234567')
         self.second_user.save()
+
+        profile2 = Profile(
+            phone = "+34621321221",
+            birthdate = datetime(1994, 12, 6),
+            user = self.second_user
+        )
+        profile2.save()
 
         self.vehicle = Vehicle(
             brand="BMW",

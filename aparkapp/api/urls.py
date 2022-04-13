@@ -3,7 +3,7 @@ from rest_framework_simplejwt import views as jwt_views
 from .payments import StripePaymentsAPI, StripeExtendedPaymentsAPI
 from .views import (AnnouncementAPI, AnnouncementsAPI, AnnouncementStatusAPI,
                     AnnouncementsUserAPI, CancelAnnouncementsAPI, CancelReservationAPI, GeolocationToAddressAPI,
-                    GeolocationToCoordinatesAPI, ProfileApi, ReservationAPI,
+                    GeolocationToCoordinatesAPI, Login, ProfileApi, ReservationAPI,
                     ReservationByAnouncementAPI, ReservationsAPI, UsersAPI,
                     UsersVehiclesAPI, VehiclesAPI, VehiclesIdAPI,
                     myAnnouncementsAPI, RegisterAPI, UserAPI, RatingAPI)
@@ -11,7 +11,7 @@ from api.auxiliary import stripe_webhook_view
 
 urlpatterns = [
     path('register/', RegisterAPI.as_view()),
-    path('login/', jwt_views.TokenObtainPairView.as_view()),
+    path('login/', Login.as_view()),
     path('refresh-token/', jwt_views.TokenRefreshView.as_view()),
     path('vehicles/', VehiclesAPI.as_view()),
     path('vehicles/<int:pk>/', VehiclesIdAPI.as_view()),
