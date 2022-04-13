@@ -1657,3 +1657,198 @@ class PaymentsTestCase(TestCase):
         self.assertEqual(second_response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(third_response.status_code, status.HTTP_200_OK)
         self.assertEqual(forth_response.status_code, status.HTTP_400_BAD_REQUEST)
+
+class RatingsTestCase(TestCase):
+    access = ""
+    refresh = ""
+    second_access=""
+    second_refresh=""
+
+    def setUp(self):
+        self.user = User(username='Manuel')
+        self.user.set_password('prueba12345')
+        self.user.save()
+
+        profile = Profile(
+            phone = "621748524",
+            birthdate = datetime(1988, 4, 13),
+            user = self.user
+        )
+        profile.save()
+
+        self.second_user = User(username='frigo')
+        self.second_user.set_password('mecpe1234567')
+        self.second_user.save()
+
+        profile2 = Profile(
+            phone = "685278524",
+            birthdate = datetime(1991, 2, 10),
+            user = self.second_user
+        )
+        profile2.save()
+
+        self.vehicle = Vehicle(
+            brand="Peugeot",
+            model="207",
+            license_plate="ABC123",
+            color="Azul",
+            type="Pequeño",
+            user=self.user
+        )
+
+        self.vehicle.save()
+
+        self.vehicle2 = Vehicle(
+            brand="Opel",
+            model="Corsa",
+            license_plate="ABD123",
+            color="Negro",
+            type="Pequeño",
+            user=self.second_user
+        )
+        self.vehicle2.save()
+
+        self.announcement = Announcement(date="2023-10-05 13:43", wait_time=5,
+                                         price=6.2,  allow_wait=True, location='Reina Mercedes', latitude=38.35865256131185, longitude=-5.98612186891111,
+                                         zone='Zona libre', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
+                                         vehicle=self.vehicle2, user=self.second_user)
+        self.announcement.save()
+
+        self.reservation = Reservation(date=self.announcement.date,
+                                       cancelled=False, rated=False, user=self.user, announcement=self.announcement)
+        self.reservation.save()
+
+        self.client = APIClient()
+        first_login = self.client.post(
+            '/api/login/', {
+                'username': 'Manuel',
+                'password': 'prueba12345'
+            },
+            format='json'
+        )
+        self.access = first_login.data['access']
+        self.refresh = first_login.data['refresh']
+
+        second_login = self.client.post(
+            '/api/login/', {
+                'username': 'frigo',
+                'password': 'mecpe1234567'
+            },
+            format='json'
+        )
+
+        self.second_access = second_login.data['access']
+        self.second_refresh = second_login.data['refresh']
+
+    def test_wrong_call_to_endpoint(self):
+        client = APIClient()
+        response = client.post(
+            '/api/rating/anuncio/'+ str(self.announcement.id) +'/', {
+                "rate": 4,
+                "comment": "Usuario fiable"
+            },
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
+        )
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+
+    def test_announcement_not_found(self):
+        client = APIClient()
+        response = client.post(
+            '/api/rating/announcement/99/', {
+                "rate": 4,
+                "comment": "Usuario fiable"
+            },
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_rate_announcement_unauthorized(self):
+        client = APIClient()
+        response = client.post(
+            '/api/rating/announcement/'+ str(self.announcement.id) +'/' , {
+                "rate": 4,
+                "comment": "Usuario fiable"
+            },
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.second_access)
+        )
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_successfully_announcement_rating(self):
+        client = APIClient()
+        response = client.post(
+            '/api/rating/announcement/'+ str(self.announcement.id) +'/', {
+                "rate": 4,
+                "comment": "Usuario fiable"
+            },
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_rate_a_rated_announcement(self):
+        self.announcement.rated = True
+        self.announcement.save()
+        client = APIClient()
+        response = client.post(
+            '/api/rating/announcement/'+ str(self.announcement.id) +'/' , {
+                "rate": 4,
+                "comment": "Usuario fiable"
+            },
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
+        )
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_reservation_not_found(self):
+        client = APIClient()
+        response = client.post(
+            '/api/rating/reservation/99/', {
+                "rate": 4,
+                "comment": "Usuario fiable"
+            },
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.second_access)
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+    
+    def test_rate_reservation_unauthorized(self):
+        client = APIClient()
+        response = client.post(
+            '/api/rating/reservation/'+ str(self.reservation.id) +'/' , {
+                "rate": 4,
+                "comment": "Usuario fiable"
+            },
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
+        )
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+    
+    def test_successfully_reservation_rating(self):
+        self.reservation.cancelled = False
+        client = APIClient()
+        response = client.post(
+            '/api/rating/reservation/'+ str(self.reservation.id) +'/', {
+                "rate": 4,
+                "comment": "Usuario fiable"
+            },
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.second_access)
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+    
+    def test_rate_a_rated_reservation(self):
+        self.reservation.rated = True
+        self.reservation.save()
+        client = APIClient()
+        response = client.post(
+            '/api/rating/reservation/'+ str(self.reservation.id) +'/', {
+                "rate": 4,
+                "comment": "Usuario fiable"
+            },
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.second_access)
+        )
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)   

@@ -30,7 +30,7 @@ from api.serializers import (AnnouncementNestedVehicleSerializer,
                              SwaggerVehicleSerializerId,
                              UserNestedProfileSerializer, UserSerializer,
                              VehicleSerializer, VehicleSerializerId,
-                             RatingSerializer)
+                             RatingSerializer, SwaggerRatingSerializer)
 
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .geolocator import address_to_coordinates, coordinates_to_address
@@ -604,3 +604,46 @@ class RatingAPI(APIView):
             return Response(serializer_class.data, status=status.HTTP_200_OK)
         except Exception:
             return Response({"error":"No se han encontrado el usuario"}, status=status.HTTP_404_NOT_FOUND)
+
+class CreateRatingAPI(APIView):
+    permission_classes = [IsAuthenticated]
+    swagger_tags=["Endpoints de valoraciones"]
+
+    @swagger_auto_schema(request_body=SwaggerRatingSerializer)
+    def post(self,request, object, pk):
+        data = request.data.copy()
+
+        if object=="announcement":
+            obj = get_object_or_404(Announcement,pk=pk)
+            res_list = Reservation.objects.filter(user=request.user).filter(cancelled=False)
+            ann_id_list = list(res_list.values_list('announcement', flat=True))
+
+            if pk not in ann_id_list:
+                return Response("No puede valorar un anuncio que no ha reservado", status=status.HTTP_401_UNAUTHORIZED)
+            elif obj.rated == True:
+                return Response("El anuncio ya ha sido valorado", status=status.HTTP_405_METHOD_NOT_ALLOWED)
+            else:
+                data['user'] = obj.user.id
+                serializer_data = RatingSerializer(data=data)     
+
+        elif object=="reservation":
+            obj = get_object_or_404(Reservation,pk=pk)
+            owner_of_Announcement = obj.announcement.user
+            
+            if request.user != owner_of_Announcement:
+                return Response("No puede valorar una reserva cuyo anuncio asociado no le pertenece", status=status.HTTP_401_UNAUTHORIZED)
+            elif obj.rated == True:
+                return Response("La reserva ya ha sido valorado", status=status.HTTP_405_METHOD_NOT_ALLOWED)
+            else:
+                data['user'] = obj.user.id
+                serializer_data = RatingSerializer(data=data)
+        else:
+            return Response({"error":"Las únicas urls válidas son rating/announcement/pk y rating/reservation/pk"}, status=status.HTTP_409_CONFLICT)
+
+        if serializer_data.is_valid():
+                obj.rated = True
+                obj.save()
+                serializer_data.save()
+                return Response(serializer_data.data, status=status.HTTP_201_CREATED)
+        else:
+                return Response(serializer_data.errors, status=status.HTTP_400_BAD_REQUEST)

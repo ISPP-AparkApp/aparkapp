@@ -89,8 +89,10 @@ class RatingSerializer(serializers.ModelSerializer):
         model = Rating
         fields = '__all__'
 
-
-
+class SwaggerRatingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Rating
+        fields = ['rate', 'comment']
 ### ANNOUNCEMENTS SERIALIZERS
 
 class AnnouncementSerializer(serializers.ModelSerializer):
