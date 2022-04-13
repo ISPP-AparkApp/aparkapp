@@ -28,10 +28,11 @@ from api.serializers import (AnnouncementNestedVehicleSerializer,
                              SwaggerUserSerializer, SwaggerVehicleSerializer,
                              SwaggerVehicleSerializerId,
                              UserNestedProfileSerializer, UserSerializer,
-                             VehicleSerializer, VehicleSerializerId)
+                             VehicleSerializer, VehicleSerializerId,
+                             RatingSerializer)
 
 from .geolocator import address_to_coordinates, coordinates_to_address
-from .models import Announcement, Profile, Reservation, User, Vehicle
+from .models import Announcement, Profile, Reservation, User, Vehicle, Rating
 
 
 class VehiclesAPI(APIView):
@@ -556,3 +557,15 @@ class RegisterAPI(APIView):
         else:
             err = self.return_errors(serializer_data.errors)
             return Response({"error":err},status=status.HTTP_400_BAD_REQUEST)
+
+class RatingAPI(APIView):
+    permission_classes = [IsAuthenticated]
+    swagger_tags=["Endpoints de valoraciones"]
+
+    def get(self, request, pk):
+        try:
+            ratings = Rating.objects.filter(user=pk)
+            serializer_class = RatingSerializer(ratings, many=True)
+            return Response(serializer_class.data, status=status.HTTP_200_OK)
+        except Exception:
+            return Response({"error":"No se han encontrado el usuario"}, status=status.HTTP_404_NOT_FOUND)

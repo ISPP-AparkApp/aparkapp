@@ -5,7 +5,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.validators import MaxValueValidator, MinValueValidator
 from rest_framework import serializers
 
-from api.models import Announcement, Profile, Reservation, Vehicle
+from api.models import Announcement, Profile, Reservation, Vehicle, Rating
 
 ### PROFILE SERIALIZERS
 
@@ -80,6 +80,15 @@ class SwaggerVehicleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vehicle
         fields = ['id','brand','model','license_plate','color','type']
+
+
+### RATINGS SERIALIZERS
+class RatingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Rating
+        fields = '__all__'
+
+
 
 ### ANNOUNCEMENTS SERIALIZERS
 
