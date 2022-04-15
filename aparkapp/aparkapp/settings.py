@@ -16,7 +16,8 @@ load_dotenv()
 API_KEY = os.environ['STRIPE_SECRET']
 PUBLISHABLE_KEY = os.environ['STRIPE_PUBLISHABLE_KEY']
 stripe.api_key=API_KEY
-ENDPOINT_SECRET=os.environ['STRIPE_WEBHOOK_SECRET']
+# ENDPOINT_SECRET=os.environ['STRIPE_WEBHOOK_SECRET']
+ENDPOINT_SECRET=os.environ['STRIPE_LOCAL_WEBHOOK_SECRET']
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True

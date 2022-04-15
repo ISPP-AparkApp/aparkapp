@@ -191,3 +191,9 @@ class RegisterSerializer(serializers.ModelSerializer):
             Vehicle.objects.create(user=user, **vehicle_data)
 
         return user
+
+
+## SELENIUM SERIALIZERS
+
+class SwaggerSeleniumPaymentsSerializer(serializers.Serializer):
+    payment_link= serializers.URLField(required=True)

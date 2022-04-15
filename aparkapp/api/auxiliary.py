@@ -9,7 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
 from rest_framework.request import HttpRequest
 from rest_framework.response import Response
-
+import time
 from .models import Announcement, Reservation, User
 
 ## File for auxiliary methods to improve general readibility of the project
@@ -33,12 +33,11 @@ def stripe_webhook_view(request):
         res=HttpResponse(status=400)
 
     # Handle operations after payment succeeded event
-    if (event['type'] == 'checkout.session.completed' or event['type'] == 'payment_intent.succeeded' 
-    or event['type'] == 'checkout.session.async_payment_succeeded'):
+    if (event['type'] == 'payment_intent.succeeded' or event['type'] == 'checkout.session.async_payment_succeeded'):
         session = event['data']['object']
         session['cancel_url']='https://aparkapp-s2.herokuapp.com/home'
         # Fulfill the purchase
-        post_order_operations(session, session['metadata'])
+        post_order_operations(session, session['metadata'])  ## Metada not being send sometimes?
     elif event['type'] == 'checkout.session.expired' or event['type'] == 'checkout.session.async_payment_failed':
         session = event['data']['object']
         session['cancel_url']='https://aparkapp-s2.herokuapp.com/home'
@@ -47,10 +46,12 @@ def stripe_webhook_view(request):
 
     
 def post_order_operations(session, metadata):
-    stripe.PaymentLink.modify(
-        session['payment_link'],
-        active=False,
-    )
+    time.sleep(5)
+    if(session['payment_link']):
+        stripe.PaymentLink.modify(
+            session['payment_link'],
+            active=False,
+        )
     req=HttpRequest()
     req.user=User.objects.get(pk=metadata['user_id'])
     req.data={'announcement':metadata['announcement_id']}
