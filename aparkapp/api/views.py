@@ -235,7 +235,7 @@ class myAnnouncementsAPI(APIView):
     swagger_tags= ["Endpoints de anuncios"]
 
     def get(self, request):
-        announcements = Announcement.objects.filter(user=request.user)
+        announcements = Announcement.objects.filter(user=request.user).order_by('date')
         serializer_class = AnnouncementNestedVehicleSerializer(announcements,many=True)
 
         return Response(serializer_class.data)
@@ -450,7 +450,7 @@ class ReservationsAPI(APIView):
     
     # Returns own reservations
     def get(self, request):
-        reservations=Reservation.objects.filter(user=request.user)
+        reservations=Reservation.objects.filter(user=request.user).order_by('date')
         reservations_data=[]
         for r in reservations:
             reservations_data.append(ReservationSerializer(r).data)
