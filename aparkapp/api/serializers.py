@@ -1,18 +1,18 @@
 from datetime import date
-
+from django.db import models
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.forms import ValidationError
 from rest_framework import serializers
-
 from api.models import Announcement, Profile, Reservation, Vehicle
+from decimal import Decimal
 
 ### PROFILE SERIALIZERS
-
-class ProfileSerializer(serializers.ModelSerializer):
+class ProfileSerializer(serializers.Serializer):
     class Meta:
         model = Profile
-        fields = ['phone', 'birthdate']
+        fields = ['phone', 'birthdate', 'balance']
     
     def validate_birthdate(self, value):
         if value > date.today() or value < date(1900,1,1):
@@ -31,10 +31,26 @@ class ProfileSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Ya existe un usuario registrado con el mismo número de teléfono")
         return value
 
-class SwaggerProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Profile
-        fields = ['phone', 'birthdate']
+def amount_is_valid(value):
+    try:
+        return round(Decimal(value), 2)
+    except:
+        raise ValidationError(
+            _('%(value)s no es válido, el número máximo de decimales permitidos es 2'),
+            params={'value': value},
+        )
+
+class SwaggerProfileSerializer(serializers.Serializer):
+
+    phone = serializers.CharField(max_length=12)
+    birthdate = serializers.DateField()
+    funds = serializers.DecimalField(max_digits=6, decimal_places=2, default=Decimal('0.0'), validators=[amount_is_valid])
+    funds_currency = serializers.CharField(max_length=3, default='EUR') 
+
+class SwaggerProfileBalanceSerializer(serializers.Serializer):
+    
+    funds = serializers.DecimalField(max_digits=6, decimal_places=2, default=Decimal('0.0'), validators=[amount_is_valid])
+    funds_currency = serializers.CharField(max_length=3, default='EUR') 
 
 ### USER SERIALIZERS
 

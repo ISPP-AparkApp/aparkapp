@@ -18,6 +18,14 @@ PUBLISHABLE_KEY = os.environ['STRIPE_PUBLISHABLE_KEY']
 stripe.api_key=API_KEY
 ENDPOINT_SECRET=os.environ['STRIPE_WEBHOOK_SECRET']
 
+# MONEY CONFIGURATION
+EXCHANGE_BACKEND = 'djmoney.contrib.exchange.backends.FixerBackend'
+CURRENCIES = ('USD', 'EUR', 'GBP', 'USD')
+BASE_CURRENCY= 'EUR'
+OPEN_EXCHANGE_RATES_APP_ID = '0cc20180235a4af2a33b0663be742b59'
+FIXER_ACCESS_KEY='7e137ec5c81d4d66b9f90973c2138f3c'
+OPEN_EXCHANGE_RATES_URL = 'https://openexchangerates.org/api/historical/2017-01-01.json?symbols=EUR,NOK,SEK,CZK,USD,GBP'
+AUTO_CONVERT_MONEY = True
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -26,7 +34,6 @@ ALLOWED_HOSTS = ["*"]
 CORS_ORIGIN_ALLOW_ALL = True
 
 AUTH_PROFILE_MODULE = 'api.User'
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -44,6 +51,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'drf_yasg',
+    'djmoney',
+    'djmoney.contrib.exchange',
 ]
 
 REST_FRAMEWORK = {

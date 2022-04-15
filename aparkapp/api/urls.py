@@ -1,6 +1,6 @@
 from django.urls import path
 from rest_framework_simplejwt import views as jwt_views
-from .payments import StripePaymentsAPI, StripeExtendedPaymentsAPI
+from .payments import StripePaymentsAPI, StripeExtendedPaymentsAPI, UserBalanceAPI
 from .views import (AnnouncementAPI, AnnouncementsAPI, AnnouncementStatusAPI,
                     AnnouncementsUserAPI, CancelAnnouncementsAPI, CancelReservationAPI, GeolocationToAddressAPI,
                     GeolocationToCoordinatesAPI, ProfileApi, ReservationAPI,
@@ -34,5 +34,6 @@ urlpatterns = [
     path('geolocatorToCoordinates/', GeolocationToCoordinatesAPI.as_view()),
     path('payments/<int:pk>/', StripePaymentsAPI.as_view()),
     path('paymentsExtended/<int:pk>/', StripeExtendedPaymentsAPI.as_view()),
+    path('userBalance/<int:pk>/', UserBalanceAPI.as_view()),
     path('stripeWebhook/', stripe_webhook_view)
 ]

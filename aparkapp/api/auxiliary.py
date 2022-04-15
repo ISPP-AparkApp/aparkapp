@@ -60,9 +60,10 @@ def post_order_operations(session, metadata):
 ## PAYMENT LINK BUILDERS
 
 def product_builder(announcement):
-    return stripe.Product.create(name="Plaza en "+ announcement.location+"\n("+str(announcement.longitude) +" , " 
-        + str(announcement.latitude)+")")
+    return stripe.Product.create(name="Plaza en "+ announcement.location)
 
+
+## BORRAR
 def extended_product_builder(announcement):
     return stripe.Product.create(name="Extensión de tiempo de espera nº " + str(announcement.n_extend+1) + " en "
         + announcement.location+"\n("+str(announcement.longitude)+" , "

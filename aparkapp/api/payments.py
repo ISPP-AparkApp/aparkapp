@@ -1,3 +1,7 @@
+
+from decimal import Decimal
+from djmoney.money import Money
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -5,7 +9,8 @@ from rest_framework.views import APIView
 
 from .auxiliary import (extended_product_builder, payment_builder,
                         product_builder)
-from .models import Announcement
+from .models import Announcement, Profile
+from .serializers import SwaggerProfileBalanceSerializer
 
 
 class StripePaymentsAPI(APIView):
@@ -65,3 +70,49 @@ class StripeExtendedPaymentsAPI(APIView):
         else:
             res=Response("No se ha encontrado tal anuncio",status.HTTP_404_NOT_FOUND)
         return res    
+
+
+class UserBalanceAPI(APIView):
+    permission_classes = [IsAuthenticated]
+    swagger_tags= ["Endpoints de saldo de usuario"]
+
+    def get(self, request, pk):     ## No se comprueba el usuario para que podáis obtener de cualquiera, si hace falta se cambia
+        user=Profile.objects.filter(pk=pk)
+        if user:
+            res=Response(str(user.get().balance),status.HTTP_200_OK)  
+        else:
+            res=Response("No existe tal usuario",status.HTTP_404_NOT_FOUND)
+        return res
+    
+    @swagger_auto_schema(request_body=SwaggerProfileBalanceSerializer)
+    def put(self, request, pk):
+        filter=Profile.objects.filter(pk=pk)
+        
+        if filter:
+            user=filter.get()
+            if request.user.id == user.id:
+                if request.data['funds']:
+                    funds=request.data['funds']
+                    if funds< 0:
+                        if user.balance >= funds:
+                            user.balance-=Money(round(Decimal(funds),2), request.data['funds_currency'])
+                            user.save()
+                            res=Response(status=status.HTTP_204_NO_CONTENT)
+                        else:
+                            res=Response("No tienes suficiente saldo para realizar la transaccion",status.HTTP_409_CONFLICT)
+
+                    elif funds > 0:
+                        if funds <5:
+                            res=Response("El ingreso mínimo es de 5€",status.HTTP_405_METHOD_NOT_ALLOWED)
+                        else:
+                            user.balance+=Money(round(Decimal(funds),2), request.data['funds_currency'])
+                            user.save()
+                            res=Response(status=status.HTTP_204_NO_CONTENT)
+                else:
+                    res=Response("Petición inválida",status=status.HTTP_400_BAD_REQUEST)
+            else:
+                res=Response("No puedes añadir saldo a otros usuarios",status=status.HTTP_403_FORBIDDEN) 
+        else:
+            res=Response("No existe tal usuario",status.HTTP_404_NOT_FOUND)
+        
+        return res
