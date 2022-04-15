@@ -6,7 +6,7 @@ from .views import (AnnouncementAPI, AnnouncementsAPI, AnnouncementStatusAPI,
                     GeolocationToCoordinatesAPI, Login, ProfileApi, ReservationAPI,
                     ReservationByAnouncementAPI, ReservationsAPI, UsersAPI,
                     UsersVehiclesAPI, VehiclesAPI, VehiclesIdAPI,
-                    myAnnouncementsAPI, RegisterAPI, UserAPI, RatingAPI, CreateRatingAPI)
+                    myAnnouncementsAPI, RegisterAPI, UserAPI, RatingAPI, CreateRatingAPI, AnnouncementHasReservationAPI)
 from api.auxiliary import stripe_webhook_view
 
 urlpatterns = [
@@ -25,6 +25,7 @@ urlpatterns = [
     path('announcement/<int:pk>/', AnnouncementAPI.as_view()),
     path('announcement/user/', AnnouncementsUserAPI.as_view()),
     path('cancel/announcement/<int:pk>/', CancelAnnouncementsAPI.as_view()),
+    path('anouncement/<int:pk>/hasReservation/', AnnouncementHasReservationAPI.as_view()),
     path('reservation/<int:pk>/', ReservationAPI.as_view()),
     path('reservation/anouncement/<int:pk>/', ReservationByAnouncementAPI.as_view()),
     path('reservations/', ReservationsAPI.as_view()),
