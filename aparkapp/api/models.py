@@ -13,6 +13,7 @@ class Profile(models.Model):
    birthdate = models.DateField()
    balance = MoneyField(max_digits=6, decimal_places=2, default_currency='EUR', validators=[MinMoneyValidator(0)], 
       default=Money(0.00, 'EUR'))
+   is_banned = models.BooleanField(default=False)
 
    #Relationship
    user = models.OneToOneField(User, on_delete=models.CASCADE)

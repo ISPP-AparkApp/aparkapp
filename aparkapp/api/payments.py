@@ -16,74 +16,61 @@ from .serializers import (SwaggerBalanceRechargeSerializer,
 
 class BalanceStripeAPI(APIView):
     permission_classes = [IsAuthenticated]
-    swagger_tags= ["Endpoints de saldo de usuario"]
+    swagger_tags= ["Endpoints de perfiles y saldo de usuario"]
 
     @swagger_auto_schema(request_body=SwaggerBalanceRechargeSerializer)
     def post(self,request):
-        if request.data['amount'] and float(request.data['amount'])>=2.5:
-            price_cents=int(Decimal(request.data['amount'])*100)
-            try:
-                product=product_builder()
-                pay_link=payment_builder(price_cents, product['id'],
-                "https://aparkapp-s2.herokuapp.com/home/", request.user.id)
-                res=Response({"id":pay_link.id, "object":pay_link.object, 
-                "active": pay_link.active, "url":pay_link.url}, status.HTTP_200_OK)
-
-            except Exception as e:
-                res=Response("La cantidad mínima a depositar es de 5€",status.HTTP_406_NOT_ACCEPTABLE)
+        amount=request.data.get('amount')
+        if amount:
+            if float(amount)>=2.5:
+                price_cents=int(Decimal(amount)*100)
+                try:
+                    product=product_builder()
+                    pay_link=payment_builder(price_cents, product['id'],
+                    "https://aparkapp-s2.herokuapp.com/home/", request.user.id)
+                    res=Response({"id":pay_link.id, "object":pay_link.object, 
+                    "active": pay_link.active, "url":pay_link.url}, status.HTTP_200_OK)
+                except Exception as e:
+                    res=Response("Error en el servicio, inténtelo de nuevo más tarde",status.HTTP_503_SERVICE_UNAVAILABLE)
+            else:
+               res=Response("La cantidad mínima a depositar es de 2.5€",status.HTTP_406_NOT_ACCEPTABLE) 
         else:
-            res=Response("No se ha podido procesar la solicitud",status.HTTP_400_BAD_REQUEST)
+            res=Response("La solicitud no es válida, asegurese de que están todos los campos correctamente",status.HTTP_400_BAD_REQUEST)
         return res
 
 class UserBalanceAPI(APIView):
     permission_classes = [IsAuthenticated]
-    swagger_tags= ["Endpoints de saldo de usuario"]
+    swagger_tags= ["Endpoints de perfiles y saldo de usuario"]
 
-    def get(self, request):     ## No se comprueba el usuario para que podáis obtener de cualquiera, si hace falta se cambia
-        user=Profile.objects.filter(pk=request.user.id)
-        if user:
-            res=Response(str(user.get().balance),status.HTTP_200_OK)  
-        else:
-            res=Response("No existe tal usuario",status.HTTP_404_NOT_FOUND)
-        return res
+    def get(self, request):  
+        user=Profile.objects.get(pk=request.user.id)
+        return Response(str(user.balance),status.HTTP_200_OK)  
     
-    @swagger_auto_schema(request_body=SwaggerProfileBalanceSerializer)
+    @swagger_auto_schema(request_body=SwaggerProfileBalanceSerializer)  ## Allow users to retrieve account balance 
     def put(self, request):
-        filter=Profile.objects.filter(pk=request.user.id)
-        
-        if filter:
-            user=filter.get()
-
-            if request.data['funds']:
-                funds_amount= round(Decimal(request.data['funds']),2)
-                funds_to_money=Money(funds_amount,request.data['funds_currency'])
-                if funds_amount< 0:
-                    if user.balance >= funds_to_money:
-                        user.balance+=funds_to_money
-                        user.save()
-                        res=Response(status=status.HTTP_204_NO_CONTENT)
-                    else:
-                        res=Response("No tienes suficiente saldo para realizar la transaccion",status.HTTP_405_METHOD_NOT_ALLOWED)
-
-                elif funds_amount > 0:
-                    if funds_amount <5:
-                        res=Response("El ingreso mínimo es de 5€",status.HTTP_405_METHOD_NOT_ALLOWED)
-                    else:
-                        user.balance+=funds_to_money
-                        user.save()
-                        res=Response(status=status.HTTP_204_NO_CONTENT)
+        user=Profile.objects.get(pk=request.user.id)
+        if request.data.get('funds'):
+            funds_amount= round(Decimal(request.data['funds']),2)
+            funds_to_money=Money(funds_amount,request.data['funds_currency'])
+            if funds_amount< 0:
+                if (user.balance+funds_to_money) >= Money(0.0, user.balance.currency):
+                    user.balance+=funds_to_money
+                    user.save()
+                    res=Response(status=status.HTTP_204_NO_CONTENT)
+                else:
+                    res=Response("No tienes suficiente saldo para realizar la transaccion",status.HTTP_405_METHOD_NOT_ALLOWED)
             else:
-                res=Response("Petición inválida",status=status.HTTP_400_BAD_REQUEST)
+                res=Response("Para retirar fondos introduce una cifra negativo",status.HTTP_406_NOT_ACCEPTABLE)
         else:
-            res=Response("No puedes añadir saldo a otros usuarios",status=status.HTTP_403_FORBIDDEN) 
+            res=Response("Petición inválida",status=status.HTTP_400_BAD_REQUEST)
         
         return res
 
 class ManageBalanceTransactionsAPI(APIView):
     permission_classes = [IsAuthenticated]
-    swagger_tags= ["Endpoints de saldo de usuario"]
+    swagger_tags= ["Endpoints de perfiles y saldo de usuario"]
 
-    @swagger_auto_schema(operation_description="Permite manejo de transacciones (reserva y extensiones) de anuncios introduciendo el id")
+    @swagger_auto_schema(operation_description="Permite manejo de transacciones (reservar y extensiones) de anuncios introduciendo el id")
     def put(self, request, pk):
         announcement_filter=Announcement.objects.filter(pk=pk)
         session_user=Profile.objects.get(pk=request.user.id)
@@ -102,7 +89,7 @@ class ManageBalanceTransactionsAPI(APIView):
                     session_user.save()
                     res=Response(status=status.HTTP_204_NO_CONTENT)
                 else:
-                    res=Response("No tienes suficiente saldo para realizar la transaccion",status.HTTP_405_METHOD_NOT_ALLOWED)
+                    res=Response("No tienes suficiente saldo para realizar la extensión",status.HTTP_409_CONFLICT)
             else:
                 reservation_buy_transaction=Money(announcement.price, 'EUR')
                 if session_user.balance > reservation_buy_transaction:   ## Session user is petitioner user
@@ -118,7 +105,8 @@ class ManageBalanceTransactionsAPI(APIView):
                     req.user=User.objects.get(pk=request.user.id)
                     req.data={'announcement':announcement.id}
                     res=post_reservation_logic(req)
-
+                else:
+                    res=Response("No tienes suficiente saldo para realizar la reserva",status.HTTP_409_CONFLICT)
         else:
             res=Response("No existe tal anuncio",status.HTTP_404_NOT_FOUND)          
         return res

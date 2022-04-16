@@ -8,7 +8,7 @@ schema_view = get_schema_view(
     openapi.Info(
         title="AparkApp Backend API",
         default_version='v1',
-        description="This is the API to connect AparkApp Frontend and Backend",
+        description="API to connect AparkApp Backend and Frontend",
         contact=openapi.Contact(email="aparkapp.info@gmail.com"),
     ),
     public=True,
