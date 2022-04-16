@@ -31,6 +31,8 @@ class ProfileSerializer(serializers.Serializer):
             raise serializers.ValidationError("Ya existe un usuario registrado con el mismo número de teléfono")
         return value
 
+
+### BALANCE RELATED SERIALIZERS
 def amount_is_valid(value):
     try:
         return round(Decimal(value), 2)
@@ -50,7 +52,10 @@ class SwaggerProfileSerializer(serializers.Serializer):
 class SwaggerProfileBalanceSerializer(serializers.Serializer):
     
     funds = serializers.DecimalField(max_digits=6, decimal_places=2, default=Decimal('0.0'), validators=[amount_is_valid])
-    funds_currency = serializers.CharField(max_length=3, default='EUR') 
+    funds_currency = serializers.CharField(max_length=3, default='EUR')
+
+class SwaggerBalanceRechargeSerializer(serializers.Serializer):
+    amount = serializers.DecimalField(max_digits=6, decimal_places=2, default=Decimal('0.0'), validators=[amount_is_valid])
 
 ### USER SERIALIZERS
 

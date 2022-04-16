@@ -7,10 +7,10 @@ from django.shortcuts import get_object_or_404
 from django.utils.timezone import make_aware
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
-from rest_framework.request import HttpRequest
 from rest_framework.response import Response
+from djmoney.money import Money
 
-from .models import Announcement, Reservation, User
+from .models import Announcement, Reservation, Profile
 
 ## File for auxiliary methods to improve general readibility of the project
 
@@ -33,8 +33,7 @@ def stripe_webhook_view(request):
         res=HttpResponse(status=400)
 
     # Handle operations after payment succeeded event
-    if (event['type'] == 'checkout.session.completed' or event['type'] == 'payment_intent.succeeded' 
-    or event['type'] == 'checkout.session.async_payment_succeeded'):
+    if (event['type'] == 'checkout.session.completed'):
         session = event['data']['object']
         session['cancel_url']='https://aparkapp-s2.herokuapp.com/home'
         # Fulfill the purchase
@@ -51,26 +50,17 @@ def post_order_operations(session, metadata):
         session['payment_link'],
         active=False,
     )
-    req=HttpRequest()
-    req.user=User.objects.get(pk=metadata['user_id'])
-    req.data={'announcement':metadata['announcement_id']}
-    response=post_reservation_logic(req)
-    return HttpResponse(status=response.status_code) 
+    user=Profile.objects.get(pk=metadata['user_id'])
+    user.balance+=Money(session['amount_total']//100, session['currency'])
+    user.save()
+    return HttpResponse(status=201)
 
 ## PAYMENT LINK BUILDERS
 
-def product_builder(announcement):
-    return stripe.Product.create(name="Plaza en "+ announcement.location)
+def product_builder():
+    return stripe.Product.create(name="Recarga de saldo AparkApp")
 
-
-## BORRAR
-def extended_product_builder(announcement):
-    return stripe.Product.create(name="Extensión de tiempo de espera nº " + str(announcement.n_extend+1) + " en "
-        + announcement.location+"\n("+str(announcement.longitude)+" , "
-        + str(announcement.latitude)+")")
-
-
-def payment_builder(price, productId, url, user_id, announcement_id):
+def payment_builder(price, productId, url, user_id):
     price=stripe.Price.create(
         unit_amount=price,
         currency="eur",
@@ -78,10 +68,7 @@ def payment_builder(price, productId, url, user_id, announcement_id):
     )                   
     return stripe.PaymentLink.create(line_items=[{"price": price['id'], "quantity": 1}], 
             after_completion={"type": "redirect", "redirect": {"url": url}},
-            metadata={'user_id': user_id, 'announcement_id': announcement_id})
-
-
-
+            metadata={'user_id': user_id})
 
 ### RESERVATION LOGIC
 

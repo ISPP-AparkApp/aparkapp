@@ -11,7 +11,7 @@ class Profile(models.Model):
    id = models.AutoField(primary_key=True)
    phone = models.CharField(max_length=12)
    birthdate = models.DateField()
-   balance = MoneyField(max_digits=6, decimal_places=2,default_currency='EUR', validators=[MinMoneyValidator(0)], 
+   balance = MoneyField(max_digits=6, decimal_places=2, default_currency='EUR', validators=[MinMoneyValidator(0)], 
       default=Money(0.00, 'EUR'))
 
    #Relationship
