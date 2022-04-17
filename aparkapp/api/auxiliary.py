@@ -84,3 +84,31 @@ def post_reservation_logic(request):
         cancelled=False, rated=False, user=request.user, announcement=announcement_to_book)
         response=Response("La reserva ha sido creada",status=status.HTTP_201_CREATED)
     return response
+
+### ANNOUNCEMENT LOGIC 
+
+def put_announcement_status_logic(request, pk):
+    try:
+        request_status= request.data.get("status")
+        if request_status:
+            announcement_to_update=Announcement.objects.get(pk=pk)
+            if announcement_to_update:
+                if request_status=="AcceptDelay":
+                    if announcement_to_update.n_extend>=3:
+                        res=Response("error: n_extend es mayor o igual a 3",status=status.HTTP_400_BAD_REQUEST)
+                    else:
+                        announcement_to_update.status = request_status
+                        announcement_to_update.wait_time += 5
+                        announcement_to_update.n_extend += 1
+                        announcement_to_update.save()
+                        res=Response(status=status.HTTP_204_NO_CONTENT)
+                else:
+                    announcement_to_update.status = request_status
+                    announcement_to_update.save()
+                    res=Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            res=Response("La petición es inválida", status=status.HTTP_400_BAD_REQUEST)
+    except Exception:
+        res=Response("No existe el anuncio especificado", status=status.HTTP_404_NOT_FOUND)
+    
+    return res

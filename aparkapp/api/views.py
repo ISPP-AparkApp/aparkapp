@@ -11,7 +11,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.utils.timezone import make_aware
-from api.auxiliary import post_reservation_logic
+from api.auxiliary import post_reservation_logic, put_announcement_status_logic
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from api.serializers import (AnnouncementNestedVehicleSerializer,
                              AnnouncementSerializer,
@@ -307,30 +307,7 @@ class AnnouncementStatusAPI(APIView):
 
     @swagger_auto_schema(request_body=SwaggerUpdateAnnouncementSerializer)
     def put(self,request,pk):
-        try:
-            request_status= request.data.get("status")
-            if request_status:
-                announcement_to_update=Announcement.objects.get(pk=pk)
-                if announcement_to_update:
-                    if request_status=="AcceptDelay":
-                        if announcement_to_update.n_extend>3:
-                            res=Response("error: n_extend es mayor o igual a 3",status=status.HTTP_400_BAD_REQUEST)
-                        else:
-                            announcement_to_update.status = request_status
-                            announcement_to_update.wait_time += 5
-                            announcement_to_update.n_extend += 1
-                            announcement_to_update.save()
-                            res=Response(status=status.HTTP_204_NO_CONTENT)
-                    else:
-                        announcement_to_update.status = request_status
-                        announcement_to_update.save()
-                        res=Response(status=status.HTTP_204_NO_CONTENT)
-            else:
-                res=Response("La petición es inválida", status=status.HTTP_400_BAD_REQUEST)
-        except Exception:
-            res=Response("No existe el anuncio especificado", status=status.HTTP_404_NOT_FOUND)
-        
-        return res
+        return put_announcement_status_logic(request,pk)
         
     
 class AnnouncementAPI(APIView):
