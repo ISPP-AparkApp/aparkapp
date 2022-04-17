@@ -32,6 +32,7 @@ from api.serializers import (AnnouncementNestedVehicleSerializer,
                              VehicleSerializer, VehicleSerializerId,
                              RatingSerializer, SwaggerRatingSerializer)
 
+
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .geolocator import address_to_coordinates, coordinates_to_address
 from .models import Announcement, Profile, Rating, Reservation, User, Vehicle
@@ -271,7 +272,7 @@ class myAnnouncementsAPI(APIView):
     swagger_tags= ["Endpoints de anuncios"]
 
     def get(self, request):
-        announcements = Announcement.objects.filter(user=request.user)
+        announcements = Announcement.objects.filter(user=request.user).order_by('date')
         serializer_class = AnnouncementNestedVehicleSerializer(announcements,many=True)
 
         return Response(serializer_class.data)
@@ -486,7 +487,7 @@ class ReservationsAPI(APIView):
     
     # Returns own reservations
     def get(self, request):
-        reservations=Reservation.objects.filter(user=request.user)
+        reservations=Reservation.objects.filter(user=request.user).order_by('date')
         reservations_data=[]
         for r in reservations:
             reservations_data.append(ReservationSerializer(r).data)
@@ -659,3 +660,4 @@ class AnnouncementHasReservationAPI(APIView):
     def get(self, request, pk):
         announcement = get_object_or_404(Announcement, pk=pk)
         return Response(Reservation.objects.filter(announcement=announcement).exists())
+
