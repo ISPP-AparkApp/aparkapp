@@ -8,6 +8,7 @@ class Profile(models.Model):
    id = models.AutoField(primary_key=True)
    phone = models.CharField(max_length=12)
    birthdate = models.DateField()
+   is_banned = models.BooleanField(default=False)
 
    #Relationship
    user = models.OneToOneField(User, on_delete=models.CASCADE)

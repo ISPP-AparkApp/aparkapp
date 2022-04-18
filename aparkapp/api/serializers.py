@@ -9,10 +9,11 @@ from api.models import Announcement, Profile, Reservation, Vehicle, Rating
 
 ### PROFILE SERIALIZERS
 
+
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ['phone', 'birthdate']
+        fields = ['phone', 'birthdate', 'is_banned']
     
     def validate_birthdate(self, value):
         if value > date.today() or value < date(1900,1,1):
@@ -34,7 +35,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 class SwaggerProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ['phone', 'birthdate']
+        fields = ['phone', 'birthdate', 'is_banned']
 
 ### USER SERIALIZERS
 
@@ -88,8 +89,10 @@ class RatingSerializer(serializers.ModelSerializer):
         model = Rating
         fields = '__all__'
 
-
-
+class SwaggerRatingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Rating
+        fields = ['rate', 'comment']
 ### ANNOUNCEMENTS SERIALIZERS
 
 class AnnouncementSerializer(serializers.ModelSerializer):
