@@ -7,6 +7,7 @@ from .views import (AnnouncementAPI, AnnouncementsAPI, AnnouncementStatusAPI,
                     ReservationByAnouncementAPI, ReservationsAPI, UsersAPI,
                     UsersVehiclesAPI, VehiclesAPI, VehiclesIdAPI,
                     myAnnouncementsAPI, RegisterAPI, UserAPI, RatingAPI, CreateRatingAPI, AnnouncementHasReservationAPI)
+
 from api.auxiliary import stripe_webhook_view
 
 urlpatterns = [
