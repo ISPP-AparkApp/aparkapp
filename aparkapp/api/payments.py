@@ -1,18 +1,21 @@
 
 from decimal import Decimal
 
+from django.shortcuts import get_object_or_404
 from djmoney.money import Money
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.request import HttpRequest
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.request import HttpRequest
-from .auxiliary import payment_builder, product_builder, post_reservation_logic, put_announcement_status_logic
+
+from .auxiliary import (payment_builder, post_reservation_logic,
+                        product_builder, put_announcement_status_logic)
 from .models import Announcement, Profile, Reservation, User
 from .serializers import (SwaggerBalanceRechargeSerializer,
                           SwaggerProfileBalanceSerializer)
-from django.shortcuts import get_object_or_404
+
 
 class BalanceStripeAPI(APIView):
     permission_classes = [IsAuthenticated]
@@ -27,7 +30,7 @@ class BalanceStripeAPI(APIView):
                 try:
                     product=product_builder()
                     pay_link=payment_builder(price_cents, product['id'],
-                    "https://aparkapp-s2.herokuapp.com/home/", request.user.id)
+                    "https://aparkapp-s2.herokuapp.com/credit/", request.user.id)
                     res=Response({"id":pay_link.id, "object":pay_link.object, 
                     "active": pay_link.active, "url":pay_link.url}, status.HTTP_200_OK)
                 except Exception as e:
@@ -84,7 +87,7 @@ class ManageBalanceTransactionsAPI(APIView):
                 if petitioner_user.balance > extend_announcement_transaction:
                     request=HttpRequest()
                     request.user=petitioner_user
-                    request.data={'status': 'AcceptDelay'};
+                    request.data={'status': 'AcceptDelay'}
                     res=put_announcement_status_logic(request, announcement.id)
                     if res.status_code == status.HTTP_204_NO_CONTENT:
                         petitioner_user.balance-=extend_announcement_transaction

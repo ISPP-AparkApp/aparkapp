@@ -1,24 +1,26 @@
 from pathlib import Path
 from dotenv import load_dotenv
-import os, stripe
+import os, stripe, sys
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
+### SECRETS CONFIGURATION
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-0c@al$25nzv(s7y96$adhg38hv-at!4=9k+278iyn##2dks!vb'
-
-
-# STRIPE CONFIGURATION
 load_dotenv() 
+
+# DJANGO
+SECRET_KEY= os.environ['SECRET_KEY']
+# STRIPE 
 API_KEY = os.environ['STRIPE_SECRET']
 PUBLISHABLE_KEY = os.environ['STRIPE_PUBLISHABLE_KEY']
 stripe.api_key=API_KEY
-ENDPOINT_SECRET=os.environ['STRIPE_LOCAL_WEBHOOK_SECRET']  ## REMEMBER TO CHANGE THIS TO DEVELOPMENT SECRET FOR HEROKU
 
-# MONEY CONFIGURATION
+# Checks if project is being used in localhost or production environment
+ENDPOINT_SECRET= os.environ['STRIPE_LOCAL_WEBHOOK_SECRET'] if (sys.argv[1] == 'runserver') else os.environ['STRIPE_WEBHOOK_SECRET']
+
+# MONEY
+
 EXCHANGE_BACKEND = 'djmoney.contrib.exchange.backends.FixerBackend'
 CURRENCIES = ('USD', 'EUR', 'GBP', 'CAD', 'JPY', 'CHF')
 BASE_CURRENCY= 'EUR'

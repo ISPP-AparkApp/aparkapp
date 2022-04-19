@@ -51,7 +51,7 @@ def post_order_operations(session, metadata):
         active=False,
     )
     user=Profile.objects.get(pk=metadata['user_id'])
-    user.balance+=Money(session['amount_total']//100, session['currency'])
+    user.balance+=Money(session['amount_total']/100, session['currency'])
     user.save()
     return HttpResponse(status=201)
 

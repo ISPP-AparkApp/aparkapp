@@ -42,6 +42,7 @@ jobs:
         python manage.py makemigrations
         python manage.py migrate
       env:
+	      SECRET_KEY: ${{ secrets.SECRET_KEY }}
         STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
         STRIPE_SECRET: ${{ secrets.STRIPE_SECRET }}
         STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
@@ -51,6 +52,7 @@ jobs:
     - name: Run tests
       run: cd aparkapp;coverage run --branch --source=. ./manage.py test api --keepdb; coverage xml;
       env:
+	      SECRET_KEY: ${{ secrets.SECRET_KEY }}
         STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
         STRIPE_SECRET: ${{ secrets.STRIPE_SECRET }}
         STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
