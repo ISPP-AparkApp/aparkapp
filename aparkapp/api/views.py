@@ -593,7 +593,7 @@ class RegisterAPI(APIView):
             return Response({"error":err},status=status.HTTP_400_BAD_REQUEST)
 
 class RatingAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     swagger_tags=["Endpoints de valoraciones"]
 
     def get(self, request, pk):
@@ -605,7 +605,7 @@ class RatingAPI(APIView):
             return Response({"error":"No se han encontrado el usuario"}, status=status.HTTP_404_NOT_FOUND)
 
 class CreateRatingAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     swagger_tags=["Endpoints de valoraciones"]
 
     @swagger_auto_schema(request_body=SwaggerRatingSerializer)
@@ -643,6 +643,11 @@ class CreateRatingAPI(APIView):
                 obj.rated = True
                 obj.save()
                 serializer_data.save()
+                ratings = Rating.objects.filter(user=data["user"]).filter(rate=1)
+                profile_user = Profile.objects.get(user=data["user"])
+                if len(ratings) >= 10:
+                    profile_user.is_banned = True
+                    profile_user.save()
                 return Response(serializer_data.data, status=status.HTTP_201_CREATED)
         else:
                 return Response(serializer_data.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -653,3 +658,4 @@ class AnnouncementHasReservationAPI(APIView):
     def get(self, request, pk):
         announcement = get_object_or_404(Announcement, pk=pk)
         return Response(Reservation.objects.filter(announcement=announcement).exists())
+
