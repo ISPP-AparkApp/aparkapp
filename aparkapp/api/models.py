@@ -117,7 +117,7 @@ class Announcement(models.Model):
    n_extend = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(3)], default=0)
 
    #Relationship
-   vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE)
+   vehicle = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, null = True)
    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
    def __str__(self):
