@@ -93,6 +93,7 @@ class SwaggerRatingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Rating
         fields = ['rate', 'comment']
+
 ### ANNOUNCEMENTS SERIALIZERS
 
 class AnnouncementSerializer(serializers.ModelSerializer):

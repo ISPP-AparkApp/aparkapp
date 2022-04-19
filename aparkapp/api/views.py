@@ -31,7 +31,6 @@ from api.serializers import (AnnouncementNestedVehicleSerializer,
                              UserNestedProfileSerializer, UserSerializer,
                              VehicleSerializer, VehicleSerializerId,
                              RatingSerializer, SwaggerRatingSerializer)
-
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .geolocator import address_to_coordinates, coordinates_to_address
 from .models import Announcement, Profile, Rating, Reservation, User, Vehicle
