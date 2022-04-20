@@ -5,7 +5,9 @@
     "fields": {
       "phone": "633917766",
       "birthdate": "2000-02-15",
-      "user": 1
+      "user": 1,
+      "balance": "7",
+      "balance_currency": "EUR"
     }
   },
   {
