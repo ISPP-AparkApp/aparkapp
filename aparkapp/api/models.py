@@ -2,12 +2,17 @@ from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from drf_yasg.inspectors import SwaggerAutoSchema
+from djmoney.models.fields import MoneyField
+from djmoney.money import Money
+from djmoney.models.validators import MinMoneyValidator
 
 
 class Profile(models.Model):
    id = models.AutoField(primary_key=True)
    phone = models.CharField(max_length=12)
    birthdate = models.DateField()
+   balance = MoneyField(max_digits=6, decimal_places=2, default_currency='EUR', validators=[MinMoneyValidator(0)], 
+      default=Money(0.00, 'EUR'))
    is_banned = models.BooleanField(default=False)
 
    #Relationship

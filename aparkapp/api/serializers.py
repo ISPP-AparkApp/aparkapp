@@ -1,20 +1,40 @@
 from datetime import date
-
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.forms import ValidationError
 from rest_framework import serializers
-
 from api.models import Announcement, Profile, Reservation, Vehicle, Rating
+from decimal import Decimal
 
 ### PROFILE SERIALIZERS
-
-
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ['phone', 'birthdate', 'is_banned']
+        fields = '__all__'
     
+    def validate_birthdate(self, value):            
+        if value > date.today() or value < date(1900,1,1):
+            raise serializers.ValidationError("Inserte una fecha válida")
+        elif (date.today().year - value.year) < 18:
+            raise serializers.ValidationError("Debe tener 18 años para usar la aplicación")
+        return value
+
+    def validate_phone(self, value):
+        user = None
+        request = self.context.get('request')
+        if request and hasattr(request, "user"):
+            user = request.user
+        
+        if Profile.objects.filter(phone=value).exists() and Profile.objects.get(phone=value).user != user:
+            raise serializers.ValidationError("Ya existe un usuario registrado con el mismo número de teléfono")
+        return value
+
+class ProfileRegisterSerializer(serializers.ModelSerializer): ## CHEEECCCCCCCCCCCCCCCCCCCKKKKKKK
+    class Meta:
+        model = Profile
+        fields = ['phone', 'birthdate', 'is_banned']
+
     def validate_birthdate(self, value):
         if value > date.today() or value < date(1900,1,1):
             raise serializers.ValidationError("Inserte una fecha válida")
@@ -32,10 +52,29 @@ class ProfileSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Ya existe un usuario registrado con el mismo número de teléfono")
         return value
 
+### BALANCE RELATED SERIALIZERS
+def amount_is_valid(value):
+    try:
+        val=float(value)
+        return round(Decimal(val), 2)
+    except:
+        raise ValidationError('Petición inválida, el número máximo de decimales permitidos es 2 y ha de usarse "." siguiendo el formato internacional')
+
 class SwaggerProfileSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Profile
         fields = ['phone', 'birthdate', 'is_banned']
+
+
+class SwaggerProfileBalanceSerializer(serializers.Serializer):
+    
+    funds = serializers.DecimalField(max_digits=6, decimal_places=2, default=Decimal('0.0'), validators=[amount_is_valid])
+    funds_currency = serializers.CharField(max_length=3, default='EUR')
+
+class SwaggerBalanceRechargeSerializer(serializers.Serializer):
+    amount = serializers.DecimalField(max_digits=6, decimal_places=2, default=Decimal('0.0'), validators=[amount_is_valid])
+
 
 ### USER SERIALIZERS
 
@@ -172,7 +211,7 @@ class GeolocationToCoordinatesSerializer(serializers.Serializer):
 class RegisterSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True)
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
-    profile = ProfileSerializer()
+    profile = ProfileRegisterSerializer()    ## CHEEECCCCCCCCCCCCCCCCCCCKKKKKKK
     vehicles = SwaggerVehicleSerializerId(many=True)
     
     class Meta:

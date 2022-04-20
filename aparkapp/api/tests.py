@@ -1,8 +1,8 @@
 from datetime import date, datetime, timedelta
-from urllib import response
 
 from django.test import TestCase
 from django.utils.timezone import make_aware
+from djmoney.money import Money
 from rest_framework import status
 from rest_framework.test import APIClient
 
@@ -20,7 +20,7 @@ class AuthenticationTestCase(TestCase):
 
         profile = Profile(
             phone = "+34621321221",
-            birthdate = datetime(1994, 12, 6),
+            birthdate = make_aware(datetime(1994, 12, 6)),
             user = user
         )
         profile.save()
@@ -68,7 +68,7 @@ class AnnouncementsUserTestCase(TestCase):
 
         profile = Profile(
             phone = "+34621321221",
-            birthdate = datetime(1994, 12, 6),
+            birthdate = make_aware(datetime(1994, 12, 6)),
             user = self.user
         )
         profile.save()
@@ -78,7 +78,7 @@ class AnnouncementsUserTestCase(TestCase):
 
         profile2 = Profile(
             phone = "+34621321221",
-            birthdate = datetime(1993, 12, 6),
+            birthdate = make_aware(datetime(1993, 12, 6)),
             user = self.user2
         )
         profile2.save()
@@ -104,25 +104,25 @@ class AnnouncementsUserTestCase(TestCase):
         )
         self.vehicle2.save()
 
-        self.announcement = Announcement(date="2022-08-14 13:43", wait_time=5,
+        self.announcement = Announcement(date=make_aware(datetime(2022, 8, 14, 13, 43)), wait_time=5,
                                          price=3.5,  allow_wait=True, location='Reina Mercedes', latitude=38.35865724531185, longitude=-5.986121868933244,
                                          zone='Zona libre', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
                                          vehicle=self.vehicle, user=self.user)
         self.announcement.save()
 
-        self.announcement2 = Announcement(date="2022-08-14 15:43", wait_time=5,
+        self.announcement2 = Announcement(date=make_aware(datetime(2022, 8, 14, 15, 43)), wait_time=5,
                                           price=2,  allow_wait=True, location='Triana', latitude=38.35865724531185, longitude=-5.986121868933244,
                                           zone='Zona libre', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
                                           vehicle=self.vehicle, user=self.user)
         self.announcement2.save()
 
-        self.announcement3 = Announcement(date="2022-08-14 17:43", wait_time=5,
+        self.announcement3 = Announcement(date=make_aware(datetime(2022, 8, 14, 17, 43)), wait_time=5,
                                           price=4,  allow_wait=True, location='Triana', latitude=38.35585724531185, longitude=-5.986231868933244,
                                           zone='Zona Azul', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
                                           vehicle=self.vehicle2, user=self.user2)
         self.announcement3.save()
 
-        self.announcement4 = Announcement(date="2022-08-15 17:43", wait_time=5,
+        self.announcement4 = Announcement(date=make_aware(datetime(2022, 8, 15, 17, 43)), wait_time=5,
                                           price=4,  allow_wait=True, location='Triana', latitude=38.35585724531185, longitude=-5.986231868933244,
                                           zone='Zona Azul', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
                                           vehicle=self.vehicle2, user=self.user2)
@@ -151,7 +151,7 @@ class AnnouncementsUserTestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         results = response.json()
         i = 0
-        for r in results:
+        for _ in results:
             i=i+1
         self.assertEqual(i, 2)
 
@@ -164,7 +164,7 @@ class AnnouncementStatusAPI(TestCase):
 
         profile = Profile(
             phone = "+34621321221",
-            birthdate = datetime(1994, 12, 6),
+            birthdate = make_aware(datetime(1994, 12, 6)),
             user = self.user
         )
         profile.save()
@@ -180,7 +180,7 @@ class AnnouncementStatusAPI(TestCase):
 
         self.vehicle.save()
 
-        self.announcement = Announcement(date="2022-08-14 13:43", wait_time=5,
+        self.announcement = Announcement(date=make_aware(datetime(2022, 8, 14, 13, 43)), wait_time=5,
                                          price=3.5,  allow_wait=True, location='Reina Mercedes', latitude=38.35865724531185, longitude=-5.986121868933244,
                                          zone='Zona libre', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
                                          vehicle=self.vehicle, user=self.user)
@@ -249,7 +249,7 @@ class VehiclesTestCase(TestCase):
 
         profile = Profile(
             phone = "+34621321221",
-            birthdate = datetime(1994, 12, 6),
+            birthdate = make_aware(datetime(1994, 12, 6)),
             user = self.user
         )
         profile.save()
@@ -533,7 +533,7 @@ class AnnouncementTestCase(TestCase):
         
         profile = Profile(
             phone = "+34621321221",
-            birthdate = datetime(1994, 12, 6),
+            birthdate = make_aware(datetime(1994, 12, 6)),
             user = self.user
         )
         profile.save()
@@ -543,7 +543,7 @@ class AnnouncementTestCase(TestCase):
 
         profile2 = Profile(
             phone = "+34621321221",
-            birthdate = datetime(1994, 12, 6),
+            birthdate = make_aware(datetime(1994, 12, 6)),
             user = self.user2
         )
         profile2.save()
@@ -569,31 +569,31 @@ class AnnouncementTestCase(TestCase):
         )
         self.vehicle2.save()
 
-        self.announcement = Announcement(date="2022-08-14 13:43", wait_time=5,
+        self.announcement = Announcement(date=make_aware(datetime(2022, 8, 14, 13, 43)), wait_time=5,
                                          price=3.5,  allow_wait=True, location='Reina Mercedes', latitude=38.35865724531185, longitude=-5.986121868933244,
                                          zone='Zona libre', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
                                          vehicle=self.vehicle, user=self.user)
         self.announcement.save()
 
-        self.announcement2 = Announcement(date="2023-08-14 15:43", wait_time=5,
+        self.announcement2 = Announcement(date=make_aware(datetime(2022, 8, 14, 15, 43)), wait_time=5,
                                           price=2,  allow_wait=True, location='Triana', latitude=38.35865724531185, longitude=-5.986121868933244,
                                           zone='Zona libre', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
                                           vehicle=self.vehicle, user=self.user)
         self.announcement2.save()
 
-        self.announcement3 = Announcement(date="2023-08-14 17:43", wait_time=5,
+        self.announcement3 = Announcement(date=make_aware(datetime(2022, 8, 14, 17, 43)), wait_time=5,
                                           price=4,  allow_wait=True, location='Triana', latitude=38.35585724531185, longitude=-5.986231868933244,
                                           zone='Zona Azul', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
                                           vehicle=self.vehicle2, user=self.user2)
         self.announcement3.save()
 
-        self.announcement4 = Announcement(date="2023-08-15 17:43", wait_time=5,
+        self.announcement4 = Announcement(date=make_aware(datetime(2023, 8, 15, 17, 43)), wait_time=5,
                                           price=4,  allow_wait=True, location='Triana', latitude=38.35585724531185, longitude=-5.986231868933244,
                                           zone='Zona Azul', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
                                           vehicle=self.vehicle2, user=self.user2)
         self.announcement4.save()
 
-        self.announcement5 = Announcement(date="2023-08-16 18:43", wait_time=5,
+        self.announcement5 = Announcement(date=make_aware(datetime(2023, 8, 16, 18, 43)), wait_time=5,
                                           price=3.5,  allow_wait=True, location='Nervion', latitude=38.35582224531185, longitude=-5.986231318933244,
                                           zone='Zona Azul', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
                                           vehicle=self.vehicle2, user=self.user2)
@@ -618,7 +618,7 @@ class AnnouncementTestCase(TestCase):
         client = APIClient()
         response = client.post('/api/announcements/', {
 
-            "date": "2022-08-14 13:45",
+            "date": make_aware(datetime(2022, 8, 14, 13, 45)),
                     "wait_time": 5,
                     "price": 2,
                     "allow_wait": True,
@@ -634,7 +634,7 @@ class AnnouncementTestCase(TestCase):
         client = APIClient()
 
         response = client.post('/api/announcements/', {
-            "date": "2022-08-14 13:43",
+            "date": make_aware(datetime(2022, 8, 14, 13, 43)),
                     "wait_time": 5,
                     "price": 2,
                     "latitude": 38.35865724531185,
@@ -649,7 +649,7 @@ class AnnouncementTestCase(TestCase):
         client = APIClient()
 
         response = client.post('/api/announcements/', {
-            "date": "2022-08-14 13:43",
+            "date": make_aware(datetime(2022, 8, 14, 13, 43)),
                     "wait_time": 5,
                     "allow_wait": True,
                     "price": 2,
@@ -665,7 +665,7 @@ class AnnouncementTestCase(TestCase):
         client = APIClient()
 
         response = client.post('/api/announcements/', {
-            "date": "2022-08-14 13:53",
+            "date": make_aware(datetime(2022, 8, 14, 13, 53)),
                     "wait_time": 5,
                     "allow_wait": True,
                     # "price": 2,  Price it's a mandatory field
@@ -682,7 +682,7 @@ class AnnouncementTestCase(TestCase):
         client = APIClient()
 
         response = client.put('/api/announcement/' + str(self.announcement.id)+'/', {
-            "date": "2022-08-14 14:00",
+            "date": make_aware(datetime(2022, 8, 14, 14, 00)),
                     "wait_time": 5,
                     "price": 2,
                     "allow_wait": True,
@@ -699,7 +699,7 @@ class AnnouncementTestCase(TestCase):
         client = APIClient()
 
         response = client.put('/api/announcement/' + str(self.announcement2.id)+'/', {
-            "date": "2022-08-14 13:43",
+            "date": make_aware(datetime(2022, 8, 14, 13, 43)),
                     "wait_time": 10,
                     "allow_wait": True,
                     "price": 2,
@@ -718,7 +718,7 @@ class AnnouncementTestCase(TestCase):
         client = APIClient()
 
         response = client.put('/api/announcement/' + str(self.announcement.id)+'/', {
-            "date": "2022-08-14 13:43",
+            "date": make_aware(datetime(2022, 8, 14, 13, 43)),
                     "wait_time": 10,
                     "allow_wait": True,
                     "latitude": 38.35865724531185,
@@ -828,7 +828,7 @@ class AnnouncementTestCase(TestCase):
 
     def test_filter_announcements_by_datetime(self):
         client = APIClient()
-        response = client.get('/api/announcements/?date=2022-08-14 17:43',
+        response = client.get('/api/announcements/?date=' + make_aware(datetime(2022, 8, 14, 17, 43)).strftime("%Y-%m-%d %H:%M"),
                               format='json', HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         results = response.json()
@@ -843,7 +843,7 @@ class UserVehiclesTestCase(TestCase):
 
         profile = Profile(
             phone = "+34621321221",
-            birthdate = datetime(1994, 12, 6),
+            birthdate = make_aware(datetime(1994, 12, 6)),
             user = self.user
         )
         profile.save()
@@ -903,7 +903,7 @@ class ReservationTestCase(TestCase):
 
         profile = Profile(
             phone = "+34621321221",
-            birthdate = datetime(1994, 12, 6),
+            birthdate = make_aware(datetime(1994, 12, 6)),
             user = self.user
         )
         profile.save()
@@ -917,7 +917,7 @@ class ReservationTestCase(TestCase):
 
         profile2 = Profile(
             phone = "+34621321221",
-            birthdate = datetime(1994, 12, 6),
+            birthdate = make_aware(datetime(1994, 12, 6)),
             user = self.second_user
         )
         profile2.save()
@@ -931,7 +931,7 @@ class ReservationTestCase(TestCase):
 
         profile3 = Profile(
             phone = "+34621321221",
-            birthdate = datetime(1994, 12, 6),
+            birthdate = make_aware(datetime(1994, 12, 6)),
             user = self.third_user
         )
         profile3.save()
@@ -1103,7 +1103,7 @@ class ReservationTestCase(TestCase):
         client = APIClient()
         first_response = client.post(
             '/api/reservations/', {
-                "date": "2022-03-21T23:19:13.277Z",
+                "date": make_aware(datetime(2023, 3, 14, 16, 25)),
                 "user": 1,
                 "announcement": 1
             },
@@ -1113,7 +1113,7 @@ class ReservationTestCase(TestCase):
 
         second_response = client.post(
             '/api/reservations/', {
-                "date": "2022-03-22T23:19:13.277Z",
+                "date": make_aware(datetime(2023, 8, 14, 16, 25)),
                 "user": 2,
                 "announcement": 3
             },
@@ -1123,7 +1123,7 @@ class ReservationTestCase(TestCase):
 
         third_response = client.post(
             '/api/reservations/', {
-                "date": "2022-03-23T23:19:13.277Z",
+                "date": make_aware(datetime(2023, 8, 14, 13, 43)),
                 "user": 1,
                 "announcement": 3
             },
@@ -1139,7 +1139,7 @@ class ReservationTestCase(TestCase):
         client = APIClient()
         first_response = client.put(
             '/api/reservation/1/', {
-                "date": "2022-03-21T23:19:13.277Z",
+                "date": make_aware(datetime(2023, 9, 21, 23, 19)),
                 "user": 2,
                 "announcement": 99
             },
@@ -1148,7 +1148,7 @@ class ReservationTestCase(TestCase):
         )
         second_response = client.put(
             '/api/reservation/1/', {
-                "date": "2022-03-21T23:19:13.277Z",
+                "date": make_aware(datetime(2023, 10, 21, 23, 19)),
                 "user": 2,
                 "announcement": 2
             },
@@ -1158,7 +1158,7 @@ class ReservationTestCase(TestCase):
 
         third_response = client.put(
             '/api/reservation/2/', {
-                "date": "2022-03-21T23:19:13.277Z",
+                "date": make_aware(datetime(2023, 11, 21, 23, 12)),
                 "user": 3,
                 "announcement": 3
             },
@@ -1181,7 +1181,7 @@ class RegistrationTestCase(TestCase):
 
         self.profile = Profile(
             phone= "692069179",
-	        birthdate= "2000-03-15",
+	        birthdate= make_aware(datetime(2000, 3, 15)),
             user= self.user
         )
         self.profile.save()
@@ -1204,7 +1204,7 @@ class RegistrationTestCase(TestCase):
                 "last_name": "Velázquez",
                 "profile": {
                     "phone": "618518923",
-                    "birthdate": "1985-05-02"
+                    "birthdate": make_aware(datetime(1985, 5, 2)).strftime("%Y-%m-%d"),
                 },
                 "vehicles":[{
                     "brand": "Opel",
@@ -1397,7 +1397,7 @@ class CancelTestCase(TestCase):
 
         profile = Profile(
             phone = "+34621321221",
-            birthdate = datetime(1994, 12, 6),
+            birthdate = make_aware(datetime(1994, 12, 6)),
             user = self.user
         )
         profile.save()
@@ -1410,7 +1410,7 @@ class CancelTestCase(TestCase):
 
         profile2 = Profile(
             phone = "+34621321221",
-            birthdate = datetime(1994, 12, 6),
+            birthdate = make_aware(datetime(1994, 12, 6)),
             user = self.user2
         )
         profile2.save()
@@ -1437,7 +1437,7 @@ class CancelTestCase(TestCase):
 
         self.vehicle2.save()
 
-        self.announcement = Announcement(date="2022-08-14 13:43", wait_time=5,
+        self.announcement = Announcement(date=make_aware(datetime(2022, 8, 14,13,43)), wait_time=5,
                                 price=3.5,  allow_wait=True, location='Reina Mercedes', latitude=38.35865724531185, longitude=-5.986121868933244,
                                 zone='Zona libre', limited_mobility=False, status='Initial', observation='Ninguna', rated=False, cancelled=False,
                                 vehicle=self.vehicle, user=self.user)
@@ -1447,13 +1447,13 @@ class CancelTestCase(TestCase):
                                        cancelled=False, rated=False, user=self.user, announcement=self.announcement)
         self.reservation.save()
     
-        self.announcement2 = Announcement(date="2022-08-15 13:43", wait_time=5,
+        self.announcement2 = Announcement(date=make_aware(datetime(2022, 8, 15,13,43)), wait_time=5,
                                 price=3.5,  allow_wait=True, location='Reina Mercedes', latitude=38.35865724531185, longitude=-5.986121868933244,
                                 zone='Zona libre', limited_mobility=False, status='Initial', observation='Ninguna', rated=False, cancelled=False,
                                 vehicle=self.vehicle, user=self.user)
         self.announcement2.save()
 
-        self.announcement3 = Announcement(date="2022-08-15 17:43", wait_time=5,
+        self.announcement3 = Announcement(date=make_aware(datetime(2022, 8, 15,17,43)), wait_time=5,
                                 price=4,  allow_wait=True, location='Reina Mercedes', latitude=38.4567724531185, longitude=-2.236121868933244,
                                 zone='Zona libre', limited_mobility=False, status='Initial', observation='Ninguna', rated=False, cancelled=False,
                                 vehicle=self.vehicle2, user=self.user2)
@@ -1526,7 +1526,7 @@ class CancelTestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertTrue(self.reservation.cancelled)
 
-class PaymentsTestCase(TestCase):
+class UserAccountBalanceTestCase(TestCase):
     access = ""
     refresh = ""
     second_access=""
@@ -1541,8 +1541,10 @@ class PaymentsTestCase(TestCase):
         self.user.save()
 
         profile = Profile(
+            id = 1, 
             phone = "+34621321221",
-            birthdate = datetime(1994, 12, 6),
+            birthdate = make_aware(datetime(1994, 12, 6)),
+            balance= Money('20.5', 'EUR'),
             user = self.user
         )
         profile.save()
@@ -1555,8 +1557,10 @@ class PaymentsTestCase(TestCase):
         self.second_user.save()
 
         profile2 = Profile(
+            id = 2,
             phone = "+34621321221",
-            birthdate = datetime(1994, 12, 6),
+            birthdate = make_aware(datetime(1994, 12, 6)),
+            balance= Money('11', 'EUR'),
             user = self.second_user
         )
         profile2.save()
@@ -1582,16 +1586,20 @@ class PaymentsTestCase(TestCase):
         )
         self.vehicle2.save()
 
-        self.announcement = Announcement(date="2023-10-05 13:43", wait_time=5,
+        self.announcement = Announcement(date=make_aware(datetime(2023, 10, 5,13,43)), wait_time=5,
                                          price=6.2,  allow_wait=True, location='Reina Mercedes', latitude=38.35865256131185, longitude=-5.98612186891111,
                                          zone='Zona libre', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
                                          vehicle=self.vehicle, user=self.user)
         self.announcement.save()
-        self.announcement2 = Announcement(date="2023-10-07 11:43", wait_time=5,
+        self.announcement2 = Announcement(date=make_aware(datetime(2023, 10, 7,11,43)), wait_time=5,
                                          price=6.8,  allow_wait=True, location='Triana', latitude=38.35865256131185, longitude=-5.98612186891111,
                                          zone='Zona libre', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
                                          n_extend=2, vehicle=self.vehicle, user=self.second_user)
         self.announcement2.save()
+
+        self.reservation = Reservation(date=self.announcement.date,
+                                       cancelled=False, rated=False, user=self.second_user, announcement=self.announcement)
+        self.reservation.save()
 
         self.client = APIClient()
         first_login = self.client.post(
@@ -1615,48 +1623,118 @@ class PaymentsTestCase(TestCase):
         self.second_access = second_login.data['access']
         self.second_refresh = second_login.data['refresh']
 
-    def test_create_payment(self):
-        first_response = self.client.post('/api/payments/' + str(self.announcement.id) + '/',
-            format='json',
-            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access),
+    def test_check_user_balance(self):
+        response = self.client.get('/api/userAccountBalance/', format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
         )
-        second_response = self.client.post('/api/payments/' + str(999) + '/',
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+    
+    def test_recharge_user_balance(self):
+        first_response = self.client.post('/api/userBalanceRecharge/',  # Wrong body parameters
+            {
+                "dummy": 4,
+            },
             format='json',
-            HTTP_AUTHORIZATION='Bearer {0}'.format(self.second_access),
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
         )
-        third_response = self.client.post('/api/payments/' + str(self.announcement.id) + '/',
+
+        second_response = self.client.post('/api/userBalanceRecharge/', # Funds under 2.5 € threshold
+            {
+                "amount": 1.23,
+            },
             format='json',
-            HTTP_AUTHORIZATION='Bearer {0}'.format(self.second_access),
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
         )
-        self.assertEqual(first_response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(second_response.status_code, status.HTTP_404_NOT_FOUND)
+
+        third_response = self.client.post('/api/userBalanceRecharge/', # Valid request
+            {
+                "amount": 10.00,
+            },
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
+        )
+        self.assertEqual(first_response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(second_response.status_code, status.HTTP_406_NOT_ACCEPTABLE)
         self.assertEqual(third_response.status_code, status.HTTP_200_OK)
 
 
-    def test_extend_payment(self):
-        first_response = self.client.post('/api/paymentsExtended/' + str(self.announcement2.id) + '/',
+    def test_add_and_substract_user_balance(self):
+        first_response = self.client.put('/api/userAccountBalance/', # Invalid JSON request
+            {},
             format='json',
-            HTTP_AUTHORIZATION='Bearer {0}'.format(self.second_access),
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
         )
-        second_response = self.client.post('/api/paymentsExtended/' + str(999) + '/',
+        second_response = self.client.put('/api/userAccountBalance/', # Not enough balance to perform operation
+            {
+                "funds": "-25",
+                "funds_currency": "EUR",
+            },
             format='json',
-            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access),
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.second_access)
         )
-        third_response = self.client.post('/api/paymentsExtended/' + str(self.announcement2.id) + '/',
+        third_response = self.client.put('/api/userAccountBalance/', # Adding amount when retrieving money
+            {
+                "funds": "1.5",
+                "funds_currency": "EUR",
+            },
             format='json',
-            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access),
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.second_access)
         )
-        self.announcement2.n_extend=3
-        self.announcement2.save()
+        forth_response = self.client.put('/api/userAccountBalance/', # Valid request
+            {
+                "funds": "-1.00",
+                "funds_currency": "EUR",
+            },
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
+        )
+        self.assertEqual(first_response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(second_response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        self.assertEqual(third_response.status_code, status.HTTP_406_NOT_ACCEPTABLE)
+        self.assertEqual(forth_response.status_code, status.HTTP_204_NO_CONTENT)
 
-        forth_response = self.client.post('/api/paymentsExtended/' + str(self.announcement2.id) + '/',
+    def test_manage_balance_transactions(self):
+        first_response = self.client.put('/api/balanceTransactions/' + str(999)+'/', # Announcement doesn't exist
             format='json',
-            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access),
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.second_access)
         )
-        self.assertEqual(first_response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(second_response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(third_response.status_code, status.HTTP_200_OK)
-        self.assertEqual(forth_response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        # Session user is bidding user but second user is lacking enough balance
+        profile=Profile.objects.filter(pk=self.second_user.id)
+        profile.update(balance=Money(0.1, 'EUR'))
+        self.second_user = profile.get().user
+        second_response = self.client.put('/api/balanceTransactions/' + str(self.announcement.id)+'/', 
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.second_access)
+        )
+        # Session user is bidding user and second user have enough balance
+        profile=Profile.objects.filter(pk=self.second_user.id)
+        profile.update(balance=Money(100, 'EUR'))
+        self.second_user = profile.get().user
+        second_response = self.client.put('/api/balanceTransactions/' + str(self.announcement.id)+'/', 
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.second_access)
+        )
+         # Session user is petitioner user but user is lacking enough balance
+        profile=Profile.objects.filter(pk=self.user.id)
+        profile.update(balance=Money(0.1, 'EUR'))
+        self.user = profile.get().user
+        third_response = self.client.put('/api/balanceTransactions/' + str(self.announcement2.id)+'/', 
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
+        )
+        # Session user is petitioner user and user have enough balance
+        profile=Profile.objects.filter(pk=self.user.id)
+        profile.update(balance=Money(100, 'EUR'))
+        self.user = profile.get().user
+        forth_response = self.client.put('/api/balanceTransactions/' + str(self.announcement2.id)+'/', 
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access)
+        )
+        self.assertEqual(first_response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(second_response.status_code, status.HTTP_409_CONFLICT)
+        self.assertEqual(third_response.status_code, status.HTTP_409_CONFLICT)
+        self.assertEqual(forth_response.status_code, status.HTTP_201_CREATED)
 
 class RatingsTestCase(TestCase):
     access = ""
@@ -1671,7 +1749,7 @@ class RatingsTestCase(TestCase):
 
         profile = Profile(
             phone = "621748524",
-            birthdate = datetime(1988, 4, 13),
+            birthdate = make_aware(datetime(1988, 4, 13)),
             user = self.user
         )
         profile.save()
@@ -1682,7 +1760,7 @@ class RatingsTestCase(TestCase):
 
         profile2 = Profile(
             phone = "685278524",
-            birthdate = datetime(1991, 2, 10),
+            birthdate = make_aware(datetime(1991, 2, 10)),
             user = self.second_user
         )
         profile2.save()
@@ -1708,7 +1786,7 @@ class RatingsTestCase(TestCase):
         )
         self.vehicle2.save()
 
-        self.announcement = Announcement(date="2023-10-05 13:43", wait_time=5,
+        self.announcement = Announcement(date=make_aware(datetime(2023, 10, 5,13,43)), wait_time=5,
                                          price=6.2,  allow_wait=True, location='Reina Mercedes', latitude=38.35865256131185, longitude=-5.98612186891111,
                                          zone='Zona libre', limited_mobility=False, status='Initial', observation='Ninguna', rated=False,
                                          vehicle=self.vehicle2, user=self.second_user)
