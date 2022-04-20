@@ -6,7 +6,7 @@ from djmoney.money import Money
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from api.models import Announcement, Profile, Reservation, User, Vehicle
+from api.models import Announcement, Profile, Reservation, User, Vehicle, Rating
 
 
 class AuthenticationTestCase(TestCase):
@@ -643,7 +643,7 @@ class AnnouncementTestCase(TestCase):
         },
             format='json',
             HTTP_AUTHORIZATION='Bearer {0}'.format(self.access))
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
 
     def test_create_announcement_fail(self):
         client = APIClient()
@@ -1765,6 +1765,29 @@ class RatingsTestCase(TestCase):
         )
         profile2.save()
 
+        self.third_user = User(username='eve123')
+        self.third_user.set_password('evelyn123')
+        self.third_user.save()
+
+        profile3 = Profile(
+            phone = "684338089",
+            birthdate = datetime(1991, 2, 10),
+            user = self.third_user
+        )  
+        profile3.save()
+
+        self.rating1 = Rating(
+            rate = 5,
+            comment = "Muy buen servicio",
+            user = self.third_user,
+        )
+
+        self.rating2 = Rating(
+            rate = 4,
+            comment = "Buen servicio",
+            user = self.third_user,
+        )
+
         self.vehicle = Vehicle(
             brand="Peugeot",
             model="207",
@@ -1817,6 +1840,22 @@ class RatingsTestCase(TestCase):
 
         self.second_access = second_login.data['access']
         self.second_refresh = second_login.data['refresh']
+
+    def test_get_ratings_by_user(self):
+        client = APIClient()
+        response = client.get('/api/rating/' + str(self.third_user.id) + '/',
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access),
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_get_ratings_by_user_non_exists(self):
+        client = APIClient()
+        response = client.get('/api/rating/108/',
+            format='json',
+            HTTP_AUTHORIZATION='Bearer {0}'.format(self.access),
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_wrong_call_to_endpoint(self):
         client = APIClient()

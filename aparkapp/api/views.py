@@ -251,14 +251,14 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
 
         if query:
             if not query.get().cancelled:
-                res=Response("El anuncio ya existe", status=status.HTTP_409_CONFLICT)    
+                 return Response("El anuncio ya existe", status=status.HTTP_409_CONFLICT)    
         if query2:
             vhs = query2.all().values()
             ls = [v['id'] for v in vhs]
             if data['vehicle'] not in ls:
                 return Response("No se puede crear un anuncio con un vehículo ajeno.", status=status.HTTP_406_NOT_ACCEPTABLE)
 
-        if serializer.is_valid() and not query:
+        if serializer.is_valid():
             serializer.save()
             res = Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
@@ -573,11 +573,15 @@ class RatingAPI(APIView):
     permission_classes = [IsAuthenticated & NotIsBanned]
     swagger_tags=["Endpoints de valoraciones"]
 
-    def get(self, request, pk):
+    def get(self, request, pk):  
         try:
-            ratings = Rating.objects.filter(user=pk)
-            serializer_class = RatingSerializer(ratings, many=True)
-            return Response(serializer_class.data, status=status.HTTP_200_OK)
+            user = User.objects.get(pk=pk)
+            if user:
+                ratings = Rating.objects.filter(user=pk)
+                serializer_class = RatingSerializer(ratings, many=True)
+                return Response(serializer_class.data, status=status.HTTP_200_OK)
+            else:
+                return Response({"error":"No se han encontrado el usuario"}, status=status.HTTP_404_NOT_FOUND)
         except Exception:
             return Response({"error":"No se han encontrado el usuario"}, status=status.HTTP_404_NOT_FOUND)
 
