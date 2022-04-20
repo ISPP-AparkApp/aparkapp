@@ -30,8 +30,7 @@ from api.serializers import (AnnouncementNestedVehicleSerializer,
                              SwaggerVehicleSerializerId,
                              UserNestedProfileSerializer, UserSerializer,
                              VehicleSerializer, VehicleSerializerId,
-                             RatingSerializer, SwaggerRatingSerializer)
-
+                             RatingSerializer, SwaggerRatingSerializer, AnnouncementNestedReservationsSerializer)
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .geolocator import address_to_coordinates, coordinates_to_address
 from .models import Announcement, Profile, Rating, Reservation, User, Vehicle
@@ -251,8 +250,8 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
         query2 = Vehicle.objects.filter(user=user)
 
         if query:
-            if query.get().cancelled:
-                res=Response("El anuncio ya está reservado", status=status.HTTP_409_CONFLICT)    
+            if not query.get().cancelled:
+                res=Response("El anuncio ya existe", status=status.HTTP_409_CONFLICT)    
         if query2:
             vhs = query2.all().values()
             ls = [v['id'] for v in vhs]
@@ -272,7 +271,7 @@ class myAnnouncementsAPI(APIView):
 
     def get(self, request):
         announcements = Announcement.objects.filter(user=request.user).order_by('date')
-        serializer_class = AnnouncementNestedVehicleSerializer(announcements,many=True)
+        serializer_class = AnnouncementNestedReservationsSerializer(announcements,many=True)
 
         return Response(serializer_class.data)
 
@@ -594,7 +593,7 @@ class RegisterAPI(APIView):
             return Response({"error":err},status=status.HTTP_400_BAD_REQUEST)
 
 class RatingAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     swagger_tags=["Endpoints de valoraciones"]
 
     def get(self, request, pk):  
@@ -610,7 +609,7 @@ class RatingAPI(APIView):
             return Response({"error":"No se han encontrado el usuario"}, status=status.HTTP_404_NOT_FOUND)
 
 class CreateRatingAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     swagger_tags=["Endpoints de valoraciones"]
 
     @swagger_auto_schema(request_body=SwaggerRatingSerializer)
@@ -648,6 +647,11 @@ class CreateRatingAPI(APIView):
                 obj.rated = True
                 obj.save()
                 serializer_data.save()
+                ratings = Rating.objects.filter(user=data["user"]).filter(rate=1)
+                profile_user = Profile.objects.get(user=data["user"])
+                if len(ratings) >= 10:
+                    profile_user.is_banned = True
+                    profile_user.save()
                 return Response(serializer_data.data, status=status.HTTP_201_CREATED)
         else:
                 return Response(serializer_data.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -658,3 +662,4 @@ class AnnouncementHasReservationAPI(APIView):
     def get(self, request, pk):
         announcement = get_object_or_404(Announcement, pk=pk)
         return Response(Reservation.objects.filter(announcement=announcement).exists())
+
