@@ -84,7 +84,7 @@ class ManageBalanceTransactionsAPI(APIView):
                 reservation=get_object_or_404(Reservation,announcement=announcement.id)
                 petitioner_user=get_object_or_404(Profile,pk=reservation.user.id)
                 extend_announcement_transaction=Money(0.5, 'EUR')
-                if petitioner_user.balance > extend_announcement_transaction:
+                if petitioner_user.balance >= extend_announcement_transaction:
                     request=HttpRequest()
                     request.user=petitioner_user
                     request.data={'status': 'AcceptDelay'}
@@ -99,7 +99,7 @@ class ManageBalanceTransactionsAPI(APIView):
                     res=Response("No tienes suficiente saldo para realizar la extensión",status.HTTP_409_CONFLICT)
             else:
                 reservation_buy_transaction=Money(announcement.price, 'EUR')
-                if session_user.balance > reservation_buy_transaction:   ## Session user is petitioner user
+                if session_user.balance >= reservation_buy_transaction:   ## Session user is petitioner user
                     session_user.balance-=reservation_buy_transaction
                     session_user.save()
 
