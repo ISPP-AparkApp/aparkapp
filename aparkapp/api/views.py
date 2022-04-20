@@ -258,7 +258,7 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
             if data['vehicle'] not in ls:
                 return Response("No se puede crear un anuncio con un vehículo ajeno.", status=status.HTTP_406_NOT_ACCEPTABLE)
 
-        if serializer.is_valid() and not query:
+        if serializer.is_valid():
             serializer.save()
             res = Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
