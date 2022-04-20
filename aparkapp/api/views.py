@@ -251,7 +251,7 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
 
         if query:
             if not query.get().cancelled:
-                res=Response("El anuncio ya existe", status=status.HTTP_409_CONFLICT)    
+                 return Response("El anuncio ya existe", status=status.HTTP_409_CONFLICT)    
         if query2:
             vhs = query2.all().values()
             ls = [v['id'] for v in vhs]
