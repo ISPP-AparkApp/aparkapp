@@ -106,7 +106,7 @@ class AnnouncementNestedVehicleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Announcement
         fields = '__all__'
-        
+
 class SwaggerAnnouncementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Announcement
@@ -147,6 +147,11 @@ class SwaggerCancelReservationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reservation
         fields = ['cancelled']
+
+class SimpleReservationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Reservation
+        fields = ['id', 'cancelled']
 
 
 ### GEOLOCATION SERIALIZERS
@@ -204,3 +209,12 @@ class RegisterSerializer(serializers.ModelSerializer):
             Vehicle.objects.create(user=user, **vehicle_data)
 
         return user
+
+###
+class AnnouncementNestedReservationsSerializer(serializers.ModelSerializer):
+    vehicle = VehicleSerializer(read_only = True)
+    reservation_set = SimpleReservationSerializer(many=True)
+    class Meta:
+        model = Announcement
+        fields = ['id','date','wait_time','price','allow_wait','location', 'longitude', 'latitude',
+        'zone', 'limited_mobility', 'status', 'observation', 'rated', 'announcement', 'vehicle', 'reservation_set']
