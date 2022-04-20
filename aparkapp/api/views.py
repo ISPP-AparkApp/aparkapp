@@ -30,7 +30,7 @@ from api.serializers import (AnnouncementNestedVehicleSerializer,
                              SwaggerVehicleSerializerId,
                              UserNestedProfileSerializer, UserSerializer,
                              VehicleSerializer, VehicleSerializerId,
-                             RatingSerializer, SwaggerRatingSerializer)
+                             RatingSerializer, SwaggerRatingSerializer, AnnouncementNestedReservationsSerializer)
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .geolocator import address_to_coordinates, coordinates_to_address
 from .models import Announcement, Profile, Rating, Reservation, User, Vehicle
@@ -250,8 +250,8 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
         query2 = Vehicle.objects.filter(user=user)
 
         if query:
-            if query.get().cancelled:
-                res=Response("El anuncio ya está reservado", status=status.HTTP_409_CONFLICT)    
+            if not query.get().cancelled:
+                res=Response("El anuncio ya existe", status=status.HTTP_409_CONFLICT)    
         if query2:
             vhs = query2.all().values()
             ls = [v['id'] for v in vhs]
@@ -271,7 +271,7 @@ class myAnnouncementsAPI(APIView):
 
     def get(self, request):
         announcements = Announcement.objects.filter(user=request.user).order_by('date')
-        serializer_class = AnnouncementNestedVehicleSerializer(announcements,many=True)
+        serializer_class = AnnouncementNestedReservationsSerializer(announcements,many=True)
 
         return Response(serializer_class.data)
 
