@@ -8,7 +8,7 @@ from api.models import Announcement, Profile, Reservation, Vehicle, Rating
 from decimal import Decimal
 
 ### PROFILE SERIALIZERS
-class ProfileSerializer(serializers.ModelSerializer):  ## CHEEECCCCCCCCCCCCCCCCCCCKKKKKKK
+class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = '__all__'
@@ -55,17 +55,17 @@ class ProfileRegisterSerializer(serializers.ModelSerializer): ## CHEEECCCCCCCCCC
 ### BALANCE RELATED SERIALIZERS
 def amount_is_valid(value):
     try:
-        return round(Decimal(value), 2)
+        val=float(value)
+        return round(Decimal(val), 2)
     except:
-        raise ValidationError(_('%(value)s no es válido, el número máximo de decimales permitidos es 2'),
-            params={'value': value},
-        )
+        raise ValidationError('Petición inválida, el número máximo de decimales permitidos es 2 y ha de usarse "." siguiendo el formato internacional')
 
 class SwaggerProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
         fields = ['phone', 'birthdate', 'is_banned']
+
 
 class SwaggerProfileBalanceSerializer(serializers.Serializer):
     
@@ -74,6 +74,7 @@ class SwaggerProfileBalanceSerializer(serializers.Serializer):
 
 class SwaggerBalanceRechargeSerializer(serializers.Serializer):
     amount = serializers.DecimalField(max_digits=6, decimal_places=2, default=Decimal('0.0'), validators=[amount_is_valid])
+
 
 ### USER SERIALIZERS
 
@@ -144,7 +145,7 @@ class AnnouncementNestedVehicleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Announcement
         fields = '__all__'
-        
+
 class SwaggerAnnouncementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Announcement
@@ -185,6 +186,11 @@ class SwaggerCancelReservationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reservation
         fields = ['cancelled']
+
+class SimpleReservationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Reservation
+        fields = ['id', 'cancelled']
 
 
 ### GEOLOCATION SERIALIZERS
@@ -242,3 +248,12 @@ class RegisterSerializer(serializers.ModelSerializer):
             Vehicle.objects.create(user=user, **vehicle_data)
 
         return user
+
+###
+class AnnouncementNestedReservationsSerializer(serializers.ModelSerializer):
+    vehicle = VehicleSerializer(read_only = True)
+    reservation_set = SimpleReservationSerializer(many=True)
+    class Meta:
+        model = Announcement
+        fields = ['id','date','wait_time','price','allow_wait','location', 'longitude', 'latitude',
+        'zone', 'limited_mobility', 'status', 'observation', 'rated', 'announcement', 'vehicle', 'reservation_set']
