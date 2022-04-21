@@ -30,7 +30,7 @@ class BalanceStripeAPI(APIView):
                 try:
                     product=product_builder()
                     pay_link=payment_builder(price_cents, product['id'],
-                    "https://aparkapp-s2.herokuapp.com/credit/", request.user.id)
+                    "https://aparkapp-s3.herokuapp.com/credit/", request.user.id)
                     res=Response({"id":pay_link.id, "object":pay_link.object, 
                     "active": pay_link.active, "url":pay_link.url}, status.HTTP_200_OK)
                 except Exception as e:
