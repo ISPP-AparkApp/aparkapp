@@ -682,7 +682,7 @@ class AnnouncementTestCase(TestCase):
         client = APIClient()
 
         response = client.put('/api/announcement/' + str(self.announcement.id)+'/', {
-            "date": make_aware(datetime(2022, 8, 14, 14, 00)),
+            "date": "2022-08-14 14:00",
                     "wait_time": 5,
                     "price": 2,
                     "allow_wait": True,
@@ -699,7 +699,7 @@ class AnnouncementTestCase(TestCase):
         client = APIClient()
 
         response = client.put('/api/announcement/' + str(self.announcement2.id)+'/', {
-            "date": make_aware(datetime(2022, 8, 14, 13, 43)),
+            "date": "2022-08-14 13:43",
                     "wait_time": 10,
                     "allow_wait": True,
                     "price": 2,
@@ -718,7 +718,7 @@ class AnnouncementTestCase(TestCase):
         client = APIClient()
 
         response = client.put('/api/announcement/' + str(self.announcement.id)+'/', {
-            "date": make_aware(datetime(2022, 8, 14, 13, 43)),
+            "date": "2022-08-14 13:43",
                     "wait_time": 10,
                     "allow_wait": True,
                     "latitude": 38.35865724531185,
