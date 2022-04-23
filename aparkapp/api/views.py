@@ -338,8 +338,12 @@ class AnnouncementAPI(APIView):
 
         if request.user != announcement.user:
             return Response("No puede editar un anuncio de otro usuario", status=status.HTTP_401_UNAUTHORIZED)
+            
         elif pk in announcement_list:
             return Response("No puede editar un anuncio reservado", status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        elif datetime.datetime.strptime(request.data['date'], '%Y-%m-%d %H:%M') < datetime.datetime.now():
+            return Response("La fecha no puede ser anterior a la actual", status=status.HTTP_405_METHOD_NOT_ALLOWED)
         else:
             data = request.data.copy()
             data['user'] = announcement.user.id
