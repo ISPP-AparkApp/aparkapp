@@ -215,7 +215,7 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
 
 
     def get_queryset(self, request):
-        res_list = Reservation.objects.filter(cancelled=False)
+        res_list = Reservation.objects.all()
         ann_id_list = list(res_list.values_list('announcement', flat=True))
         query = Announcement.objects.exclude(user=request.user).exclude(id__in=ann_id_list).exclude(
             cancelled=True).exclude(date__lt=make_aware(datetime.datetime.now()))
@@ -633,9 +633,12 @@ class CreateRatingAPI(APIView):
         else:
                 return Response(serializer_data.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class AnnouncementHasReservationAPI(APIView):
-    swagger_tags= ["Endpoints de anuncios"]
+class myRatingsAPI(APIView):
+    permission_classes = [IsAuthenticated & NotIsBanned]
+    swagger_tags=["Endpoints de valoraciones"]
 
-    def get(self, request, pk):
-        announcement = get_object_or_404(Announcement, pk=pk)
-        return Response(Reservation.objects.filter(announcement=announcement).exists())
+    def get(self, request):
+        ratings = Rating.objects.filter(user=request.user)
+        serializer_class = SwaggerRatingSerializer(ratings, many=True)
+
+        return Response(serializer_class.data)
