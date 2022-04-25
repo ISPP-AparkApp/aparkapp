@@ -227,6 +227,37 @@
     }
   },
   {
+    "model": "api.announcement",
+    "pk": 5,
+    "fields": {
+      "date": "2022-04-22 12:43",
+      "price": 2,
+      "n_extend": 0,
+      "wait_time": 10,
+      "location": "Reina Mercedes",
+      "latitude": 38.35865724531185,
+      "longitude": -5.986121868933244,
+      "vehicle": 4,
+      "user": 3
+    }
+  },
+  {
+    "model": "api.announcement",
+    "pk": 6,
+    "fields": {
+      "date": "2022-04-22 12:43",
+      "price": 2,
+      "n_extend": 0,
+      "wait_time": 10,
+      "location": "Reina Mercedes",
+      "latitude": 38.35865724531185,
+      "longitude": -5.986121868933244,
+      "vehicle": 4,
+      "cancelled": true,
+      "user": 3
+    }
+  },
+  {
     "model": "api.reservation",
     "pk": 1,
     "fields": {
@@ -236,5 +267,53 @@
       "announcement": 2,
       "user": 1
     }
+  },
+  {
+    "model": "api.reservation",
+    "pk": 2,
+    "fields": {
+      "date": "2022-04-22T13:03:00+02:00",
+      "cancelled": true,
+      "rated": false,
+      "announcement": 5,
+      "user": 1
+    }
+  },
+  {
+    "model": "api.rating",
+    "pk": 1,
+    "fields": {
+      "rate": 5,
+      "comment": "Ha sido muy puntual.",
+      "user": 3
+    }
+  },
+  {
+    "model": "api.rating",
+    "pk": 2,
+    "fields": {
+      "rate": 4,
+      "comment": "Ha sido puntual.",
+      "user": 3
+    }
+  },
+  {
+    "model": "api.rating",
+    "pk": 3,
+    "fields": {
+      "rate": 4,
+      "comment": "Sin problemas.",
+      "user": 2
+    }
+  },
+  {
+    "model": "api.rating",
+    "pk": 4,
+    "fields": {
+      "rate": 3,
+      "comment": "No ha sido puntual.",
+      "user": 2
+    }
   }
+
 ]
