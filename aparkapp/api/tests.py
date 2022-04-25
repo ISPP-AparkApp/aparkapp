@@ -1857,6 +1857,12 @@ class RatingsTestCase(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+    def test_get_my_ratings(self):
+        client = APIClient()
+        response = client.get('/api/myRatings/', format='json', HTTP_AUTHORIZATION='Bearer {0}'.format(self.access),)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
     def test_wrong_call_to_endpoint(self):
         client = APIClient()
         response = client.post(
