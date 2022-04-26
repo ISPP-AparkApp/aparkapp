@@ -273,6 +273,22 @@
     }
   },
   {
+    "model": "api.announcement",
+    "pk": 8,
+    "fields": {
+      "date": "2022-04-22 07:00",
+      "price": 2,
+      "n_extend": 0,
+      "wait_time": 10,
+      "location": "Reina Mercedes",
+      "latitude": 38.35865724531185,
+      "longitude": -5.986121868933244,
+      "vehicle": 4,
+      "cancelled": false,
+      "user": 3
+    }
+  },
+  {
     "model": "api.reservation",
     "pk": 1,
     "fields": {
@@ -302,6 +318,17 @@
       "cancelled": false,
       "rated": false,
       "announcement": 6,
+      "user": 1
+    }
+  },
+  {
+    "model": "api.reservation",
+    "pk": 4,
+    "fields": {
+      "date": "2022-04-25T13:03:00+02:00",
+      "cancelled": false,
+      "rated": false,
+      "announcement": 8,
       "user": 1
     }
   },
