@@ -190,7 +190,7 @@ class SwaggerCancelReservationSerializer(serializers.ModelSerializer):
 class SimpleReservationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reservation
-        fields = ['id', 'cancelled']
+        fields = ['id', 'rated', 'cancelled']
 
 
 ### GEOLOCATION SERIALIZERS
