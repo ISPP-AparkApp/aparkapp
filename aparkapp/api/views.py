@@ -130,7 +130,7 @@ class UsersVehiclesAPI(APIView):
     def get(self,request):
         pk = request.user.id
         user = User.objects.get(pk=pk)
-        vehicles = Vehicle.objects.filter(user=user)
+        vehicles = Vehicle.objects.filter(user=user).order_by('id')
         vehicle_serializer = VehicleSerializer(vehicles, many=True)
         return Response(vehicle_serializer.data, status=status.HTTP_200_OK)
 
