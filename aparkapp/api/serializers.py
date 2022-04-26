@@ -30,7 +30,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Ya existe un usuario registrado con el mismo número de teléfono")
         return value
 
-class ProfileRegisterSerializer(serializers.ModelSerializer): ## CHEEECCCCCCCCCCCCCCCCCCCKKKKKKK
+class ProfileRegisterSerializer(serializers.ModelSerializer): 
     class Meta:
         model = Profile
         fields = ['phone', 'birthdate', 'is_banned']

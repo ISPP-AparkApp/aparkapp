@@ -1,5 +1,4 @@
 import datetime
-
 from django.contrib.auth.models import User
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.http import Http404
@@ -36,6 +35,7 @@ from .geolocator import address_to_coordinates, coordinates_to_address
 from .models import Announcement, Profile, Rating, Reservation, User, Vehicle
 from django.contrib.auth import authenticate
 from rest_framework import permissions, exceptions
+from django.db import IntegrityError
 
 class NotIsBanned(permissions.BasePermission):
     message = "El usuario está baneado"
@@ -116,9 +116,14 @@ class VehiclesIdAPI(APIView):
         data['user'] = request.user.id
         query = Vehicle.objects.filter(user=data['user']).count()
         if query > 1:
-            vehicle.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response("You have only one vehicle registred",status=status.HTTP_401_UNAUTHORIZED)
+            try:
+                vehicle.delete()
+                res=Response(status=status.HTTP_204_NO_CONTENT)
+            except IntegrityError:
+                res=Response("No se puede eliminar un vehículo si tiene un anuncio asociado",status=status.HTTP_409_CONFLICT)
+        else:
+            res=Response("No se pueden eliminar todos los vehículos de la cuenta, como mínimo ha de haber uno",status=status.HTTP_401_UNAUTHORIZED)
+        return res
     
     def get(self, request, pk):
         return Response(VehicleSerializerId(get_object_or_404(Vehicle, pk=pk)).data)
