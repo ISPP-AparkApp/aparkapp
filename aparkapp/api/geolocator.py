@@ -15,7 +15,7 @@ def address_to_coordinates(query, county_code="ES", only_one_result=False, raw=T
         else:
            locations=[loc for loc in res]  
     except Exception:
-        raise ValueError
+        return False
     return locations
     
 # Returns address given a tuple with coordinates

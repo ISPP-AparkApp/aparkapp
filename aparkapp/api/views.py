@@ -507,9 +507,13 @@ class GeolocationToCoordinatesAPI(APIView):
     def post(self, request):
         serializer = GeolocationToCoordinatesSerializer(data=request.data)
         if serializer.is_valid():
-            response=Response(address_to_coordinates(request.data['location'],
+            address = address_to_coordinates(request.data['location'],
             request.data.get('country_code', 'ES'), bool(request.data.get('one_result', 'false')),
-            request.data.get('raw', 'true')), status=status.HTTP_200_OK)            
+            request.data.get('raw', 'true'))
+            if address:
+                response=Response(address, status=status.HTTP_200_OK)
+            else:
+                response=Response("Ubicación no encontrada", status=status.HTTP_404_NOT_FOUND)
         else:
             response=Response("Petición incorrecta", status=status.HTTP_400_BAD_REQUEST)
         return response
