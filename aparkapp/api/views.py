@@ -243,9 +243,9 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
         coordinates = (float(data['latitude']), float(data['longitude']))
         direction = coordinates_to_address(coordinates)
         try:
-            data['location'] = str(direction[0]['display_name'])
-        except Exception as e:
-            data['location'] = str(direction[0])
+            data['location']=direction[0]
+        except:
+            return Response("No se ha detectado ninguna ubicación para las coordenadas especificadas", status=status.HTTP_404_NOT_FOUND)
 
         serializer = AnnouncementSerializer(data=data)
         query = Announcement.objects.filter(date=data["date"], vehicle=data["vehicle"])
@@ -357,9 +357,9 @@ class AnnouncementAPI(APIView):
             coordinates = (float(data['latitude']), float(data['longitude']))
             direction = coordinates_to_address(coordinates)
             try:
-                data['location'] = str(direction[0]['display_name'])
+                data['location']=direction[0]
             except:
-                data['location'] = str(direction[0])
+                return Response("No se ha detectado ninguna ubicación para las coordenadas especificadas", status=status.HTTP_404_NOT_FOUND)
             serializer = AnnouncementSerializer(announcement, data=data)
             query = Announcement.objects.filter(date=data["date"], vehicle=data["vehicle"])
             
