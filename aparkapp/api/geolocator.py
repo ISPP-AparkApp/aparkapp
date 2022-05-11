@@ -1,32 +1,27 @@
-from geopy.geocoders import Nominatim
+from geopy.geocoders import Nominatim, options
+from geopy.exc import GeopyError
 
 # Geolocation agent being used
-geolocator = Nominatim(user_agent="AparkApp")
+options.default_timeout = 5 # Seconds to wait before timeout
+geolocator = Nominatim(user_agent="aparkapp")
 # Returns JSON or Point with coordinates given an address
 # <param>raw</query> Determines if a JSON or just its point"
-def address_to_coordinates(query, county_code="ES", only_one_result=False, raw=True):
-    locations = []
+def address_to_coordinates(query, county_code="ES", only_one_result=True, raw=True):
+    res=None
     try:
-        res=geolocator.geocode(query=query, country_codes=county_code, exactly_one=only_one_result)
-        if hasattr(res, 'raw') and raw:
-            locations=[loc for loc in res]
-        elif hasattr(res, 'point'):
-           locations=[loc.point for loc in res] 
-        else:
-           locations=[loc for loc in res]  
-    except Exception:
-        return False
-    return locations
+        geolocation=geolocator.geocode(query=query, country_codes=county_code, exactly_one=only_one_result)
+        res=[geolocation.address,[geolocation.latitude, geolocation.longitude]]   
+    except GeopyError:
+        res=False
+    return res
     
 # Returns address given a tuple with coordinates
 # <param>query</query> (37.21,92.0) or "%(37.21)s,%(92.0)s"
-def coordinates_to_address(query, only_one_result=False):
+def coordinates_to_address(query, only_one_result=True):
+    res=None
     try:
-        res=geolocator.reverse(query=query, exactly_one=only_one_result)
-        if hasattr(res, 'raw'):
-            response=[loc.raw for loc in res]
-        else:
-            response=[loc for loc in res]
-    except Exception:
-        raise ValueError
-    return response
+        geolocation=geolocator.reverse(query=query, exactly_one=only_one_result)
+        res=[geolocation.address,[geolocation.latitude, geolocation.longitude]]
+    except GeopyError:
+        res=False
+    return res

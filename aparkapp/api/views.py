@@ -507,15 +507,13 @@ class GeolocationToCoordinatesAPI(APIView):
     def post(self, request):
         serializer = GeolocationToCoordinatesSerializer(data=request.data)
         if serializer.is_valid():
-            address = address_to_coordinates(request.data['location'],
-            request.data.get('country_code', 'ES'), bool(request.data.get('one_result', 'false')),
-            request.data.get('raw', 'true'))
+            address = address_to_coordinates(request.data.get('location'))
             if address:
                 response=Response(address, status=status.HTTP_200_OK)
             else:
                 response=Response("Ubicación no encontrada", status=status.HTTP_404_NOT_FOUND)
         else:
-            response=Response("Petición incorrecta", status=status.HTTP_400_BAD_REQUEST)
+            response=Response("Petición incorrecta. Inténtalo de nuevo más tarde", status=status.HTTP_400_BAD_REQUEST)
         return response
 
 class GeolocationToAddressAPI(APIView):
@@ -526,10 +524,14 @@ class GeolocationToAddressAPI(APIView):
     def post(self, request):
         serializer = GeolocationToAddressSerializer(data=request.data)
         if serializer.is_valid():
-            response=Response(coordinates_to_address((float(request.data['longitude']),
-            float(request.data['latitude'])), bool(request.data.get('one_result', 'false'))), status=status.HTTP_200_OK)
+            coordinates = coordinates_to_address((float(request.data.get('longitude')),
+            float(request.data.get('latitude'))))
+            if coordinates:
+                response=Response(coordinates, status=status.HTTP_200_OK)
+            else:
+                response=Response("No se ha detectado ninguna ubicación para dichas coordenadas", status=status.HTTP_404_NOT_FOUND)
         else:
-            response=Response("Petición incorrecta", status=status.HTTP_400_BAD_REQUEST)
+            response=Response("Petición incorrecta. Inténtalo de nuevo más tarde", status=status.HTTP_400_BAD_REQUEST)
         return response
         
 class RegisterAPI(APIView):
