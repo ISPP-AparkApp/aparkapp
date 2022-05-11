@@ -1,5 +1,4 @@
 import datetime
-
 from django.contrib.auth.models import User
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.http import Http404
@@ -11,7 +10,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.utils.timezone import make_aware
-from api.auxiliary import post_reservation_logic
+from api.auxiliary import post_reservation_logic, put_announcement_status_logic
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from api.serializers import (AnnouncementNestedVehicleSerializer,
                              AnnouncementSerializer,
                              GeolocationToAddressSerializer,
@@ -28,14 +28,49 @@ from api.serializers import (AnnouncementNestedVehicleSerializer,
                              SwaggerUserSerializer, SwaggerVehicleSerializer,
                              SwaggerVehicleSerializerId,
                              UserNestedProfileSerializer, UserSerializer,
-                             VehicleSerializer, VehicleSerializerId)
-
+                             VehicleSerializer, VehicleSerializerId,
+                             RatingSerializer, SwaggerRatingSerializer, AnnouncementNestedReservationsSerializer)
+from rest_framework_simplejwt.views import TokenObtainPairView
 from .geolocator import address_to_coordinates, coordinates_to_address
-from .models import Announcement, Profile, Reservation, User, Vehicle
+from .models import Announcement, Profile, Rating, Reservation, User, Vehicle
+from django.contrib.auth import authenticate
+from rest_framework import permissions, exceptions
+from django.db import IntegrityError
 
+class NotIsBanned(permissions.BasePermission):
+    message = "El usuario está baneado"
+    def has_permission(self, request, view):
+        profile = Profile.objects.get(user__username=request.user.username)
+        if profile.is_banned:
+            raise exceptions.PermissionDenied(detail=self.message) 
+        return True
+
+class Login(TokenObtainPairView):
+    serialer_class = TokenObtainPairSerializer
+
+    def post(self,request,*args,**kwargs):
+        username = request.data.get('username','')
+        password = request.data.get('password','')
+        user = authenticate(username=username, password=password)
+        if user:
+            login_serializer = self.serialer_class(data=request.data)
+            if login_serializer.is_valid():
+                profile = Profile.objects.get(user__username=username)
+                if profile.is_banned:
+                    return Response({'error': 'El usuario está bloqueado'}, status=status.HTTP_403_FORBIDDEN)
+                else:
+                    return Response({
+                        'access': login_serializer.validated_data['access'],
+                        'refresh': login_serializer.validated_data['refresh'],
+                        'message': 'Inicio de sesión realizado con éxito'
+                    }, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'Contraseña o nombre de usuario incorrectos'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({'error': 'Contraseña o nombre de usuario incorrectos'}, status=status.HTTP_400_BAD_REQUEST)
 
 class VehiclesAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     swagger_tags= ["Endpoints de vehiculos"]
 
     @swagger_auto_schema(request_body=SwaggerVehicleSerializer)
@@ -56,7 +91,7 @@ class VehiclesAPI(APIView):
         
 
 class VehiclesIdAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     swagger_tags= ["Endpoints de vehiculos"]
 
     def get_object(self,pk):
@@ -81,27 +116,32 @@ class VehiclesIdAPI(APIView):
         data['user'] = request.user.id
         query = Vehicle.objects.filter(user=data['user']).count()
         if query > 1:
-            vehicle.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response("You have only one vehicle registred",status=status.HTTP_401_UNAUTHORIZED)
+            try:
+                vehicle.delete()
+                res=Response(status=status.HTTP_204_NO_CONTENT)
+            except IntegrityError:
+                res=Response("No se puede eliminar un vehículo si tiene un anuncio asociado",status=status.HTTP_409_CONFLICT)
+        else:
+            res=Response("No se pueden eliminar todos los vehículos de la cuenta, como mínimo ha de haber uno",status=status.HTTP_401_UNAUTHORIZED)
+        return res
     
     def get(self, request, pk):
         return Response(VehicleSerializerId(get_object_or_404(Vehicle, pk=pk)).data)
 
 class UsersVehiclesAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     swagger_tags= ["Endpoints de usuarios"]
 
     def get(self,request):
         pk = request.user.id
         user = User.objects.get(pk=pk)
-        vehicles = Vehicle.objects.filter(user=user)
+        vehicles = Vehicle.objects.filter(user=user).order_by('id')
         vehicle_serializer = VehicleSerializer(vehicles, many=True)
         return Response(vehicle_serializer.data, status=status.HTTP_200_OK)
 
 
 class UsersAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     model = Profile
     swagger_tags= ["Endpoints de usuarios"]
 
@@ -129,7 +169,7 @@ class UsersAPI(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 class UserAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     swagger_tags= ["Endpoints de usuarios"]
 
     def get(self, request, pk):
@@ -138,9 +178,9 @@ class UserAPI(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
 class ProfileApi(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     model=Profile
-    swagger_tags= ["Endpoints de perfiles"]
+    swagger_tags= ["Endpoints de perfiles y saldo de usuario"]
 
     def get_object(self,user):
         try:
@@ -163,7 +203,7 @@ class ProfileApi(APIView):
 
 
 class AnnouncementsAPI(generics.ListCreateAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     swagger_tags= ["Endpoints de anuncios"]
 
     filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend)
@@ -215,15 +255,15 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
         query2 = Vehicle.objects.filter(user=user)
 
         if query:
-            if query.get().cancelled:
-                res=Response("El anuncio ya está reservado", status=status.HTTP_409_CONFLICT)    
+            if not query.get().cancelled:
+                 return Response("El anuncio ya existe", status=status.HTTP_409_CONFLICT)    
         if query2:
             vhs = query2.all().values()
             ls = [v['id'] for v in vhs]
             if data['vehicle'] not in ls:
                 return Response("No se puede crear un anuncio con un vehículo ajeno.", status=status.HTTP_406_NOT_ACCEPTABLE)
 
-        if serializer.is_valid() and not query:
+        if serializer.is_valid():
             serializer.save()
             res = Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
@@ -231,12 +271,12 @@ class AnnouncementsAPI(generics.ListCreateAPIView):
         return res    
 
 class myAnnouncementsAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     swagger_tags= ["Endpoints de anuncios"]
 
     def get(self, request):
-        announcements = Announcement.objects.filter(user=request.user)
-        serializer_class = AnnouncementNestedVehicleSerializer(announcements,many=True)
+        announcements = Announcement.objects.filter(user=request.user).order_by('date')
+        serializer_class = AnnouncementNestedReservationsSerializer(announcements,many=True)
 
         return Response(serializer_class.data)
 
@@ -251,7 +291,7 @@ class AnnouncementsUserAPI(APIView):
         return Response(announcement_serializer.data, status=status.HTTP_200_OK)
 
 class AnnouncementStatusAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     swagger_tags= ["Endpoints de anuncios"]
 
     def get_object(self,pk):
@@ -271,34 +311,11 @@ class AnnouncementStatusAPI(APIView):
 
     @swagger_auto_schema(request_body=SwaggerUpdateAnnouncementSerializer)
     def put(self,request,pk):
-        try:
-            request_status= request.data.get("status")
-            if request_status:
-                announcement_to_update=Announcement.objects.get(pk=pk)
-                if announcement_to_update:
-                    if request_status=="AcceptDelay":
-                        if announcement_to_update.n_extend>3:
-                            res=Response("error: n_extend es mayor o igual a 3",status=status.HTTP_400_BAD_REQUEST)
-                        else:
-                            announcement_to_update.status = request_status
-                            announcement_to_update.wait_time += 5
-                            announcement_to_update.n_extend += 1
-                            announcement_to_update.save()
-                            res=Response(status=status.HTTP_204_NO_CONTENT)
-                    else:
-                        announcement_to_update.status = request_status
-                        announcement_to_update.save()
-                        res=Response(status=status.HTTP_204_NO_CONTENT)
-            else:
-                res=Response("La petición es inválida", status=status.HTTP_400_BAD_REQUEST)
-        except Exception:
-            res=Response("No existe el anuncio especificado", status=status.HTTP_404_NOT_FOUND)
-        
-        return res
+        return put_announcement_status_logic(request,pk)
         
     
 class AnnouncementAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     swagger_tags= ["Endpoints de anuncios"]
 
     def get_object(self,pk):
@@ -326,8 +343,12 @@ class AnnouncementAPI(APIView):
 
         if request.user != announcement.user:
             return Response("No puede editar un anuncio de otro usuario", status=status.HTTP_401_UNAUTHORIZED)
+            
         elif pk in announcement_list:
             return Response("No puede editar un anuncio reservado", status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+        elif datetime.datetime.strptime(request.data['date'], '%Y-%m-%d %H:%M') < datetime.datetime.now():
+            return Response("La fecha no puede ser anterior a la actual", status=status.HTTP_405_METHOD_NOT_ALLOWED)
         else:
             data = request.data.copy()
             data['user'] = announcement.user.id
@@ -362,7 +383,7 @@ class AnnouncementAPI(APIView):
                 return Response("No existe el anuncio que desea borrar.", status.HTTP_400_BAD_REQUEST)
 
 class CancelAnnouncementsAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     swagger_tags= ["Endpoints de anuncios"]
 
     @swagger_auto_schema(request_body=SwaggerCancelAnnouncementSerializer)
@@ -401,7 +422,7 @@ class ReservationByAnouncementAPI(APIView):
 
 
 class ReservationAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     swagger_tags= ["Endpoints de reservas"]
 
     def get(self, request,pk):
@@ -445,12 +466,12 @@ class ReservationAPI(APIView):
         return response
 
 class ReservationsAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     swagger_tags= ["Endpoints de reservas"]
     
     # Returns own reservations
     def get(self, request):
-        reservations=Reservation.objects.filter(user=request.user)
+        reservations=Reservation.objects.filter(user=request.user).order_by('date')
         reservations_data=[]
         for r in reservations:
             reservations_data.append(ReservationSerializer(r).data)
@@ -461,7 +482,7 @@ class ReservationsAPI(APIView):
         return post_reservation_logic(request)
 
 class CancelReservationAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     swagger_tags= ["Endpoints de reservas"]
 
     @swagger_auto_schema(request_body=SwaggerCancelReservationSerializer)
@@ -479,22 +500,26 @@ class CancelReservationAPI(APIView):
         return res
 
 class GeolocationToCoordinatesAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     swagger_tags= ["Endpoints de geolocalización"]
 
     @swagger_auto_schema(request_body=GeolocationToCoordinatesSerializer) 
     def post(self, request):
         serializer = GeolocationToCoordinatesSerializer(data=request.data)
         if serializer.is_valid():
-            response=Response(address_to_coordinates(request.data['location'],
+            address = address_to_coordinates(request.data['location'],
             request.data.get('country_code', 'ES'), bool(request.data.get('one_result', 'false')),
-            request.data.get('raw', 'true')), status=status.HTTP_200_OK)            
+            request.data.get('raw', 'true'))
+            if address:
+                response=Response(address, status=status.HTTP_200_OK)
+            else:
+                response=Response("Ubicación no encontrada", status=status.HTTP_404_NOT_FOUND)
         else:
             response=Response("Petición incorrecta", status=status.HTTP_400_BAD_REQUEST)
         return response
 
 class GeolocationToAddressAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & NotIsBanned]
     swagger_tags= ["Endpoints de geolocalización"]
 
     @swagger_auto_schema(request_body=GeolocationToAddressSerializer) 
@@ -556,3 +581,77 @@ class RegisterAPI(APIView):
         else:
             err = self.return_errors(serializer_data.errors)
             return Response({"error":err},status=status.HTTP_400_BAD_REQUEST)
+
+class RatingAPI(APIView):
+    permission_classes = [IsAuthenticated & NotIsBanned]
+    swagger_tags=["Endpoints de valoraciones"]
+
+    def get(self, request, pk):  
+        try:
+            user = User.objects.get(pk=pk)
+            if user:
+                ratings = Rating.objects.filter(user=pk)
+                serializer_class = RatingSerializer(ratings, many=True)
+                return Response(serializer_class.data, status=status.HTTP_200_OK)
+            else:
+                return Response({"error":"No se han encontrado el usuario"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception:
+            return Response({"error":"No se han encontrado el usuario"}, status=status.HTTP_404_NOT_FOUND)
+
+class CreateRatingAPI(APIView):
+    permission_classes = [IsAuthenticated & NotIsBanned]
+    swagger_tags=["Endpoints de valoraciones"]
+
+    @swagger_auto_schema(request_body=SwaggerRatingSerializer)
+    def post(self,request, object, pk):
+        data = request.data.copy()
+
+        if object=="announcement":
+            obj = get_object_or_404(Announcement,pk=pk)
+            res_list = Reservation.objects.filter(user=request.user).filter(cancelled=False)
+            ann_id_list = list(res_list.values_list('announcement', flat=True))
+
+            if pk not in ann_id_list:
+                return Response("No puede valorar un anuncio que no ha reservado", status=status.HTTP_401_UNAUTHORIZED)
+            elif obj.rated == True:
+                return Response("El anuncio ya ha sido valorado", status=status.HTTP_405_METHOD_NOT_ALLOWED)
+            else:
+                data['user'] = obj.user.id
+                serializer_data = RatingSerializer(data=data)     
+
+        elif object=="reservation":
+            obj = get_object_or_404(Reservation,pk=pk)
+            owner_of_Announcement = obj.announcement.user
+            
+            if request.user != owner_of_Announcement:
+                return Response("No puede valorar una reserva cuyo anuncio asociado no le pertenece", status=status.HTTP_401_UNAUTHORIZED)
+            elif obj.rated == True:
+                return Response("La reserva ya ha sido valorado", status=status.HTTP_405_METHOD_NOT_ALLOWED)
+            else:
+                data['user'] = obj.user.id
+                serializer_data = RatingSerializer(data=data)
+        else:
+            return Response({"error":"Las únicas urls válidas son rating/announcement/pk y rating/reservation/pk"}, status=status.HTTP_409_CONFLICT)
+
+        if serializer_data.is_valid():
+                obj.rated = True
+                obj.save()
+                serializer_data.save()
+                ratings = Rating.objects.filter(user=data["user"]).filter(rate=1)
+                profile_user = Profile.objects.get(user=data["user"])
+                if len(ratings) >= 10:
+                    profile_user.is_banned = True
+                    profile_user.save()
+                return Response(serializer_data.data, status=status.HTTP_201_CREATED)
+        else:
+                return Response(serializer_data.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class myRatingsAPI(APIView):
+    permission_classes = [IsAuthenticated & NotIsBanned]
+    swagger_tags=["Endpoints de valoraciones"]
+
+    def get(self, request):
+        ratings = Rating.objects.filter(user=request.user)
+        serializer_class = SwaggerRatingSerializer(ratings, many=True)
+
+        return Response(serializer_class.data)

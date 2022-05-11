@@ -2,12 +2,18 @@ from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from drf_yasg.inspectors import SwaggerAutoSchema
+from djmoney.models.fields import MoneyField
+from djmoney.money import Money
+from djmoney.models.validators import MinMoneyValidator
 
 
 class Profile(models.Model):
    id = models.AutoField(primary_key=True)
    phone = models.CharField(max_length=12)
    birthdate = models.DateField()
+   balance = MoneyField(max_digits=6, decimal_places=2, default_currency='EUR', validators=[MinMoneyValidator(0)], 
+      default=Money(0.00, 'EUR'))
+   is_banned = models.BooleanField(default=False)
 
    #Relationship
    user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -116,7 +122,7 @@ class Announcement(models.Model):
    n_extend = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(3)], default=0)
 
    #Relationship
-   vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE)
+   vehicle = models.ForeignKey(Vehicle, on_delete=models.RESTRICT)
    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
    def __str__(self):

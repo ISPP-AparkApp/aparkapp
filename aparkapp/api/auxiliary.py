@@ -7,10 +7,10 @@ from django.shortcuts import get_object_or_404
 from django.utils.timezone import make_aware
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
-from rest_framework.request import HttpRequest
 from rest_framework.response import Response
+from djmoney.money import Money
 
-from .models import Announcement, Reservation, User
+from .models import Announcement, Reservation, Profile
 
 ## File for auxiliary methods to improve general readibility of the project
 
@@ -33,15 +33,14 @@ def stripe_webhook_view(request):
         res=HttpResponse(status=400)
 
     # Handle operations after payment succeeded event
-    if (event['type'] == 'checkout.session.completed' or event['type'] == 'payment_intent.succeeded' 
-    or event['type'] == 'checkout.session.async_payment_succeeded'):
+    if (event['type'] == 'checkout.session.completed'):
         session = event['data']['object']
-        session['cancel_url']='https://aparkapp-s2.herokuapp.com/home'
+        session['cancel_url']='https://aparkapp-s3.herokuapp.com/home'
         # Fulfill the purchase
         post_order_operations(session, session['metadata'])
     elif event['type'] == 'checkout.session.expired' or event['type'] == 'checkout.session.async_payment_failed':
         session = event['data']['object']
-        session['cancel_url']='https://aparkapp-s2.herokuapp.com/home'
+        session['cancel_url']='https://aparkapp-s3.herokuapp.com/home'
     # Passed signature verification
     return res
 
@@ -51,25 +50,17 @@ def post_order_operations(session, metadata):
         session['payment_link'],
         active=False,
     )
-    req=HttpRequest()
-    req.user=User.objects.get(pk=metadata['user_id'])
-    req.data={'announcement':metadata['announcement_id']}
-    response=post_reservation_logic(req)
-    return HttpResponse(status=response.status_code) 
+    user=Profile.objects.get(pk=metadata['user_id'])
+    user.balance+=Money(session['amount_total']/100, session['currency'])
+    user.save()
+    return HttpResponse(status=201)
 
 ## PAYMENT LINK BUILDERS
 
-def product_builder(announcement):
-    return stripe.Product.create(name="Plaza en "+ announcement.location+"\n("+str(announcement.longitude) +" , " 
-        + str(announcement.latitude)+")")
+def product_builder():
+    return stripe.Product.create(name="Recarga de saldo AparkApp")
 
-def extended_product_builder(announcement):
-    return stripe.Product.create(name="Extensión de tiempo de espera nº " + str(announcement.n_extend+1) + " en "
-        + announcement.location+"\n("+str(announcement.longitude)+" , "
-        + str(announcement.latitude)+")")
-
-
-def payment_builder(price, productId, url, user_id, announcement_id):
+def payment_builder(price, productId, url, user_id):
     price=stripe.Price.create(
         unit_amount=price,
         currency="eur",
@@ -77,10 +68,7 @@ def payment_builder(price, productId, url, user_id, announcement_id):
     )                   
     return stripe.PaymentLink.create(line_items=[{"price": price['id'], "quantity": 1}], 
             after_completion={"type": "redirect", "redirect": {"url": url}},
-            metadata={'user_id': user_id, 'announcement_id': announcement_id})
-
-
-
+            metadata={'user_id': user_id})
 
 ### RESERVATION LOGIC
 
@@ -96,3 +84,31 @@ def post_reservation_logic(request):
         cancelled=False, rated=False, user=request.user, announcement=announcement_to_book)
         response=Response("La reserva ha sido creada",status=status.HTTP_201_CREATED)
     return response
+
+### ANNOUNCEMENT LOGIC 
+
+def put_announcement_status_logic(request, pk):
+    try:
+        request_status= request.data.get("status")
+        if request_status:
+            announcement_to_update=Announcement.objects.get(pk=pk)
+            if announcement_to_update:
+                if request_status=="AcceptDelay":
+                    if announcement_to_update.n_extend>=3:
+                        res=Response("error: n_extend es mayor o igual a 3",status=status.HTTP_400_BAD_REQUEST)
+                    else:
+                        announcement_to_update.status = request_status
+                        announcement_to_update.wait_time += 5
+                        announcement_to_update.n_extend += 1
+                        announcement_to_update.save()
+                        res=Response(status=status.HTTP_204_NO_CONTENT)
+                else:
+                    announcement_to_update.status = request_status
+                    announcement_to_update.save()
+                    res=Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            res=Response("La petición es inválida", status=status.HTTP_400_BAD_REQUEST)
+    except Exception:
+        res=Response("No existe el anuncio especificado", status=status.HTTP_404_NOT_FOUND)
+    
+    return res

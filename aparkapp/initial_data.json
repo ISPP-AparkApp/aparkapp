@@ -5,7 +5,9 @@
     "fields": {
       "phone": "633917766",
       "birthdate": "2000-02-15",
-      "user": 1
+      "user": 1,
+      "balance": "7",
+      "balance_currency": "EUR"
     }
   },
   {
@@ -24,6 +26,16 @@
       "phone": "78542011",
       "birthdate": "2000-12-10",
       "user": 3
+    }
+  },
+  {
+    "model": "api.profile",
+    "pk": 4,
+    "fields": {
+      "phone": "633917700",
+      "birthdate": "2000-02-15",
+      "user": 4,
+      "is_banned": true
     }
   },
   {
@@ -60,6 +72,18 @@
       "color": "Rojo",
       "type": "Mediano",
       "user": 2
+    }
+  },
+  {
+    "model": "api.vehicle",
+    "pk": 5,
+    "fields": {
+      "brand": "Seat",
+      "model": "León",
+      "license_plate": "2191ELO",
+      "color": "Verde",
+      "type": "Mediano",
+      "user": 4
     }
   },
   {
@@ -129,6 +153,24 @@
     }
   },
   {
+    "model": "auth.user",
+    "pk": 4,
+    "fields": {
+      "password": "pbkdf2_sha256$320000$rsak8BCXOomY87FZRYWAeH$9Il8uVbuHOGj+pMBGctIJNs7Z3+5jz3uAU2oseyFac4=",
+      "last_login": "2022-03-21T07:35:56Z",
+      "is_superuser": true,
+      "username": "user_banned",
+      "first_name": "Jorge",
+      "last_name": "López López",
+      "email": "user_banned@hotmail.com",
+      "is_staff": true,
+      "is_active": true,
+      "date_joined": "2022-03-21T07:35:40Z",
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
     "model": "api.announcement",
     "pk": 1,
     "fields": {
@@ -185,6 +227,68 @@
     }
   },
   {
+    "model": "api.announcement",
+    "pk": 5,
+    "fields": {
+      "date": "2022-04-22 12:43",
+      "price": 2,
+      "n_extend": 0,
+      "wait_time": 10,
+      "location": "Reina Mercedes",
+      "latitude": 38.35865724531185,
+      "longitude": -5.986121868933244,
+      "vehicle": 4,
+      "user": 3
+    }
+  },
+  {
+    "model": "api.announcement",
+    "pk": 6,
+    "fields": {
+      "date": "2023-04-22 09:40",
+      "price": 2,
+      "n_extend": 0,
+      "wait_time": 10,
+      "location": "Reina Mercedes",
+      "latitude": 38.35865724531185,
+      "longitude": -5.986121868933244,
+      "vehicle": 4,
+      "cancelled": true,
+      "user": 3
+    }
+  },
+  {
+    "model": "api.announcement",
+    "pk": 7,
+    "fields": {
+      "date": "2023-04-22 12:43",
+      "price": 2,
+      "n_extend": 0,
+      "wait_time": 10,
+      "location": "Reina Mercedes",
+      "latitude": 38.35865724531185,
+      "longitude": -5.986121868933244,
+      "vehicle": 2,
+      "user": 1
+    }
+  },
+  {
+    "model": "api.announcement",
+    "pk": 8,
+    "fields": {
+      "date": "2022-04-22 07:00",
+      "price": 2,
+      "n_extend": 0,
+      "wait_time": 10,
+      "location": "Reina Mercedes",
+      "latitude": 38.35865724531185,
+      "longitude": -5.986121868933244,
+      "vehicle": 4,
+      "cancelled": false,
+      "user": 3
+    }
+  },
+  {
     "model": "api.reservation",
     "pk": 1,
     "fields": {
@@ -194,5 +298,75 @@
       "announcement": 2,
       "user": 1
     }
+  },
+  {
+    "model": "api.reservation",
+    "pk": 2,
+    "fields": {
+      "date": "2022-04-22T13:03:00+02:00",
+      "cancelled": true,
+      "rated": false,
+      "announcement": 5,
+      "user": 1
+    }
+  },
+  {
+    "model": "api.reservation",
+    "pk": 3,
+    "fields": {
+      "date": "2022-04-25T13:03:00+02:00",
+      "cancelled": false,
+      "rated": false,
+      "announcement": 6,
+      "user": 1
+    }
+  },
+  {
+    "model": "api.reservation",
+    "pk": 4,
+    "fields": {
+      "date": "2022-04-25T13:03:00+02:00",
+      "cancelled": false,
+      "rated": false,
+      "announcement": 8,
+      "user": 1
+    }
+  },
+  {
+    "model": "api.rating",
+    "pk": 1,
+    "fields": {
+      "rate": 5,
+      "comment": "Ha sido muy puntual.",
+      "user": 3
+    }
+  },
+  {
+    "model": "api.rating",
+    "pk": 2,
+    "fields": {
+      "rate": 4,
+      "comment": "Ha sido puntual.",
+      "user": 3
+    }
+  },
+  {
+    "model": "api.rating",
+    "pk": 3,
+    "fields": {
+      "rate": 4,
+      "comment": "Sin problemas.",
+      "user": 2
+    }
+  },
+  {
+    "model": "api.rating",
+    "pk": 4,
+    "fields": {
+      "rate": 3,
+      "comment": "No ha sido puntual.",
+      "user": 2
+    }
   }
+
 ]
