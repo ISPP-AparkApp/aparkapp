@@ -80,7 +80,7 @@ jobs:
 
   deploy:
     needs: build
-    if: ${{github.ref == 'refs/heads/develop'}}
+    if: ${{github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main'}}
     name: Heroku
     runs-on: ubuntu-latest
     steps:
