@@ -198,20 +198,16 @@ class SimpleReservationSerializer(serializers.ModelSerializer):
 class GeolocationToAddressSerializer(serializers.Serializer):
     longitude = serializers.FloatField(validators=[MinValueValidator(-180.0), MaxValueValidator(180.0)])
     latitude=serializers.FloatField(validators=[MinValueValidator(-90.0), MaxValueValidator(90.0)])  
-    one_result = serializers.BooleanField(default=False)
 
 class GeolocationToCoordinatesSerializer(serializers.Serializer):
     location = serializers.CharField(max_length=1024)
-    country_code= serializers.CharField(max_length=2, default="ES")
-    one_result = serializers.BooleanField(default=False)
-    raw= serializers.BooleanField(default=True)
 
 ### REGISTER SERIALIZERS
 
 class RegisterSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True)
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
-    profile = ProfileRegisterSerializer()    ## CHEEECCCCCCCCCCCCCCCCCCCKKKKKKK
+    profile = ProfileRegisterSerializer()  
     vehicles = SwaggerVehicleSerializerId(many=True)
     
     class Meta:
@@ -249,7 +245,6 @@ class RegisterSerializer(serializers.ModelSerializer):
 
         return user
 
-###
 class AnnouncementNestedReservationsSerializer(serializers.ModelSerializer):
     vehicle = VehicleSerializer(read_only = True)
     reservation_set = SimpleReservationSerializer(many=True)
