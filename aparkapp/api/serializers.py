@@ -37,9 +37,9 @@ class ProfileRegisterSerializer(serializers.ModelSerializer):
 
     def validate_birthdate(self, value):
         if value > date.today() or value < date(1900,1,1):
-            raise serializers.ValidationError("Inserte una fecha válida")
+            raise serializers.ValidationError("Inserte una fecha válida, la fecha no puede ser posterior a la fecha actual ni anterior a 1/1/1900")
         elif (date.today().year - value.year) < 18:
-            raise serializers.ValidationError("Debe tener 18 años para usar la aplicación")
+            raise serializers.ValidationError("Debe tener al menos 18 años para usar la aplicación")
         return value
 
     def validate_phone(self, value):
