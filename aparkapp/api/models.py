@@ -18,6 +18,9 @@ class Profile(models.Model):
    #Relationship
    user = models.OneToOneField(User, on_delete=models.CASCADE)
 
+   def __str__(self):
+       return str(self.user.username)
+
 class Rating(models.Model):
    RATING = ((1, 'Muy mala'), (2,'Mala'), (3,'Regular'), (4,'Buena'), (5,'Muy Buena'))
    id = models.AutoField(primary_key=True)

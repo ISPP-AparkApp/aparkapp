@@ -45,7 +45,7 @@
       "brand": "Seat",
       "model": "León",
       "license_plate": "2193ELO",
-      "color": "Verde",
+      "color": "#1e8449",
       "type": "Mediano",
       "user": 1
     }
@@ -57,7 +57,7 @@
       "brand": "Audi",
       "model": "A4",
       "license_plate": "9102MXN",
-      "color": "Gris",
+      "color": "#b2babb",
       "type": "Mediano",
       "user": 1
     }
@@ -69,7 +69,7 @@
       "brand": "Open",
       "model": "Corsa",
       "license_plate": "6602MXN",
-      "color": "Rojo",
+      "color": "#b03a2e",
       "type": "Mediano",
       "user": 2
     }
@@ -81,7 +81,7 @@
       "brand": "Seat",
       "model": "León",
       "license_plate": "2191ELO",
-      "color": "Verde",
+      "color": "#186a3b",
       "type": "Mediano",
       "user": 4
     }
@@ -93,7 +93,7 @@
       "brand": "Fiat",
       "model": "Toledo",
       "license_plate": "9002MXN",
-      "color": "Gris",
+      "color": "#a6acaf",
       "type": "Pequeño",
       "user": 3
     }
