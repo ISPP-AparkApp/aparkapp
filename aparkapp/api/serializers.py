@@ -37,9 +37,9 @@ class ProfileRegisterSerializer(serializers.ModelSerializer):
 
     def validate_birthdate(self, value):
         if value > date.today() or value < date(1900,1,1):
-            raise serializers.ValidationError("Inserte una fecha válida")
+            raise serializers.ValidationError("Inserte una fecha válida, la fecha no puede ser posterior a la fecha actual ni anterior a 1/1/1900")
         elif (date.today().year - value.year) < 18:
-            raise serializers.ValidationError("Debe tener 18 años para usar la aplicación")
+            raise serializers.ValidationError("Debe tener al menos 18 años para usar la aplicación")
         return value
 
     def validate_phone(self, value):
@@ -198,20 +198,16 @@ class SimpleReservationSerializer(serializers.ModelSerializer):
 class GeolocationToAddressSerializer(serializers.Serializer):
     longitude = serializers.FloatField(validators=[MinValueValidator(-180.0), MaxValueValidator(180.0)])
     latitude=serializers.FloatField(validators=[MinValueValidator(-90.0), MaxValueValidator(90.0)])  
-    one_result = serializers.BooleanField(default=False)
 
 class GeolocationToCoordinatesSerializer(serializers.Serializer):
     location = serializers.CharField(max_length=1024)
-    country_code= serializers.CharField(max_length=2, default="ES")
-    one_result = serializers.BooleanField(default=False)
-    raw= serializers.BooleanField(default=True)
 
 ### REGISTER SERIALIZERS
 
 class RegisterSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True)
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
-    profile = ProfileRegisterSerializer()    ## CHEEECCCCCCCCCCCCCCCCCCCKKKKKKK
+    profile = ProfileRegisterSerializer()  
     vehicles = SwaggerVehicleSerializerId(many=True)
     
     class Meta:
@@ -249,7 +245,6 @@ class RegisterSerializer(serializers.ModelSerializer):
 
         return user
 
-###
 class AnnouncementNestedReservationsSerializer(serializers.ModelSerializer):
     vehicle = VehicleSerializer(read_only = True)
     reservation_set = SimpleReservationSerializer(many=True)
