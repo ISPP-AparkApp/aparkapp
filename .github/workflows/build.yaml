@@ -88,5 +88,5 @@ jobs:
       - uses: AkhileshNS/heroku-deploy@v3.12.12
         with:
           heroku_api_key: ${{secrets.HEROKU_API_KEY_3}}
-          heroku_app_name: "aparkapp-backend"
+          heroku_app_name: "aparkapp-back"
           heroku_email: "fernandohq23@gmail.com"
